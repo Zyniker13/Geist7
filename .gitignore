@@ -1,0 +1,16 @@
+# Build artifacts
+.build/
+DerivedData/
+dist/
+
+# Generated Xcode projects (source of truth: project.yml + `xcodegen generate`)
+games/*/*.xcodeproj/
+
+# Xcode user state
+xcuserdata/
+*.xcuserdatad/
+.DS_Store
+
+# SwiftPM
+.swiftpm/
+Package.resolved

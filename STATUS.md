@@ -20,7 +20,16 @@ Do this once, before the first game's P0, and record the output here:
 
 If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed without an administrator, file it as a `program` maintainer item; no game can build until it is fixed.
 
-- (not run yet)
+- `xcodebuild -version`: Xcode 27.2, Build 27B52 ✓
+- `xcrun simctl list runtimes`: iOS 27.2 (27.2 - 24B8117) ✓
+- `xcrun simctl list devices available`: iPad Pro 13-inch (M5) ✓, iPad Pro 11-inch (M5) ✓, iPad (A16) ✓, iPad mini (A20 Pro) ✓, iPhone 18 Pro Max ✓
+- `swift --version`: 6.4.2 ✓
+- `brew --version`: 7.0.13 ✓
+- `xcodegen --version`: 2.46.0 ✓
+- `swiftlint version`: 0.65.1 ✓
+- `swift-format --version`: 604.0.0 ✓
+- `gh auth status`: NOT authenticated (no token file at ~/.hermes/profiles/geist7/gh-token). Using fallback: maintainer items go to "Needs the Maintainer" in STATUS.md.
+- `gh label list`: NOT CHECKED (gh not authenticated). Labels will be created when gh is available.
 
 ## Games
 

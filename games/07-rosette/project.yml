@@ -1,0 +1,165 @@
+name: Rosette
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+    macOS: "26.0"
+  xcodeGen:
+    generateCleanLayer: true
+
+settings:
+  baseSettings:
+    base:
+      GEIST_BUNDLE_ID: com.example.rosette
+      SWIFT_VERSION: "6.0"
+      IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+      MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+packages:
+  RSCore:
+    path: Packages/RSCore
+  RSContent:
+    path: Packages/RSContent
+  RSAI:
+    path: Packages/RSAI
+  RSRender:
+    path: Packages/RSRender
+  RSAudio:
+    path: Packages/RSAudio
+  RSPlatform:
+    path: Packages/RSPlatform
+  RSMeta:
+    path: Packages/RSMeta
+
+targets:
+  Rosette-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/iOS
+      - path: App/Shared
+    dependencies:
+      - package: RSCore
+      - package: RSContent
+      - package: RSAI
+      - package: RSRender
+      - package: RSAudio
+      - package: RSPlatform
+      - package: RSMeta
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/iOS/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  Rosette-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/macOS
+      - path: App/Shared
+    dependencies:
+      - package: RSCore
+      - package: RSContent
+      - package: RSAI
+      - package: RSRender
+      - package: RSAudio
+      - package: RSPlatform
+      - package: RSMeta
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/macOS/Info.plist
+
+  RSCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSCore/Sources/RSCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSContent:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSContent/Sources/RSContent
+    dependencies:
+      - package: RSCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSAI:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSAI/Sources/RSAI
+    dependencies:
+      - package: RSCore
+      - package: RSContent
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSRender:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSRender/Sources/RSRender
+    dependencies:
+      - package: RSCore
+      - package: RSContent
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSAudio:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSAudio/Sources/RSAudio
+    dependencies:
+      - package: RSCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSPlatform:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSPlatform/Sources/RSPlatform
+    dependencies:
+      - package: RSCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  RSMeta:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/RSMeta/Sources/RSMeta
+    dependencies:
+      - package: RSCore
+      - package: RSContent
+      - package: RSAI
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES

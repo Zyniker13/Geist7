@@ -103,21 +103,7 @@ public struct MatchState: Sendable, Equatable {
     /// A new Finkel-ruleset match (R-1: 7 pieces each, 14-square path,
     /// rosettes at path positions 4, 8 and 14, the shared one safe).
     public static func finkelMatch(stake: Int, omens: [Omen]) -> MatchState {
-        let ruleset = RuleSet(
-            id: "finkel",
-            label: "Modern rules (Finkel/RoyalUr)",
-            trackLength: 14,
-            pieces: 7,
-            rosettes: [3, 7, 13],
-            safeRosettes: [7],
-            diceModel: "tetra4",
-            exactBearOff: true,
-            extraRollOnRosette: true,
-            captureRule: .standard,
-            moveGenerator: "ur",
-            source: "Finkel 2007",
-            historyLabel: .reconstructed
-        )
+        let ruleset = RuleSet.finkel
         return MatchState(
             ruleset: ruleset,
             track: ruleset.makeTrack(),

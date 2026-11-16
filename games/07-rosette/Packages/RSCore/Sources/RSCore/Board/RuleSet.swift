@@ -24,6 +24,24 @@ public enum CaptureRule: String, Sendable, Codable {
 
 /// A complete ruleset definition.
 public struct RuleSet: Sendable, Equatable, Codable {
+    /// The Finkel/RoyalUr reconstruction (R-1: 7 pieces, 14-square path,
+    /// rosettes at path steps 4/8/14, the shared one safe).
+    public static let finkel = RuleSet(
+        id: "finkel",
+        label: "Modern rules (Finkel/RoyalUr)",
+        trackLength: 14,
+        pieces: 7,
+        rosettes: [3, 7, 13],
+        safeRosettes: [7],
+        diceModel: "tetra4",
+        exactBearOff: true,
+        extraRollOnRosette: true,
+        captureRule: .standard,
+        moveGenerator: "ur",
+        source: "Finkel 2007",
+        historyLabel: .reconstructed
+    )
+
     /// Unique identifier.
     public let id: String
     /// Human-readable label.

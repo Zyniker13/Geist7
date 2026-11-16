@@ -16,21 +16,7 @@ enum TestSupport {
 
   /// The Finkel ruleset (same construction as `MatchState.finkelMatch`).
   static var finkelRuleset: RuleSet {
-    RuleSet(
-      id: "finkel",
-      label: "Modern rules (Finkel/RoyalUr)",
-      trackLength: 14,
-      pieces: 7,
-      rosettes: [3, 7, 13],
-      safeRosettes: [7],
-      diceModel: "tetra4",
-      exactBearOff: true,
-      extraRollOnRosette: true,
-      captureRule: .standard,
-      moveGenerator: "ur",
-      source: "Finkel 2007",
-      historyLabel: .reconstructed
-    )
+    .finkel
   }
 
   /// Build a state with pieces placed at explicit positions.
@@ -124,74 +110,17 @@ enum TestSupport {
   /// Returns the final state plus the full action and event records (INV-4).
   static func playRandomMatch(
     seed: UInt64,
-    ruleset: RuleSet = TestSupport.finkelRuleset,
+    ruleset: RuleSet = .finkel,
     dice: DiceModel = .tetra4,
     maxActions: Int = 100_000
   ) throws -> (MatchState, [Action], [Event]) {
-    var state = MatchState(
+    let record = try RandomMatch.play(
+      seed: seed,
       ruleset: ruleset,
-      track: ruleset.makeTrack(),
       dice: dice,
-      pieces: (0..<ruleset.pieces).flatMap { id in
-        PlayerID.allCases.map { Piece.making(id: id, owner: $0) }
-      },
-      currentPlayer: .player0,
-      diceValue: nil,
-      movablePieceIds: [],
-      extraRoll: false,
-      stake: Stake(value: 2),
-      cube: .centered,
-      cubeDead: false,
-      doubleOffered: false,
-      hasDoubledThisTurn: false,
-      omensHeld: [:],
-      omensPlayed: [:],
-      pendingOmen: nil,
-      splitRemaining: nil,
-      splitActive: false,
-      hasRolled: false,
-      borneOff: [.player0: 0, .player1: 0],
-      plies: 0,
-      isComplete: false,
-      outcome: nil
+      stake: 2,
+      maxActions: maxActions
     )
-    var rng = SeededRNG(seed: seed)
-    var omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
-    var actions: [Action] = []
-    var events: [Event] = []
-
-    func step(_ action: Action) throws -> Bool {
-      let result = try Reducer.apply(action, to: state, rng: &rng, omenRng: &omenRng)
-      state = result.state
-      actions.append(action)
-      events.append(contentsOf: result.events)
-      return !state.isComplete
-    }
-
-    for _ in 0..<maxActions {
-      if state.isComplete { break }
-      guard try step(
-        state.doubleOffered
-          ? .acceptDouble
-          : (!state.hasRolled ? .roll : TestSupport.randomMove(from: state, rng: &rng))
-      ) else { break }
-    }
-    return (state, actions, events)
-  }
-
-  /// Pick a random legal move action for the current position.
-  private static func randomMove(from state: MatchState, rng: inout SeededRNG) -> Action {
-    guard let amount = state.diceValue, amount > 0 else { return .roll }
-    let moves = MoveGen.legalMoves(
-      for: state.currentPlayer,
-      amount: amount,
-      pieces: state.pieces,
-      track: state.track,
-      rules: state.ruleset,
-      unsafeRosettesActive: state.pendingOmen?.effect.kind == .unsafeRosettes
-    )
-    guard !moves.isEmpty else { return .roll }
-    let chosen = moves[Int(rng.next(UInt64(moves.count)))]
-    return .move(chosen.piece)
+    return (record.finalState, record.actions, record.events)
   }
 }

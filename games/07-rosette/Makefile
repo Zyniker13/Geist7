@@ -19,7 +19,10 @@ build: gen
 	xcodebuild build -scheme Rosette-macOS -destination "platform=macOS" -configuration Debug COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee build-macos.log
 
 test: gen
-	$(SWIFT) test --parallel --enable-code-coverage 2>&1 | tee test.log
+	@for pkg in Packages/*/; do \
+	  echo "Testing $${pkg}"; \
+	  $(SWIFT) test --package-path "$${pkg}" 2>&1 | tee "test-$$(basename $${pkg}).log" | tail -3 || exit 1; \
+	done
 	xcodebuild test -scheme Rosette-iOS -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" -configuration Debug -only-testing:Rosette-iOS UITests COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee uitest.log
 
 lint: gen

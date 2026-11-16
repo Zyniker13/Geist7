@@ -36,14 +36,16 @@ jobs:
           xcodebuild build -scheme Rosette-iOS \
             -destination "generic/platform=iOS" \
             -configuration Debug \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Build macOS
         run: |
           xcodebuild build -scheme Rosette-macOS \
             -destination "platform=macOS" \
             -configuration Debug \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Run tests
         run: |

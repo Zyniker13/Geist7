@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette (P2 UI Shell) — G1 gate passed; P2 design and scaffolding next.
-- **Next step:** Draft P2 UI Shell design, scaffold Xcode project, implement main screen and board view.
+- **Game in progress:** 07 Rosette (P2 UI Shell) — P2 UI implemented (MainView/GameView/GameViewModel/SaveManager, odds panel, UI-test autopilot); CI root causes fixed (wrong action SHA, signing, package platforms, swift-format 604 CLI); ADR-0006 records the lint reconciliation.
+- **Next step:** Confirm CI green on main + local `make test`/`make lint` green, then G2 media evidence (screenshots on iPad + Mac), gate G2, proceed P3.
 
 ## Environment Check
 

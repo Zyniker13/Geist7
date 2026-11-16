@@ -22,7 +22,7 @@ jobs:
       run:
         working-directory: games/07-rosette
     steps:
-      - uses: actions/checkout@11bd71901bbe5b163cceee1484ab1772e3a73683 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install dependencies
         run: |
@@ -47,11 +47,15 @@ jobs:
 
       - name: Run tests
         run: |
-          swift test --parallel --enable-code-coverage
+          set -euo pipefail
+          for pkg in Packages/*/; do
+            echo "Testing ${pkg}"
+            swift test --package-path "${pkg}" --parallel --enable-code-coverage 2>&1 | tail -5
+          done
 
       - name: Run lint
         run: |
-          swiftlint lint --strict 2>&1 | tee lint-swiftlint.log || true
-          swift-format --lint --recursive Packages/ App/ Tools/ Tests/ 2>&1 || true
-          bash Tools/check-imports.sh 2>&1 || true
-          bash Tools/content-lint/run.sh 2>&1 || true
+          swiftlint lint --strict 2>&1 | tee lint-swiftlint.log
+          swift-format --lint --recursive Packages/ App/ Tools/ Tests/ 2>&1
+          bash Tools/check-imports.sh 2>&1
+          bash Tools/content-lint/run.sh 2>&1

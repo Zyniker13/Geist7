@@ -34,7 +34,7 @@ jobs:
       - name: Build iOS
         run: |
           xcodebuild build -scheme Rosette-iOS \
-            -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" \
+            -destination "generic/platform=iOS" \
             -configuration Debug \
             COMPILER_INDEX_STORE_ENABLE=NO
 

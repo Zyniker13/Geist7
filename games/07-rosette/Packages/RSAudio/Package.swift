@@ -5,7 +5,7 @@ let package = Package(
     name: "RSAudio",
     platforms: [
         .iOS(.v26),
-        .macOS(.v26)
+        .macOS(.v26),
     ],
     products: [
         .library(name: "RSAudio", targets: ["RSAudio"])
@@ -23,6 +23,6 @@ let package = Package(
             name: "RSAudioTests",
             dependencies: ["RSAudio"],
             path: "Tests/RSAudioTests"
-        )
+        ),
     ]
 )

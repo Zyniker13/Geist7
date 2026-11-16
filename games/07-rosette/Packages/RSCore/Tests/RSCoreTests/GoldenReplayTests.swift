@@ -19,7 +19,7 @@ final class GoldenReplayTests: XCTestCase {
         let candidates = [
             Bundle.module.url(
                 forResource: name, withExtension: "json", subdirectory: "Fixtures/Replays"),
-            Bundle.module.url(forResource: "Replays/\(name)", withExtension: "json")
+            Bundle.module.url(forResource: "Replays/\(name)", withExtension: "json"),
         ]
         guard let url = candidates.compactMap({ $0 }).first else {
             throw RuleError.illegalAction("missing golden replay fixture \(name)")

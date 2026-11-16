@@ -48,7 +48,7 @@ public struct DiceModel: Sendable, Equatable, Codable {
             DiceOutcome(value: 1, weight: 4),
             DiceOutcome(value: 2, weight: 6),
             DiceOutcome(value: 3, weight: 4),
-            DiceOutcome(value: 4, weight: 1)
+            DiceOutcome(value: 4, weight: 1),
         ],
         denominator: 16,
         note: "Marked-tip counts from the excavated Ur sets (R-2, reconstructed)."

@@ -329,7 +329,7 @@ final class SolveTests: XCTestCase {
             Bundle.module.url(
                 forResource: name, withExtension: ext, subdirectory: "Fixtures/Tables"),
             Bundle.module.url(forResource: "Tables/\(name)", withExtension: ext),
-            Bundle.module.url(forResource: name, withExtension: ext)
+            Bundle.module.url(forResource: name, withExtension: ext),
         ]
         guard let url = candidates.compactMap({ $0 }).first else {
             throw RuleError.illegalAction("missing fixture \(name).\(ext)")

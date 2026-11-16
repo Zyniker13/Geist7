@@ -115,14 +115,29 @@ public struct SenetLikeMoveGenerator: MoveGenerating {
     ) -> [Move] {
         var moves: [Move] = []
         let owned = pieces.filter { $0.owner == player && !$0.isBorneOff }
-        let occupied = Set(pieces.filter { $0.position >= 0 }.map { $0.position })
+        let ownedPositions = Set(owned.map { $0.position })
+        let allPositions = Set(pieces.filter { $0.position >= 0 }.map { $0.position })
 
         for piece in owned {
             if piece.position == -1 {
                 guard allowEntry else { continue }
-                if !occupied.contains(0) {
-                    moves.append(Move(piece: piece.id, destination: 0))
+                // R-3: the roll carries the piece in to step roll−1.
+                let entrySquare = amount - 1
+                guard entrySquare >= 0, entrySquare < track.length else { continue }
+                // R-4: own piece blocks the destination.
+                if ownedPositions.contains(entrySquare) {
+                    continue
                 }
+                // R-5: opponent on a safe rosette also blocks entry.
+                let opponentThere = pieces.contains {
+                    $0.owner != player && $0.position == entrySquare
+                }
+                if opponentThere && !unsafeRosettesActive
+                    && track.safeRosetteIndices.contains(entrySquare)
+                {
+                    continue
+                }
+                moves.append(Move(piece: piece.id, destination: entrySquare))
                 continue
             }
 
@@ -136,9 +151,19 @@ public struct SenetLikeMoveGenerator: MoveGenerating {
             // The whole path from the next square to the destination must be
             // clear: no landing on occupied squares and no jumping over them.
             let pathClear = ((piece.position + 1)...destination).allSatisfy {
-                !occupied.contains($0)
+                !allPositions.contains($0)
             }
             if pathClear {
+                // R-5: landing on a safe rosette held by the opponent is
+                // illegal unless the safety omen is active this turn.
+                let opponentThere = pieces.contains {
+                    $0.owner != player && $0.position == destination
+                }
+                if opponentThere && !unsafeRosettesActive
+                    && track.safeRosetteIndices.contains(destination)
+                {
+                    continue
+                }
                 moves.append(Move(piece: piece.id, destination: destination))
             }
         }

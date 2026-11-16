@@ -188,21 +188,29 @@ public enum Reducer {
         var events: [Event] = []
         var movedPiece = mover
 
+        // R-3: a waiting piece enters at step roll−1 (the roll carries the
+        // piece in). A roll of 0 passes in applyRoll, so amount ≥ 1 here.
+        // Otherwise the move advances by the roll; reaching (or passing, when
+        // the ruleset allows inexact bear-off) the track end bears off (R-7).
+        let destination: Int?
         if from == -1 {
-            // Entry: the piece comes in onto the first square of its path.
-            movedPiece.position = 0
+            let entry = amount - 1
+            guard entry >= 0, entry < result.track.length else {
+                throw RuleError.invalidDestination
+            }
+            destination = entry
         } else if from + amount > result.track.length && result.ruleset.exactBearOff {
             // Unreachable for a legal move; guarded for safety.
             throw RuleError.invalidDestination
         } else if from + amount == result.track.length
             || (!result.ruleset.exactBearOff && from + amount > result.track.length)
         {
-            // R-7: bear off.
-            movedPiece.position = -2
-            result.borneOff[result.currentPlayer, default: 0] += 1
-            events.append(Event.pieceBorneOff(piece: piece, player: result.currentPlayer))
+            destination = nil  // R-7: bear off.
         } else {
-            let destination = from + amount
+            destination = from + amount
+        }
+
+        if let destination {
             if let targetIndex = pieces.firstIndex(where: {
                 $0.position == destination && $0.owner != result.currentPlayer
             }) {
@@ -231,6 +239,11 @@ public enum Reducer {
                 result.extraRoll = true
                 events.append(Event.rosetteLanded(player: result.currentPlayer))
             }
+        } else {
+            // R-7: bear off.
+            movedPiece.position = -2
+            result.borneOff[result.currentPlayer, default: 0] += 1
+            events.append(Event.pieceBorneOff(piece: piece, player: result.currentPlayer))
         }
 
         pieces[pieceIndex] = movedPiece
@@ -280,6 +293,8 @@ public enum Reducer {
         }
 
         // R-6/R-19: a rosette grants another roll (chains without limit).
+        // When extraRoll is set, reset it (so the next .roll doesn't see it)
+        // and return without ending the turn.  Otherwise end the turn.
         if result.extraRoll {
             result.extraRoll = false
             result.diceValue = nil

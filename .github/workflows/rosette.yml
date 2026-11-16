@@ -58,6 +58,6 @@ jobs:
       - name: Run lint
         run: |
           swiftlint lint --strict 2>&1 | tee lint-swiftlint.log
-          swift-format --lint --recursive Packages/ App/ Tools/ Tests/ 2>&1
+          swift-format lint --configuration .swift-format --recursive Packages/ App/ Tools/ Tests/ 2>&1
           bash Tools/check-imports.sh 2>&1
           bash Tools/content-lint/run.sh 2>&1

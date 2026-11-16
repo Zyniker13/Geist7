@@ -1,1 +1,1 @@
-// RSRender — empty placeholder until P1
+// RSRender — SpriteKit board scene and game nodes for Rosette

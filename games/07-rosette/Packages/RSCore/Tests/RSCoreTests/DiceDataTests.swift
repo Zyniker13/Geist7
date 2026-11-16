@@ -83,7 +83,7 @@ final class DiceDataTests: XCTestCase {
             DiceOutcome(value: 1, weight: 4),
             DiceOutcome(value: 3, weight: 2),
             DiceOutcome(value: 4, weight: 2),
-            DiceOutcome(value: 6, weight: 2)
+            DiceOutcome(value: 6, weight: 2),
         ]
         // Convolve four astragals into a data-driven model.
         var table: [Int: Int] = [0: 1]

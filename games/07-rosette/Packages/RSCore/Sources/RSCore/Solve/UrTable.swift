@@ -248,7 +248,7 @@ public enum FNV1a64 {
             UInt8(truncatingIfNeeded: value >> 32),
             UInt8(truncatingIfNeeded: value >> 40),
             UInt8(truncatingIfNeeded: value >> 48),
-            UInt8(truncatingIfNeeded: value >> 56)
+            UInt8(truncatingIfNeeded: value >> 56),
         ]
     }
 }

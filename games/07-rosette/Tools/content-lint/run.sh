@@ -15,16 +15,16 @@ ERRORS=0
 
 # Check 1: no hardcoded UI strings in Sources (allow comments and doc comments)
 echo "Checking for hardcoded UI strings in Sources..."
-# TODO: implement full check when P1 content is added
+# TODO(RS-P3.1): implement full check when P3 content is added
 echo "  (skeleton — no violations yet)"
 
 # Check 2: asset metadata
 echo "Checking asset metadata..."
-# TODO: implement when assets are added
+# TODO(RS-P3.1): implement when assets are added
 
 # Check 3: no copyrighted content
 echo "Checking for copyrighted content..."
-# TODO: implement when content is added
+# TODO(RS-P3.1): implement when content is added
 
 if [ "$ERRORS" -gt 0 ]; then
     echo "content-lint: $ERRORS violation(s) found"

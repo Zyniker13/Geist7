@@ -40,7 +40,7 @@ final class RulesCaptureRosetteTests: XCTestCase {
         }
     }
 
-    func testR5_CapturedPieceReentersAtItsOwnFirstSquare() throws {
+    func testR5_CapturedPieceReentersAtRollMinusOne() throws {
         var state = TestSupport.state(
             dice: TestSupport.loaded(3),
             player0: [5, -1, -1, -1, -1, -1, -1],
@@ -48,11 +48,12 @@ final class RulesCaptureRosetteTests: XCTestCase {
             currentPlayer: .player0
         )
         (state, _) = try TestSupport.rollAndMove(state, diceSeed: 3)
-        // Player 1's captured piece is waiting; their turn: enter at square 0.
+        // Player 0 captures player 1's piece at square 8.
+        // Player 1 enters with a roll of 3 → step roll−1 = 2.
         let (entered, _) = try TestSupport.apply(.roll, to: state, diceSeed: 11)
         let (afterMove, _) = try TestSupport.apply(.move(0), to: entered, diceSeed: 11)
         let entering = afterMove.pieces.first { $0.owner == .player1 && $0.id == 0 }
-        XCTAssertEqual(entering?.position, 0)
+        XCTAssertEqual(entering?.position, 2)
     }
 
     // MARK: R-6

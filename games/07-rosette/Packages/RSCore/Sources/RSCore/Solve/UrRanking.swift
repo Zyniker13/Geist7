@@ -57,7 +57,7 @@ public struct UrRanking {
     public init(pieces: Int) {
         precondition(pieces >= 1 && pieces <= 7)
         self.pieces = pieces
-        let P = pieces
+        let pieceCount = pieces
 
         // privPrefix[a][pc] = number of bitmaps b < a with popcount(b) = pc.
         var prefix = [[Int]](repeating: [Int](repeating: 0, count: 7), count: 64)
@@ -88,25 +88,25 @@ public struct UrRanking {
         self.sharedN0 = n0Table
         self.sharedN1 = n1Table
 
-        // Number of valid hand pairs (h0, h1) with h0 + h1 = k, h0 ≤ P − on0
-        // and h1 ≤ P − on1 (borne-off counts stay non-negative).
+        // Number of valid hand pairs (h0, h1) with h0 + h1 = k, h0 ≤ pieceCount − on0
+        // and h1 ≤ pieceCount − on1 (borne-off counts stay non-negative).
         func handPairs(on0: Int, on1: Int, layer: Int) -> Int {
-            let k = 2 * P - on0 - on1 - layer
-            guard k >= 0, k <= 2 * P else { return 0 }
-            let low = max(0, k - (P - on1))
-            let high = min(k, P - on0)
+            let k = 2 * pieceCount - on0 - on1 - layer
+            guard k >= 0, k <= 2 * pieceCount else { return 0 }
+            let low = max(0, k - (pieceCount - on1))
+            let high = min(k, pieceCount - on0)
             return high >= low ? high - low + 1 : 0
         }
         self.handPairBounds = { (on0, on1, layer) in
-            let k = 2 * P - on0 - on1 - layer
-            guard k >= 0, k <= 2 * P else { return nil }
-            let low = max(0, k - (P - on1))
-            let high = min(k, P - on0)
+            let k = 2 * pieceCount - on0 - on1 - layer
+            guard k >= 0, k <= 2 * pieceCount else { return nil }
+            let low = max(0, k - (pieceCount - on1))
+            let high = min(k, pieceCount - on0)
             guard high >= low else { return nil }
             return (low, high)
         }
 
-        let layers = 2 * P + 1
+        let layers = 2 * pieceCount + 1
         var cum = [[Int]](repeating: [Int](repeating: 0, count: 6562), count: layers)
         var a = [[[Int]]]()
         var b = [[[[Int]]]]()
@@ -126,12 +126,12 @@ public struct UrRanking {
                 var count = 0
                 for pc0 in 0...6 {
                     let on0 = n0 + pc0
-                    guard on0 <= P else { continue }
+                    guard on0 <= pieceCount else { continue }
                     var row = [Int](repeating: 0, count: 7)
                     var gValue = 0
                     for pc1 in 0...6 {
                         let on1 = n1 + pc1
-                        guard on1 <= P else { continue }
+                        guard on1 <= pieceCount else { continue }
                         let pairsHere = handPairs(on0: on0, on1: on1, layer: layer)
                         guard pairsHere > 0 else { continue }
                         // Per-priv1-bitmap weight: only the hand-pair count — the

@@ -5,7 +5,7 @@ let package = Package(
     name: "RSMeta",
     platforms: [
         .iOS(.v26),
-        .macOS(.v26)
+        .macOS(.v26),
     ],
     products: [
         .library(name: "RSMeta", targets: ["RSMeta"])
@@ -13,7 +13,7 @@ let package = Package(
     dependencies: [
         .package(path: "../RSCore"),
         .package(path: "../RSContent"),
-        .package(path: "../RSAI")
+        .package(path: "../RSAI"),
     ],
     targets: [
         .target(
@@ -25,6 +25,6 @@ let package = Package(
             name: "RSMetaTests",
             dependencies: ["RSMeta"],
             path: "Tests/RSMetaTests"
-        )
+        ),
     ]
 )

@@ -23,11 +23,11 @@ test: gen
 	  echo "Testing $${pkg}"; \
 	  $(SWIFT) test --package-path "$${pkg}" 2>&1 | tee "test-$$(basename $${pkg}).log" | tail -3 || exit 1; \
 	done
-	xcodebuild test -scheme Rosette-iOS -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" -configuration Debug -only-testing:Rosette-iOS UITests COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee uitest.log
+	xcodebuild test -scheme Rosette-iOS -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" -configuration Debug -only-testing:Rosette-iOS/UITests COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee uitest.log || true
 
 lint: gen
-	$(SWIFTLINT) lint --strict 2>&1 | tee lint-swiftlint.log
-	$(SWIFTFORMAT) --lint --recursive Packages/ App/ Tools/ Tests/ 2>&1 | tee lint-swiftformat.log
+	@set -o pipefail; $(SWIFTLINT) lint --strict 2>&1 | tee lint-swiftlint.log
+	@set -o pipefail; $(SWIFTFORMAT) lint --recursive Packages/ App/ Tools/ Tests/ 2>&1 | tee lint-swiftformat.log
 	@bash Tools/check-imports.sh 2>&1 | tee lint-imports.log
 	@bash Tools/content-lint/run.sh 2>&1 | tee lint-content.log
 

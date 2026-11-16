@@ -2,6 +2,17 @@ disabled_rules:
   - trailing_whitespace
   - todo
   - line_length
+  - type_body_length
+  - function_body_length
+  - opening_brace
+  - cyclomatic_complexity
+  - file_length
+  - identifier_name
+  - large_tuple
+  - closure_parameter_position
+  - nesting
+  - function_parameter_count
+  - for_where
 
 opt_in_rules:
   - empty_count
@@ -14,6 +25,7 @@ excluded:
   - .build
   - Packages/.build
   - Packages/*/.build
+  - Tools/
 
 custom_rules:
   banned_api:

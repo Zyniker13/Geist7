@@ -29,7 +29,8 @@ public struct DiceModel: Sendable, Equatable, Codable {
     /// Description note.
     public let note: String
 
-    public init(id: String, label: String, outcomes: [DiceOutcome], denominator: Int, note: String) {
+    public init(id: String, label: String, outcomes: [DiceOutcome], denominator: Int, note: String)
+    {
         self.id = id
         self.label = label
         self.outcomes = outcomes
@@ -68,7 +69,7 @@ public struct DiceModel: Sendable, Equatable, Codable {
                 return outcome.value
             }
         }
-        return outcomes.last!.value
+        fatalError("unreachable: target \(target) >= totalWeight \(totalWeight)")
     }
 
     /// Roll `count` dice and return the sum.

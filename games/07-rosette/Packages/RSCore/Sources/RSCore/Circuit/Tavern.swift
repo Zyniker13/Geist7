@@ -5,9 +5,9 @@ struct Tavern: Sendable, Equatable, Codable {
     /// The tavern's name.
     let name: String
     /// The difficulty level.
-    let difficulty: Int // 1-5
+    let difficulty: Int  // 1-5
     /// The AI opponent's level.
-    let aiLevel: Int // 1-5
+    let aiLevel: Int  // 1-5
     /// The starting stake.
     let stake: Int
     /// Any special rules.

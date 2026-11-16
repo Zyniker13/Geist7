@@ -173,9 +173,11 @@ public enum Reducer {
         guard state.movablePieceIds.contains(piece) else {
             throw RuleError.illegalAction("Piece \(piece) has no legal move this turn")
         }
-        guard let pieceIndex = state.pieces.firstIndex(where: {
-            $0.id == piece && $0.owner == state.currentPlayer
-        }) else {
+        guard
+            let pieceIndex = state.pieces.firstIndex(where: {
+                $0.id == piece && $0.owner == state.currentPlayer
+            })
+        else {
             throw RuleError.noSuchPiece(piece)
         }
 
@@ -193,7 +195,8 @@ public enum Reducer {
             // Unreachable for a legal move; guarded for safety.
             throw RuleError.invalidDestination
         } else if from + amount == result.track.length
-            || (!result.ruleset.exactBearOff && from + amount > result.track.length) {
+            || (!result.ruleset.exactBearOff && from + amount > result.track.length)
+        {
             // R-7: bear off.
             movedPiece.position = -2
             result.borneOff[result.currentPlayer, default: 0] += 1
@@ -222,7 +225,9 @@ public enum Reducer {
                 }
             }
             movedPiece.position = destination
-            if result.ruleset.extraRollOnRosette && Rosette.isRosette(at: destination, track: result.track) {
+            if result.ruleset.extraRollOnRosette
+                && Rosette.isRosette(at: destination, track: result.track)
+            {
                 result.extraRoll = true
                 events.append(Event.rosetteLanded(player: result.currentPlayer))
             }
@@ -358,7 +363,9 @@ public enum Reducer {
             initialStake: result.stake.value,
             plies: result.plies
         )
-        return (result, [Event.conceded(by: loser), Event.matchWon(winner: winner, gammon: gammon)])
+        return (
+            result, [Event.conceded(by: loser), Event.matchWon(winner: winner, gammon: gammon)]
+        )
     }
 
     // MARK: - Omens (R-12, R-23)

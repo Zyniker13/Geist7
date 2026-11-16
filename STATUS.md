@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette (P1 Core Rules).
-- **Next step:** Build Rosette P1 Core Rules — implement the game's core ruleset in RSContent, with unit tests.
+- **Game in progress:** 07 Rosette (P1 Core Rules) — RS-P1.4 complete on branch `rosette/phase/P1-rules-engine`; G1 gate evidence next.
+- **Next step:** Run the G1 gate block (make test/lint, INV-1–INV-5 evidence in the game's docs/STATUS.md, tag `rosette/gate-G1-pass`, merge to `main`), then start Rosette P2 UI Shell.
 
 ## Environment Check
 
@@ -72,3 +72,4 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - 2026-11-15: Roadmap set written; no code yet.
 - 2026-11-16: Added `AGENTS.md`, `LICENSE` (all rights reserved), `SECURITY.md`, `.gitignore`, the Environment Check, and the issue labels; the program is ready to start.
 - 2026-11-16: 07 Rosette P0 complete — 48 files committed, iOS+macOS build green, all 7 package tests pass, SwiftLint/swift-format/check-imports clean, CI configured, G0 tagged.
+- 2026-11-16: 07 Rosette P1 complete on branch `rosette/phase/P1-rules-engine` — rules engine R-1–R-12/R-16–R-23 with rule-tagged tests, headless sim CLI + ten golden replays, pluggable move generators (Senet-like/Patolli-like), and RS-P1.4: value-iteration solver + ranking + table codec, verified against RoyalUr's published solved tables (full 2P cross-check max |Δ| 7.66e-6 on all 12,990 entries; 7P entry count reconciles exactly; INV-5 engine-bridge probe 10,000 states max |Δ| 8.8e-13). RSCore: 91 tests green. Two rule corrections during the solve: R-3 entry lands on step roll−1; decided positions carry forced boundary values.

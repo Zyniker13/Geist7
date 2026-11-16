@@ -25,14 +25,16 @@ struct GoldenReplay: Codable {
 
 @MainActor
 func usage() -> Never {
-    FileHandle.standardError.write(Data("""
-    usage: sim [--count N] [--seed S] [--golden-out DIR] [--golden-count N]
+    FileHandle.standardError.write(
+        Data(
+            """
+            usage: sim [--count N] [--seed S] [--golden-out DIR] [--golden-count N]
 
-      --count N         play N random-legal matches (default 200)
-      --seed S          base seed (default 1)
-      --golden-out DIR  write --golden-count golden replay fixtures to DIR
-      --golden-count N  number of golden replays (default 10)
-    """.utf8))
+              --count N         play N random-legal matches (default 200)
+              --seed S          base seed (default 1)
+              --golden-out DIR  write --golden-count golden replay fixtures to DIR
+              --golden-count N  number of golden replays (default 10)
+            """.utf8))
     exit(2)
 }
 

@@ -45,13 +45,19 @@ public struct UrMoveGenerator: MoveGenerating {
 
         for piece in owned {
             if piece.position == -1 {
-                // Entry: any non-zero roll brings a piece in onto the first
-                // square of its path; the roll is consumed by entering.
-                // Split turns exclude entry moves: entering spends the roll.
+                // R-3: the roll carries the piece in from off the board —
+                // a roll of `amount` places it on square `amount − 1`.
+                // Only the destination square is checked; passed-over
+                // squares do not block. Entry consumes the roll, so split
+                // turns exclude entry moves.
                 guard allowEntry else { continue }
-                let entryBlocked = pieces.contains { $0.owner == player && $0.position == 0 }
+                let entrySquare = amount - 1
+                guard entrySquare >= 0, entrySquare < track.length else { continue }
+                let entryBlocked = pieces.contains {
+                    $0.owner == player && $0.position == entrySquare
+                }
                 if !entryBlocked {
-                    moves.append(Move(piece: piece.id, destination: 0))
+                    moves.append(Move(piece: piece.id, destination: entrySquare))
                 }
                 continue
             }
@@ -70,7 +76,9 @@ public struct UrMoveGenerator: MoveGenerating {
             // R-5: landing on a safe rosette held by the opponent is illegal,
             // unless the safety omen is active this turn.
             let opponentThere = pieces.contains { $0.owner != player && $0.position == destination }
-            if opponentThere && !unsafeRosettesActive && track.safeRosetteIndices.contains(destination) {
+            if opponentThere && !unsafeRosettesActive
+                && track.safeRosetteIndices.contains(destination)
+            {
                 continue
             }
             moves.append(Move(piece: piece.id, destination: destination))
@@ -127,7 +135,9 @@ public struct SenetLikeMoveGenerator: MoveGenerating {
             guard destination < track.length else { continue }
             // The whole path from the next square to the destination must be
             // clear: no landing on occupied squares and no jumping over them.
-            let pathClear = ((piece.position + 1)...destination).allSatisfy { !occupied.contains($0) }
+            let pathClear = ((piece.position + 1)...destination).allSatisfy {
+                !occupied.contains($0)
+            }
             if pathClear {
                 moves.append(Move(piece: piece.id, destination: destination))
             }
@@ -181,7 +191,9 @@ public struct PatolliLikeMoveGenerator: MoveGenerating {
             // Landing on a safe rosette held by the opponent is illegal
             // unless the safety omen is active this turn.
             let opponentThere = pieces.contains { $0.owner != player && $0.position == destination }
-            if opponentThere && !unsafeRosettesActive && track.safeRosetteIndices.contains(destination) {
+            if opponentThere && !unsafeRosettesActive
+                && track.safeRosetteIndices.contains(destination)
+            {
                 continue
             }
             moves.append(Move(piece: piece.id, destination: destination))

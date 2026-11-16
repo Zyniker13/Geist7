@@ -163,3 +163,11 @@ targets:
     settings:
       base:
         SWIFT_EMIT_LOC_STRINGS: YES
+
+  SolveUr:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Tools/SolveUr
+    dependencies:
+      - package: RSCore

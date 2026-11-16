@@ -8,12 +8,11 @@ options:
     generateCleanLayer: true
 
 settings:
-  baseSettings:
-    base:
-      GEIST_BUNDLE_ID: com.example.rosette
-      SWIFT_VERSION: "6.0"
-      IPHONEOS_DEPLOYMENT_TARGET: "26.0"
-      MACOSX_DEPLOYMENT_TARGET: "26.0"
+  base:
+    GEIST_BUNDLE_ID: com.example.rosette
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
 
 packages:
   RSCore:
@@ -171,3 +170,53 @@ targets:
       - path: Tools/SolveUr
     dependencies:
       - package: RSCore
+
+  RosetteUITests-iOS:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/UITests
+    dependencies:
+      - target: Rosette-iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  RosetteUITests-macOS:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/UITests
+    dependencies:
+      - target: Rosette-macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Rosette-iOS:
+    build:
+      targets:
+        Rosette-iOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - RosetteUITests-iOS
+  Rosette-macOS:
+    build:
+      targets:
+        Rosette-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - RosetteUITests-macOS
+  SolveUr:
+    build:
+      targets:
+        SolveUr: all
+    run:
+      config: Release

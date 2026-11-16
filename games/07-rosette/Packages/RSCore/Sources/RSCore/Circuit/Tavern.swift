@@ -26,7 +26,7 @@ struct Tavern: Sendable, Equatable, Codable {
             "The Temple Guard",
             "The Merchant Quarter",
             "The Royal Court",
-            "The High Priest"
+            "The High Priest",
         ]
         let name = names[min(nextLevel - 1, names.count - 1)]
         return Tavern(

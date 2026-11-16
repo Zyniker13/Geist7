@@ -5,14 +5,14 @@ let package = Package(
     name: "RSAI",
     platforms: [
         .iOS(.v26),
-        .macOS(.v26)
+        .macOS(.v26),
     ],
     products: [
         .library(name: "RSAI", targets: ["RSAI"])
     ],
     dependencies: [
         .package(path: "../RSCore"),
-        .package(path: "../RSContent")
+        .package(path: "../RSContent"),
     ],
     targets: [
         .target(
@@ -24,6 +24,6 @@ let package = Package(
             name: "RSAITests",
             dependencies: ["RSAI"],
             path: "Tests/RSAITests"
-        )
+        ),
     ]
 )

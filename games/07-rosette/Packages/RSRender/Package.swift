@@ -5,14 +5,14 @@ let package = Package(
     name: "RSRender",
     platforms: [
         .iOS(.v26),
-        .macOS(.v26)
+        .macOS(.v26),
     ],
     products: [
         .library(name: "RSRender", targets: ["RSRender"])
     ],
     dependencies: [
         .package(path: "../RSCore"),
-        .package(path: "../RSContent")
+        .package(path: "../RSContent"),
     ],
     targets: [
         .target(
@@ -24,6 +24,6 @@ let package = Package(
             name: "RSRenderTests",
             dependencies: ["RSRender"],
             path: "Tests/RSRenderTests"
-        )
+        ),
     ]
 )

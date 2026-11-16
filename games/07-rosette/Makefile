@@ -19,15 +19,16 @@ build: gen
 	xcodebuild build -scheme Rosette-macOS -destination "platform=macOS" -configuration Debug COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee build-macos.log
 
 test: gen
-	@for pkg in Packages/*/; do \
+	@set -o pipefail; \
+	for pkg in Packages/*/; do \
 	  echo "Testing $${pkg}"; \
 	  $(SWIFT) test --package-path "$${pkg}" 2>&1 | tee "test-$$(basename $${pkg}).log" | tail -3 || exit 1; \
 	done
-	xcodebuild test -scheme Rosette-iOS -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" -configuration Debug -only-testing:Rosette-iOS/UITests COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee uitest.log || true
+	xcodebuild test -scheme Rosette-iOS -destination "platform=iOS Simulator,name=iPad Pro 13-inch (M5)" -configuration Debug -only-testing:RosetteUITests-iOS COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | tee uitest.log || true
 
 lint: gen
 	@set -o pipefail; $(SWIFTLINT) lint --strict 2>&1 | tee lint-swiftlint.log
-	@set -o pipefail; $(SWIFTFORMAT) lint --recursive Packages/ App/ Tools/ Tests/ 2>&1 | tee lint-swiftformat.log
+	@set -o pipefail; $(SWIFTFORMAT) lint --configuration .swift-format --recursive Packages/ App/ Tools/ Tests/ 2>&1 | tee lint-swiftformat.log
 	@bash Tools/check-imports.sh 2>&1 | tee lint-imports.log
 	@bash Tools/content-lint/run.sh 2>&1 | tee lint-content.log
 
@@ -46,3 +47,6 @@ sim: gen
 	@N=${N:-200}; echo "Running $$N seeded AI-vs-AI games..."; $(SWIFT) run --package-path Tools/sim sim --count $$N 2>&1 | tee sim.log
 
 all: test lint
+
+todo:
+	@bash Tools/todo-map.sh

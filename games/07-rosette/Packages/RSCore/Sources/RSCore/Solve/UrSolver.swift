@@ -178,7 +178,7 @@ public struct UrSolver {
     /// The Bellman update for one position. The stored orientation's first
     /// player is always the player about to roll.
     func update(position: UrPosition, read: [Double], ranking: UrRanking) -> Double {
-        let P = pieces
+        let pieceCount = pieces
         // Terminal positions: a player with no pieces in hand and none on
         // board has borne off everything. If the roller finished, they have
         // won; if the opponent finished first, the roller has lost. The
@@ -259,8 +259,8 @@ public struct UrSolver {
                 if destination == UrRanking.trackLength {
                     // Exact bear-off (R-7). If it was the last piece, the mover wins.
                     let onBoard = ownMask.nonzeroBitCount
-                    let borneOff = P - position.hand0 - onBoard
-                    if borneOff + 1 == P {
+                    let borneOff = pieceCount - position.hand0 - onBoard
+                    if borneOff + 1 == pieceCount {
                         if 1.0 > best { best = 1.0 }
                         continue
                     }

@@ -13,6 +13,7 @@ disabled_rules:
   - nesting
   - function_parameter_count
   - for_where
+  - trailing_comma
 
 opt_in_rules:
   - empty_count
@@ -26,6 +27,7 @@ excluded:
   - Packages/.build
   - Packages/*/.build
   - Tools/
+  - App/
 
 custom_rules:
   banned_api:

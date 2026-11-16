@@ -12,11 +12,11 @@ enum Inv5Check {
     /// Builds the engine's piece list from a solver position. Player 0 of the
     /// position is the rolling player, so it maps to `.player0`.
     static func enginePieces(of position: UrPosition, pieces: Int) -> [Piece] {
-        var pieces_out: [Piece] = []
+        var piecesOut: [Piece] = []
         func append(_ owner: PlayerID, _ step: Int) {
-            var piece = Piece.making(id: pieces_out.count, owner: owner)
+            var piece = Piece.making(id: piecesOut.count, owner: owner)
             piece.position = step
-            pieces_out.append(piece)
+            piecesOut.append(piece)
         }
         for index in 0..<8 {
             switch position.sharedDigit(index) {
@@ -37,7 +37,7 @@ enum Inv5Check {
         let onBoard1 = position.privateCount1 + position.sharedCount1
         for _ in 0..<(pieces - position.hand0 - onBoard0) { append(.player0, -2) }
         for _ in 0..<(pieces - position.hand1 - onBoard1) { append(.player1, -2) }
-        return pieces_out
+        return piecesOut
     }
 
     /// Recovers the solver position from an engine piece list.

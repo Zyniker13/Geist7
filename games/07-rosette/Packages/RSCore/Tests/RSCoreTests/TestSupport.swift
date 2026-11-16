@@ -63,7 +63,7 @@ enum TestSupport {
             hasRolled: false,
             borneOff: [
                 .player0: player0.filter { $0 == -2 }.count,
-                .player1: player1.filter { $0 == -2 }.count
+                .player1: player1.filter { $0 == -2 }.count,
             ],
             plies: 0,
             isComplete: false,

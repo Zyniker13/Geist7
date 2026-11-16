@@ -5,7 +5,7 @@ let package = Package(
     name: "RSCore",
     platforms: [
         .iOS(.v26),
-        .macOS(.v26)
+        .macOS(.v26),
     ],
     products: [
         .library(name: "RSCore", targets: ["RSCore"])
@@ -24,6 +24,6 @@ let package = Package(
             resources: [
                 .copy("Fixtures")
             ]
-        )
+        ),
     ]
 )

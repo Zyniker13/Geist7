@@ -15,3 +15,6 @@ xcuserdata/
 # SwiftPM
 .swiftpm/
 Package.resolved
+
+# Makefile tee logs (gate evidence goes in docs/STATUS.md, not committed logs)
+games/*/*.log

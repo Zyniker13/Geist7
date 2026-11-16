@@ -5,7 +5,22 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 ## Current
 
 - **Game in progress:** none.
-- **Next step:** start 07 Rosette at P0 (`games/07-rosette/ROADMAP.md`). Before that, run `gh auth status`.
+- **Next step:** run the Environment Check below and record its output, then start 07 Rosette at P0 (`games/07-rosette/ROADMAP.md`).
+
+## Environment Check
+
+Do this once, before the first game's P0, and record the output here:
+
+- `xcodebuild -version` must report Xcode 27.2 (`_CONVENTIONS.md` §2).
+- `xcrun simctl list runtimes` must show an available iOS simulator runtime of version 26.0 or later.
+- `xcrun simctl list devices available` must include the simulators named in "Environment" in `ROADMAP.md`, or the closest models created or picked as that section says.
+- `swift --version`, `brew --version`, `xcodegen --version`, `swiftlint version`, and `swift-format --version`; install missing tools with `brew install`.
+- `gh auth status`: if it fails, file maintainer items with the fallback in "Issues for the Maintainer" in `ROADMAP.md`.
+- The issue labels exist: `gh label list --repo Zyniker13/Geist7` shows `needs-maintainer`, `blocked`, `question`, `program`, and one label per game slug. Create any that are missing with `gh label create`.
+
+If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed without an administrator, file it as a `program` maintainer item; no game can build until it is fixed.
+
+- (not run yet)
 
 ## Games
 
@@ -46,3 +61,4 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 ## Log
 
 - 2026-11-15: Roadmap set written; no code yet.
+- 2026-11-16: Added `AGENTS.md`, `LICENSE` (all rights reserved), `SECURITY.md`, `.gitignore`, the Environment Check, and the issue labels; the program is ready to start.

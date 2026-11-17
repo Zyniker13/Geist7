@@ -5,8 +5,10 @@
     "description": "The Eye of Horus grants a single re-roll of the dice.",
     "cost": 2,
     "effectKind": "reroll",
-    "parameters": {"count": 1},
-    "label": "HIST3.1: The Eye of Horus was the most protective amulet in ancient Egypt, believed to restore wholeness and grant second chances."
+    "parameters": {
+      "count": 1
+    },
+    "label": "invented"
   },
   {
     "id": "ankh_life",
@@ -14,8 +16,10 @@
     "description": "The Ankh allows one piece to move without consuming the full roll.",
     "cost": 3,
     "effectKind": "split",
-    "parameters": {"count": 1},
-    "label": "HIST3.1: The ankh symbolized eternal life; in rosette it grants a fragment of extra movement."
+    "parameters": {
+      "count": 1
+    },
+    "label": "invented"
   },
   {
     "id": "scarab_rebirth",
@@ -23,8 +27,10 @@
     "description": "The scarab lets you treat a rosette square as unsafe for one turn.",
     "cost": 4,
     "effectKind": "unsafeRosettes",
-    "parameters": {"count": 1},
-    "label": "HIST3.1: The scarab represented the sun god Khepri rolling the sun across the sky; in rosette it transforms the sacred into the perilous."
+    "parameters": {
+      "count": 1
+    },
+    "label": "invented"
   },
   {
     "id": "djed_stability",
@@ -32,8 +38,10 @@
     "description": "The Djed pillar grants two re-rolls of the dice.",
     "cost": 5,
     "effectKind": "reroll",
-    "parameters": {"count": 2},
-    "label": "HIST3.1: The djed pillar symbolized stability and endurance; in rosette it provides sustained opportunity."
+    "parameters": {
+      "count": 2
+    },
+    "label": "invented"
   },
   {
     "id": "was_scepter",
@@ -41,8 +49,10 @@
     "description": "The was scepter splits one roll into two separate moves.",
     "cost": 6,
     "effectKind": "split",
-    "parameters": {"count": 2},
-    "label": "HIST3.1: The was scepter represented power and dominion; in rosette it divides a single roll into dual authority."
+    "parameters": {
+      "count": 2
+    },
+    "label": "invented"
   },
   {
     "id": "feather_maat",
@@ -50,7 +60,9 @@
     "description": "Ma'at's feather weighs your intentions; treat all rosettes as safe for two turns.",
     "cost": 3,
     "effectKind": "unsafeRosettes",
-    "parameters": {"count": 2},
-    "label": "HIST3.1: Ma'at's feather measured the weight of souls; in rosette it brings balance to the sacred squares."
+    "parameters": {
+      "count": 2
+    },
+    "label": "invented"
   }
 ]

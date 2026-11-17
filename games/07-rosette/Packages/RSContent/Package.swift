@@ -17,7 +17,10 @@ let package = Package(
         .target(
             name: "RSContent",
             dependencies: ["RSCore"],
-            path: "Sources/RSContent"
+            path: "Sources/RSContent",
+            resources: [
+                .process("Resources/Content")
+            ]
         ),
         .testTarget(
             name: "RSContentTests",

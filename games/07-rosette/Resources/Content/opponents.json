@@ -6,7 +6,7 @@
     "difficulty": 1,
     "tavernId": "thebes_scribe",
     "style": "aggressive",
-    "label": "HIST3.1: Thebes — Apprentices learned rosette through trial and error, often favoring bold captures."
+    "label": "reconstructed"
   },
   {
     "id": "guard_captain",
@@ -15,7 +15,7 @@
     "difficulty": 2,
     "tavernId": "thebes_guard",
     "style": "positional",
-    "label": "HIST3.1: Thebes — Guard captains valued formation and patience, mirroring their tactics on the battlefield."
+    "label": "reconstructed"
   },
   {
     "id": "nubian_trader",
@@ -24,7 +24,7 @@
     "difficulty": 3,
     "tavernId": "thebes_merchant",
     "style": "balanced",
-    "label": "HIST3.1: Thebes — Nubian traders brought rosette from their homeland, mixing Egyptian rules with African strategies."
+    "label": "reconstructed"
   },
   {
     "id": "court_sage",
@@ -33,7 +33,7 @@
     "difficulty": 4,
     "tavernId": "thebes_priest",
     "style": "defensive",
-    "label": "HIST3.1: Thebes — Court sages treated rosette as a form of divination, each move a prophecy."
+    "label": "reconstructed"
   },
   {
     "id": "papyrus_reader",
@@ -42,7 +42,7 @@
     "difficulty": 1,
     "tavernId": "memphis_scribe",
     "style": "positional",
-    "label": "HIST3.1: Memphis — Papyrus readers could recall thousands of past games and applied their lessons."
+    "label": "reconstructed"
   },
   {
     "id": "loom_master",
@@ -51,7 +51,7 @@
     "difficulty": 2,
     "tavernId": "memphis_weaver",
     "style": "balanced",
-    "label": "HIST3.1: Memphis — Loom masters translated textile patterns into rosette strategies, creating unexpected combinations."
+    "label": "reconstructed"
   },
   {
     "id": "pyramid_builder",
@@ -60,7 +60,7 @@
     "difficulty": 3,
     "tavernId": "memphis_stone",
     "style": "positional",
-    "label": "HIST3.1: Memphis — Pyramid builders planned rosette moves in layers, each piece a stone in a grand design."
+    "label": "reconstructed"
   },
   {
     "id": "vizier_apprentice",
@@ -69,7 +69,7 @@
     "difficulty": 4,
     "tavernId": "memphis_vizier",
     "style": "aggressive",
-    "label": "HIST3.1: Memphis — Vizier apprentices played rosette to prove their worth, often taking bold risks."
+    "label": "reconstructed"
   },
   {
     "id": " Aten_priest",
@@ -78,7 +78,7 @@
     "difficulty": 1,
     "tavernId": "akhet_artist",
     "style": "balanced",
-    "label": "HIST3.1: Akhetaten — Aten priests believed the dice were guided by the sun disc itself."
+    "label": "reconstructed"
   },
   {
     "id": "sun_artist",
@@ -87,7 +87,7 @@
     "difficulty": 2,
     "tavernId": "akhet_solar",
     "style": "defensive",
-    "label": "HIST3.1: Akhetaten — Sun painters saw rosette as a meditation on light, each piece a ray of the Aten."
+    "label": "reconstructed"
   },
   {
     "id": "heretic_scholar",
@@ -96,15 +96,15 @@
     "difficulty": 3,
     "tavernId": "akhet_rebel",
     "style": "aggressive",
-    "label": "HIST3.1: Akhetaten — Heretic scholars broke centuries of convention, creating new strategies that shocked traditionalists."
+    "label": "reconstructed"
   },
   {
     "id": "pharaoh",
     "name": "Akhenaten",
-    "description": "The Pharaoh himself — a master strategist said to play with divine insight.",
+    "description": "The Pharaoh himself \u2014 a master strategist said to play with divine insight.",
     "difficulty": 5,
     "tavernId": "akhet_pharaoh",
     "style": "balanced",
-    "label": "HIST3.1: Akhetaten — Akhenaten's rosette games were said to be guided by the Aten, making him an undefeated opponent."
+    "label": "reconstructed"
   }
 ]

@@ -7,7 +7,7 @@
     "aiLevel": 1,
     "stake": 1,
     "specialRules": [],
-    "label": "HIST3.1: Thebes — The scribes of the Temple of Amun taught rosette as a game of calculation and patience."
+    "label": "reconstructed"
   },
   {
     "id": "thebes_guard",
@@ -17,7 +17,7 @@
     "aiLevel": 2,
     "stake": 2,
     "specialRules": [],
-    "label": "HIST3.1: Thebes — Temple guards played rosette during watch shifts, valuing discipline over flair."
+    "label": "reconstructed"
   },
   {
     "id": "thebes_merchant",
@@ -26,8 +26,10 @@
     "difficulty": 3,
     "aiLevel": 3,
     "stake": 4,
-    "specialRules": ["double_gammon"],
-    "label": "HIST3.1: Thebes — Nubian and Levantine merchants wagered on rosette matches along the Nile trade routes."
+    "specialRules": [
+      "double_gammon"
+    ],
+    "label": "reconstructed"
   },
   {
     "id": "thebes_priest",
@@ -36,8 +38,10 @@
     "difficulty": 4,
     "aiLevel": 4,
     "stake": 8,
-    "specialRules": ["omen_blessing"],
-    "label": "HIST3.1: Thebes — The court of the Pharaoh used rosette as a training ground for military strategy."
+    "specialRules": [
+      "omen_blessing"
+    ],
+    "label": "reconstructed"
   },
   {
     "id": "memphis_scribe",
@@ -47,7 +51,7 @@
     "aiLevel": 1,
     "stake": 1,
     "specialRules": [],
-    "label": "HIST3.1: Memphis — Memphis scholars preserved rosette rules on ostraca dating to the Middle Kingdom."
+    "label": "reconstructed"
   },
   {
     "id": "memphis_weaver",
@@ -57,7 +61,7 @@
     "aiLevel": 2,
     "stake": 2,
     "specialRules": [],
-    "label": "HIST3.1: Memphis — Textile weavers used rosette patterns as training for complex geometric designs."
+    "label": "reconstructed"
   },
   {
     "id": "memphis_stone",
@@ -66,8 +70,10 @@
     "difficulty": 3,
     "aiLevel": 3,
     "stake": 4,
-    "specialRules": ["sphinx_gaze"],
-    "label": "HIST3.1: Memphis — Stone masons played rosette during construction breaks, drawing parallels between board geometry and temple layout."
+    "specialRules": [
+      "sphinx_gaze"
+    ],
+    "label": "reconstructed"
   },
   {
     "id": "memphis_vizier",
@@ -76,8 +82,11 @@
     "difficulty": 4,
     "aiLevel": 4,
     "stake": 8,
-    "specialRules": ["double_gammon", "omen_blessing"],
-    "label": "HIST3.1: Memphis — The vizier's court used rosette matches to test the strategic thinking of potential advisors."
+    "specialRules": [
+      "double_gammon",
+      "omen_blessing"
+    ],
+    "label": "reconstructed"
   },
   {
     "id": "akhet_artist",
@@ -87,7 +96,7 @@
     "aiLevel": 1,
     "stake": 1,
     "specialRules": [],
-    "label": "HIST3.1: Akhetaten — Akhenaten's new capital attracted artists who saw rosette as a meditation on symmetry."
+    "label": "reconstructed"
   },
   {
     "id": "akhet_solar",
@@ -97,7 +106,7 @@
     "aiLevel": 2,
     "stake": 2,
     "specialRules": [],
-    "label": "HIST3.1: Akhetaten — The Aten cult framed rosette pieces as manifestations of solar light and shadow."
+    "label": "reconstructed"
   },
   {
     "id": "akhet_rebel",
@@ -106,8 +115,10 @@
     "difficulty": 3,
     "aiLevel": 3,
     "stake": 4,
-    "specialRules": ["omen_curse"],
-    "label": "HIST3.1: Akhetaten — Followers of the new faith saw rosette omens as direct messages from the Aten."
+    "specialRules": [
+      "omen_curse"
+    ],
+    "label": "reconstructed"
   },
   {
     "id": "akhet_pharaoh",
@@ -116,7 +127,11 @@
     "difficulty": 5,
     "aiLevel": 5,
     "stake": 16,
-    "specialRules": ["double_gammon", "omen_blessing", "omen_curse"],
-    "label": "HIST3.1: Akhetaten — The final test: play before Akhenaten himself, whose strategy was said to be divinely inspired."
+    "specialRules": [
+      "double_gammon",
+      "omen_blessing",
+      "omen_curse"
+    ],
+    "label": "reconstructed"
   }
 ]

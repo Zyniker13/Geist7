@@ -6,7 +6,6 @@ import RSCore
 // MARK: - ContentLoader
 
 /// Loads typed content from JSON files bundled with the app.
-@MainActor
 public struct ContentLoader {
     private let bundle: Bundle
 

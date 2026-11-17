@@ -68,7 +68,35 @@ public struct Tavern: Sendable, Equatable, Codable {
 
     /// Advance to the next tavern in the sequence.
     public func nextTavern() -> Tavern {
-        let nextLevel = min(difficulty + 1, 5)
+        let levelTaverns: [[String]] = [
+            ["thebes_scribe", "memphis_scribe", "akhet_artist"],
+            ["thebes_guard", "memphis_weaver", "akhet_solar"],
+            ["thebes_merchant", "memphis_stone", "akhet_rebel"],
+            ["thebes_priest", "memphis_vizier"],
+            ["akhet_pharaoh"]
+        ]
+        let currentLevel = difficulty
+        if currentLevel <= levelTaverns.count {
+            let tavernsAtLevel = levelTaverns[currentLevel - 1]
+            if let idx = tavernsAtLevel.firstIndex(of: id) {
+                if idx + 1 < tavernsAtLevel.count {
+                    // Advance within the same level
+                    let nextId = tavernsAtLevel[idx + 1]
+                    return Tavern(
+                        id: nextId,
+                        name: tavernName(for: nextId),
+                        region: tavernRegion(for: nextId),
+                        difficulty: currentLevel,
+                        aiLevel: currentLevel,
+                        stake: stake * 2,
+                        specialRules: tavernSpecialRules(for: nextId),
+                        label: tavernLabel(for: nextId)
+                    )
+                }
+            }
+        }
+        // Advance to next level (or final tavern)
+        let nextLevel = min(currentLevel + 1, 5)
         let nextId = nextTavernId(for: id, at: nextLevel)
         return Tavern(
             id: nextId,
@@ -118,8 +146,8 @@ public struct Tavern: Sendable, Equatable, Codable {
         ]
         if level <= levelTaverns.count {
             let tavernsAtLevel = levelTaverns[level - 1]
-            if let idx = tavernsAtLevel.firstIndex(of: currentId), idx + 1 < tavernsAtLevel.count {
-                return tavernsAtLevel[idx + 1]
+            if !tavernsAtLevel.isEmpty {
+                return tavernsAtLevel[0]
             }
         }
         return "akhet_pharaoh"

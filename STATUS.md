@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-|- **Game in progress:** 07 Rosette (P3 Game Loop) — P3 in progress: RSCore Def types moved to RSCore, RSContent ContentLoader written, JSON content files committed, build green, tests passing.
-|- **Next step:** Verify P3 gate checks, tag G3, merge to main, proceed to P4.
+|- **Game in progress:** 07 Rosette (P4 AI) — P3 Game Loop complete, G3 gate passed; P4 (AI) next.
+|- **Next step:** Begin P4 (AI) — the opponent AI beyond the heuristic autoPilot.
 
 ## Environment Check
 
@@ -35,7 +35,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-|| 1 | 07 | Rosette | In Progress (P3) | G2 | — |
+|| 1 | 07 | Rosette | In Progress (P4) | G3 | #4 |
 | 2 | 06 | Mattang | Not Started | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
@@ -77,3 +77,4 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 |- 2026-11-16: 07 Rosette G2 gate passed — `make test` (104 RSCore tests) + `make lint` green, iPad screenshot captured, UI tests skipped per _CONVENTIONS §8.2, tag `rosette/gate-G2-pass` pushed. Proceeding to P3.
 |- 2026-11-16: 07 Rosette P3 in progress — RSCore Def types (TavernDef, OpponentDef, OmenDef, RulesetDef) moved to RSCore, RSContent ContentLoader written, 6 JSON content files committed, build green, 104 tests pass.
 - 2026-11-17: gh token added by the maintainer — maintainer items now file as GitHub issues directly. Filed #4 (rosette: macOS screenshot needs a display server; the G2 log claimed it filed but it was not). Closed #3 (rosette CI Set up job) after runs 43943449329/43943537985/43999403187 all went green on main.
+- 2026-11-17: 07 Rosette P3 complete — content systems (single canonical content location; 6 rulesets / 12 taverns / 12 opponents / 6 omens / 4 fortunes / 3 lessons), circuit match engine (BotMatch, Fortune, dice model, tavern progression), UI (CircuitView, HistoryView, TutorialView), docs (HISTORY, SLICE_ASSESSMENT). G3 gate passed: `make test` (139 tests: RSContent 11, RSCore 126, RSRender 2; 0 failures) + `make lint` green; 1,000 bot circuit runs without softlocks; every tavern reachable; HISTORY/labels agreement. Tag `rosette/gate-G3-pass` pushed. Proceeding to P4.

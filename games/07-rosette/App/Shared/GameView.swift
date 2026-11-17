@@ -13,6 +13,9 @@ struct GameView: View {
     @State private var showPauseMenu = false
 
     let onMatchComplete: (Outcome) -> Void
+    /// Whether the results overlay offers "Play Again" (hidden in circuit
+    /// matches, where the circuit session drives the next match).
+    private let showPlayAgain: Bool
 
     init(
         stake: Int = 1,
@@ -29,6 +32,34 @@ struct GameView: View {
                 seed: LaunchArguments.seed ?? seed
             ))
         self.onMatchComplete = onMatchComplete
+        self.showPlayAgain = true
+    }
+
+    /// Start a match under a specific content ruleset (circuit path).
+    init(
+        ruleset: RuleSet,
+        dice: DiceModel,
+        fortunes: [FortuneSquare] = [],
+        omens1: [Omen] = [],
+        stake: Int,
+        useAI: Bool = true,
+        seed: UInt64 = 42,
+        showPlayAgain: Bool = true,
+        onMatchComplete: @escaping (Outcome) -> Void
+    ) {
+        _viewModel = StateObject(
+            wrappedValue: GameViewModel(
+                ruleset: ruleset,
+                dice: dice,
+                fortunes: fortunes,
+                omens1: omens1,
+                stakeValue: stake,
+                useAI: useAI,
+                seed: LaunchArguments.seed ?? seed,
+                autoSave: false
+            ))
+        self.onMatchComplete = onMatchComplete
+        self.showPlayAgain = showPlayAgain
     }
 
     /// Resume a saved match (S2.4).
@@ -38,6 +69,7 @@ struct GameView: View {
     ) {
         _viewModel = StateObject(wrappedValue: GameViewModel(snapshot: snapshot))
         self.onMatchComplete = onMatchComplete
+        self.showPlayAgain = true
     }
 
     var body: some View {
@@ -85,7 +117,8 @@ struct GameView: View {
 
             Spacer()
 
-            // Center column: dice value and doubling cube (R-10).
+            // Center column: dice value, doubling cube (R-10), and the
+            // ruleset's name with its history label (R-15, HIST3.1).
             VStack(spacing: 2) {
                 if let diceValue = viewModel.matchState.diceValue {
                     Text("Roll \(diceValue)")
@@ -100,6 +133,11 @@ struct GameView: View {
                 Text("Cube ×\(viewModel.matchState.cube.value)")
                     .font(.caption)
                     .foregroundColor(viewModel.matchState.cube.value > 1 ? .yellow : .gray)
+                Text(
+                    "\(viewModel.matchState.ruleset.label) · \(viewModel.matchState.ruleset.historyLabel.displayName)"
+                )
+                .font(.caption2)
+                .foregroundColor(.gray)
             }
 
             Spacer()
@@ -294,14 +332,16 @@ struct GameView: View {
                         .foregroundColor(.gray)
                     }
 
-                    Button(action: { viewModel.restart() }) {
-                        Text("Play Again")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 16)
-                            .background(Color.blue)
-                            .cornerRadius(8)
+                    if showPlayAgain {
+                        Button(action: { viewModel.restart() }) {
+                            Text("Play Again")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 16)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
                     }
 
                     Button(action: { showPauseMenu = true }) {

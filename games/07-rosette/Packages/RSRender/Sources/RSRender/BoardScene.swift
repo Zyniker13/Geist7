@@ -27,6 +27,10 @@ public final class BoardScene: SKScene {
 
     private var boardBackground: SKShapeNode?
     private var squareNodes: [[SKShapeNode]] = []
+
+    /// Test-visible access to the laid-out square nodes (RSRenderTests read
+    /// them to pin the board layout).
+    var layoutSquares: [[SKShapeNode]] { squareNodes }
     private var pieceNodes: [PieceID: [PlayerID: SKShapeNode]] = [:]
     private var diceNode: SKLabelNode?
     private var rosetteHighlight: SKShapeNode?
@@ -103,7 +107,10 @@ public final class BoardScene: SKScene {
                 rowIdx += 1
                 if squareIndex >= trackLength { break }
 
-                let colOffset = CGFloat(col) - CGFloat((rowInfo.count - 1) / 2) / 2.0
+                // Center the row: offsets run −(count−1)/2 … +(count−1)/2.
+                // (Float division — the integer-division version shifted
+                // every row 2 columns right, off the board.)
+                let colOffset = CGFloat(col) - CGFloat(rowInfo.count - 1) / 2.0
                 let x = colOffset * (scaledSquare + scaledGap)
                 let y = CGFloat(rowInfo.row - 1) * (scaledSquare + scaledGap)
 

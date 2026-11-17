@@ -1,5 +1,6 @@
 // MARK: - MainView
 
+import RSContent
 import RSCore
 import SwiftUI
 
@@ -8,8 +9,11 @@ struct MainView: View {
     @State private var showGame = false
     @State private var showResume = false
     @State private var showNewGame = false
+    @State private var showCircuit = false
+    @State private var showTutorial = false
+    @State private var showHistory = false
     @State private var newGameStake: Int = 1
-    @State private var newGameUseAI = false
+    @State private var newGameUseAI = true
     @State private var newGameOmen: String = "none"
     @State private var lastOutcome: Outcome?
     @State private var resumeSnapshot: SavedMatch?
@@ -38,23 +42,26 @@ struct MainView: View {
                         }
                     }
 
+                    Button(action: { showCircuit = true }) {
+                        menuButton("Tavern Circuit")
+                    }
+
                     Button(action: { showNewGame = true }) {
-                        menuButton("New Game")
+                        menuButton("Single Match")
                     }
 
-                    Button(action: { showGame = true }) {
-                        menuButton("Quick Match (vs AI)")
+                    Button(action: { showTutorial = true }) {
+                        menuButton("How to Play")
                     }
 
-                    Button(action: {}) {
-                        menuButton("Rules")
+                    Button(action: { showHistory = true }) {
+                        menuButton("Rules & History")
                     }
-                    .disabled(true)  // Placeholder for P3
 
                     Button(action: {}) {
                         menuButton("Settings")
                     }
-                    .disabled(true)  // Placeholder for P3
+                    .disabled(true)  // Placeholder for P7
                 }
                 .padding(.horizontal, 40)
 
@@ -80,6 +87,15 @@ struct MainView: View {
                         lastOutcome = outcome
                     }
                 )
+            }
+            .navigationDestination(isPresented: $showCircuit) {
+                CircuitView()
+            }
+            .navigationDestination(isPresented: $showTutorial) {
+                TutorialView()
+            }
+            .navigationDestination(isPresented: $showHistory) {
+                HistoryView()
             }
             .navigationDestination(isPresented: $showResume) {
                 if let snapshot = resumeSnapshot {
@@ -128,6 +144,8 @@ struct NewGameView: View {
     var onConfirm: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    /// Content omens for the picker (R-12's closed set, from omens.json).
+    @State private var omenDefs: [OmenDef] = []
 
     var body: some View {
         NavigationStack {
@@ -139,13 +157,17 @@ struct NewGameView: View {
                         Text("4").tag(4)
                     }
 
-                    Toggle("Play vs AI", isOn: $useAI)
+                    // RS-P3.3: pass-and-play is the two-player hot-seat mode.
+                    Picker("Players", selection: $useAI) {
+                        Text("Solo vs AI").tag(true)
+                        Text("Pass & Play").tag(false)
+                    }
 
                     Picker("Omen (one per match)", selection: $omen) {
                         Text("None").tag("none")
-                        Text("Re-roll").tag("reroll")
-                        Text("Unsafe Rosettes").tag("unsafeRosettes")
-                        Text("Split Roll").tag("split")
+                        ForEach(omenDefs, id: \.id) { def in
+                            Text("\(def.name) · \(def.label.displayName)").tag(def.id)
+                        }
                     }
                 }
 
@@ -170,6 +192,11 @@ struct NewGameView: View {
                         dismiss()
                     }
                 }
+            }
+        }
+        .onAppear {
+            if omenDefs.isEmpty {
+                omenDefs = (try? ContentLoader().loadOmens()) ?? []
             }
         }
     }

@@ -2,6 +2,7 @@
 
 import Combine
 import Foundation
+import RSContent
 import RSCore
 
 // MARK: - LaunchArguments
@@ -63,6 +64,15 @@ public final class GameViewModel: ObservableObject {
     private let useAI: Bool
     private let stakeValue: Int
     private let omenId: String?
+    /// The match's ruleset (R-15: it travels with the match).
+    private let ruleset: RuleSet
+    /// The match's dice model.
+    private let diceModel: DiceModel
+    /// Fortune squares in play (R-16; only the Tablet ruleset has any).
+    private let fortunes: [FortuneSquare]
+    /// Omens held by each side at the start (R-12).
+    private let omens0: [Omen]
+    private let omens1: [Omen]
     /// Autosave every applied action (S2.4 save/resume).
     private let autoSave: Bool
     /// UI-test/auto mode: both sides play the heuristic AI, fast timers.
@@ -72,15 +82,23 @@ public final class GameViewModel: ObservableObject {
 
     // MARK: - Lifecycle
 
-    /// Start a new Finkel match.
+    /// Start a new match under a content ruleset.
     ///
     /// - Parameters:
+    ///   - ruleset: The ruleset to play (nil = the content's Finkel ruleset).
+    ///   - dice: The dice model (nil = the ruleset's content dice).
+    ///   - fortunes: Fortune squares in play (R-16).
+    ///   - omens0/omens1: Omens each side holds at the start (R-12).
     ///   - stakeValue: Initial stake for the doubling cube.
-    ///   - omenId: Optional omen held by player 0 (R-12): "reroll",
-    ///     "unsafeRosettes", or "split". Nil for none.
-    ///   - useAI: If true, player 1 is controlled by a simple heuristic AI.
+    ///   - omenId: Optional omen id held by player 0 (quick-match path).
+    ///   - useAI: If true, player 1 is controlled by the heuristic AI.
     ///   - seed: Deterministic seed for dice rolls.
     public init(
+        ruleset: RuleSet? = nil,
+        dice: DiceModel? = nil,
+        fortunes: [FortuneSquare] = [],
+        omens0: [Omen] = [],
+        omens1: [Omen] = [],
         stakeValue: Int = 1,
         omenId: String? = nil,
         useAI: Bool = false,
@@ -88,6 +106,12 @@ public final class GameViewModel: ObservableObject {
         autoSave: Bool = true,
         autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot")
     ) {
+        let defaults = GameViewModel.contentDefaults()
+        self.ruleset = ruleset ?? defaults.ruleset
+        self.diceModel = dice ?? defaults.dice
+        self.fortunes = fortunes
+        self.omens0 = omens0 + (GameViewModel.omenFrom(id: omenId).map { [$0] } ?? [])
+        self.omens1 = omens1
         self.stakeValue = stakeValue
         self.omenId = omenId
         self.useAI = useAI
@@ -96,15 +120,25 @@ public final class GameViewModel: ObservableObject {
         self.autoPilot = autoPilot
         self.rng = SeededRNG(seed: seed)
         self.omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
-        self.matchState = GameViewModel.makeMatch(stake: stakeValue, omenId: omenId)
+        self.matchState = GameViewModel.emptyMatch
+        self.matchState = self.makeMatch(stake: stakeValue)
+        deriveViewState()
     }
 
     /// Restore a saved match by deterministic replay of its action history.
+    /// (Circuit matches do not autosave; snapshots are quick matches under
+    /// the content's default ruleset.)
     init(
         snapshot: SavedMatch,
         autoSave: Bool = true,
         autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot")
     ) {
+        let defaults = GameViewModel.contentDefaults()
+        self.ruleset = defaults.ruleset
+        self.diceModel = defaults.dice
+        self.fortunes = []
+        self.omens0 = GameViewModel.omenFrom(id: snapshot.omenId).map { [$0] } ?? []
+        self.omens1 = []
         self.stakeValue = snapshot.stakeValue
         self.omenId = snapshot.omenId
         self.useAI = snapshot.useAI
@@ -113,8 +147,9 @@ public final class GameViewModel: ObservableObject {
         self.autoPilot = autoPilot
         self.rng = SeededRNG(seed: snapshot.seed)
         self.omenRng = SeededRNG(seed: snapshot.seed &+ 0x9E37_79B9_7F4A_7C15)
-        var state = GameViewModel.makeMatch(stake: snapshot.stakeValue, omenId: snapshot.omenId)
         self.recordedActions = []
+        self.matchState = GameViewModel.emptyMatch
+        var state = self.makeMatch(stake: snapshot.stakeValue)
 
         // Fold the saved actions through the reducer with fresh streams from
         // the stored seed. A failed step means a corrupt save; stop there.
@@ -146,13 +181,47 @@ public final class GameViewModel: ObservableObject {
         }
     }
 
-    private static func makeMatch(stake: Int, omenId: String?) -> MatchState {
-        .finkelMatch(stake: stake, omens: omenFrom(id: omenId).map { [$0] } ?? [])
+    /// The content's default ruleset and dice (Finkel + tetra4), used when
+    /// a caller does not specify one. Loaded from RSContent (ADR-0007).
+    static func contentDefaults() -> (ruleset: RuleSet, dice: DiceModel) {
+        let loader = ContentLoader()
+        if let ruleset = (try? loader.loadEngineRuleSets())?.first(where: { $0.id == "finkel" }),
+            let dice = try? loader.diceModel(forRulesetID: "finkel")
+        {
+            return (ruleset, dice)
+        }
+        // Content should always provide Finkel; fall back to the engine's
+        // static definition so a broken bundle still yields a playable match.
+        return (RuleSet.finkel, .tetra4)
     }
 
-    /// Build an omen from its id (R-12's closed effect set).
+    /// An empty placeholder state used only during initialisation.
+    private static let emptyMatch = MatchState.finkelMatch(stake: 1, omens: [])
+
+    /// Build the match from the configured ruleset, dice, fortunes, omens.
+    private func makeMatch(stake: Int) -> MatchState {
+        var state = MatchState.newMatch(
+            ruleset: ruleset,
+            dice: diceModel,
+            stake: stake,
+            omens: [],
+            fortunes: fortunes
+        )
+        state.omensHeld[.player0] = omens0
+        state.omensHeld[.player1] = omens1
+        return state
+    }
+
+    /// Build an omen from its id: content omens first (their cost and
+    /// HIST3.1 label travel with them), then the legacy quick-match ids.
     static func omenFrom(id: String?) -> Omen? {
         guard let id else { return nil }
+        let loader = ContentLoader()
+        if let defs = try? loader.loadOmens(),
+            let def = defs.first(where: { $0.id == id })
+        {
+            return Omen(id: def.id, effect: def.effect, cost: def.cost, label: def.label)
+        }
         let effect: OmenEffect
         switch id {
         case "reroll": effect = .reroll(count: 1)
@@ -203,7 +272,7 @@ public final class GameViewModel: ObservableObject {
 
     /// Restart the match with the same settings.
     public func restart() {
-        matchState = GameViewModel.makeMatch(stake: stakeValue, omenId: omenId)
+        matchState = makeMatch(stake: stakeValue)
         recordedActions = []
         legalMoves = []
         canEnter = false

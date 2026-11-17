@@ -1,0 +1,122 @@
+[
+  {
+    "id": "harbor_pilot",
+    "name": "The Harbor Pilot",
+    "ai": "careful",
+    "cubeAggression": 2,
+    "omens": [],
+    "tellCost": 5,
+    "label": "invented",
+    "historyNote": "Invented character. All circuit opponents are fiction; none represents a historical person."
+  },
+  {
+    "id": "brick_steward",
+    "name": "The Brick Steward",
+    "ai": "greedy",
+    "cubeAggression": 3,
+    "omens": [],
+    "tellCost": 8,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "wool_counter",
+    "name": "The Wool Counter",
+    "ai": "bluffer",
+    "cubeAggression": 4,
+    "omens": ["reroll"],
+    "tellCost": 10,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "wharf_master",
+    "name": "The Wharf Master",
+    "ai": "gambler",
+    "cubeAggression": 5,
+    "omens": ["split_path"],
+    "tellCost": 12,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "court_scribe",
+    "name": "The Court Scribe",
+    "ai": "careful",
+    "cubeAggression": 3,
+    "omens": [],
+    "tellCost": 10,
+    "label": "invented",
+    "historyNote": "Invented character. The tablet's scribe Itti-Marduk-balatu is attested, but this character is not him."
+  },
+  {
+    "id": "guard_captain",
+    "name": "The Guard Captain",
+    "ai": "greedy",
+    "cubeAggression": 4,
+    "omens": ["warded_squares"],
+    "tellCost": 12,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "grain_merchant",
+    "name": "The Grain Merchant",
+    "ai": "bluffer",
+    "cubeAggression": 5,
+    "omens": [],
+    "tellCost": 15,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "temple_steward",
+    "name": "The Temple Steward",
+    "ai": "careful",
+    "cubeAggression": 4,
+    "omens": ["open_squares"],
+    "tellCost": 15,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "market_steward",
+    "name": "The Market Steward",
+    "ai": "greedy",
+    "cubeAggression": 5,
+    "omens": [],
+    "tellCost": 18,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "canoe_trader",
+    "name": "The Canoe Trader",
+    "ai": "bluffer",
+    "cubeAggression": 6,
+    "omens": ["twin_path"],
+    "tellCost": 20,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "feather_worker",
+    "name": "The Featherworker",
+    "ai": "gambler",
+    "cubeAggression": 7,
+    "omens": ["cheap_reroll", "split_path"],
+    "tellCost": 22,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "eagle_table_host",
+    "name": "The Eagle Table Host",
+    "ai": "gambler",
+    "cubeAggression": 8,
+    "omens": ["warded_squares", "twin_path"],
+    "tellCost": 25,
+    "label": "invented",
+    "historyNote": "Invented character. The final tavern's host plays aggressively; no historical person is depicted."
+  }
+]

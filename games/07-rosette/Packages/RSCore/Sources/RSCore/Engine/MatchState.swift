@@ -49,6 +49,8 @@ public struct MatchState: Sendable, Equatable {
     public var isComplete: Bool
     /// The match outcome (once complete).
     public var outcome: Outcome?
+    /// Fortune squares in play (R-16; empty outside the Tablet ruleset).
+    public var fortunes: [FortuneSquare]
 
     public init(
         ruleset: RuleSet,
@@ -73,7 +75,8 @@ public struct MatchState: Sendable, Equatable {
         borneOff: [PlayerID: Int],
         plies: Int,
         isComplete: Bool,
-        outcome: Outcome?
+        outcome: Outcome?,
+        fortunes: [FortuneSquare] = []
     ) {
         self.ruleset = ruleset
         self.track = track
@@ -98,6 +101,7 @@ public struct MatchState: Sendable, Equatable {
         self.plies = plies
         self.isComplete = isComplete
         self.outcome = outcome
+        self.fortunes = fortunes
     }
 
     /// A new Finkel-ruleset match (R-1: 7 pieces each, 14-square path,
@@ -130,6 +134,46 @@ public struct MatchState: Sendable, Equatable {
             plies: 0,
             isComplete: false,
             outcome: nil
+        )
+    }
+
+    /// A new match under any content ruleset (R-15: the ruleset and its
+    /// label travel with the match; RS-P3.1 circuit matches build this from
+    /// the tavern's ruleset and dice model).
+    public static func newMatch(
+        ruleset: RuleSet,
+        dice: DiceModel,
+        stake: Int,
+        omens: [Omen] = [],
+        fortunes: [FortuneSquare] = []
+    ) -> MatchState {
+        MatchState(
+            ruleset: ruleset,
+            track: ruleset.makeTrack(),
+            dice: dice,
+            pieces: (0..<ruleset.pieces).flatMap { id in
+                PlayerID.allCases.map { Piece.making(id: id, owner: $0) }
+            },
+            currentPlayer: .player0,
+            diceValue: nil,
+            movablePieceIds: [],
+            extraRoll: false,
+            stake: Stake(value: stake),
+            cube: .centered,
+            cubeDead: false,
+            doubleOffered: false,
+            hasDoubledThisTurn: false,
+            omensHeld: [.player0: omens, .player1: []],
+            omensPlayed: [:],
+            pendingOmen: nil,
+            splitRemaining: nil,
+            splitActive: false,
+            hasRolled: false,
+            borneOff: [.player0: 0, .player1: 0],
+            plies: 0,
+            isComplete: false,
+            outcome: nil,
+            fortunes: fortunes
         )
     }
 

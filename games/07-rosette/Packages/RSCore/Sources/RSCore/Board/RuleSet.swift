@@ -10,6 +10,17 @@ public enum HistoryLabel: String, Sendable, Codable {
     case invented
 }
 
+extension HistoryLabel {
+    /// Human-readable display name (HIST3.1: labels shown in-game).
+    public var displayName: String {
+        switch self {
+        case .attested: return "Attested"
+        case .reconstructed: return "Reconstructed"
+        case .invented: return "Invented"
+        }
+    }
+}
+
 // MARK: - CaptureRule
 
 /// How captures work on this ruleset.

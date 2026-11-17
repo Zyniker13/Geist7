@@ -22,7 +22,7 @@ test: gen
 	@set -o pipefail; \
 	for pkg in Packages/*/; do \
 	  echo "Testing $${pkg}"; \
-	  $(SWIFT) test --package-path "$${pkg}" 2>&1 | tee "test-$$(basename $${pkg}).log" | tail -3 || exit 1; \
+	  $(SWIFT) test --package-path "$${pkg}" 2>&1 | tee "test-$$(basename $${pkg}).log" | grep -E "Executed [0-9]+ tests|Test Suite '.*' (passed|failed)|Test run with .* (passed|failed)|error:" || exit 1; \
 	done
 	@echo "UI test: skipping (simulator crash workaround — G2 uses manual snapshots)"; \
 	true

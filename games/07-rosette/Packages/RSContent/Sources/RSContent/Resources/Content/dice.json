@@ -1,0 +1,54 @@
+[
+  {
+    "id": "tetra4",
+    "label": "reconstructed",
+    "outcomes": [
+      {"value": 0, "weight": 1},
+      {"value": 1, "weight": 4},
+      {"value": 2, "weight": 6},
+      {"value": 3, "weight": 4},
+      {"value": 4, "weight": 1}
+    ],
+    "denominator": 16,
+    "note": "4 binary tetrahedra, from excavated Ur sets"
+  },
+  {
+    "id": "astragal4",
+    "label": "reconstructed",
+    "outcomes": [
+      {"value": 1, "weight": 10},
+      {"value": 2, "weight": 40},
+      {"value": 3, "weight": 40},
+      {"value": 4, "weight": 10}
+    ],
+    "denominator": 100,
+    "note": "Placeholder face odds pending HIST review; the tablet attests astragals but not these values"
+  },
+  {
+    "id": "stick4",
+    "label": "reconstructed",
+    "outcomes": [
+      {"value": 0, "weight": 1},
+      {"value": 1, "weight": 4},
+      {"value": 2, "weight": 6},
+      {"value": 3, "weight": 4},
+      {"value": 4, "weight": 1}
+    ],
+    "denominator": 16,
+    "note": "Four binary throw sticks (Kendall's Senet reconstruction, one of several)"
+  },
+  {
+    "id": "beans5",
+    "label": "reconstructed",
+    "outcomes": [
+      {"value": 0, "weight": 1},
+      {"value": 1, "weight": 5},
+      {"value": 2, "weight": 10},
+      {"value": 3, "weight": 10},
+      {"value": 4, "weight": 5},
+      {"value": 5, "weight": 1}
+    ],
+    "denominator": 32,
+    "note": "Five beans per Duran's account of Patolli; marked faces count"
+  }
+]

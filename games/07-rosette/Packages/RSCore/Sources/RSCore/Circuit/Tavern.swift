@@ -1,45 +1,66 @@
 // MARK: - Tavern
 
-/// A tavern in the circuit.
-struct Tavern: Sendable, Equatable, Codable {
-    /// The tavern's name.
-    let name: String
-    /// The difficulty level.
-    let difficulty: Int  // 1-5
-    /// The AI opponent's level.
-    let aiLevel: Int  // 1-5
-    /// The starting stake.
-    let stake: Int
-    /// Any special rules.
-    let specialRules: [String]
+/// A tavern in the circuit (R-13): a stop with an opponent, a ruleset, a
+/// minimum stake, and a buy-in. Loaded from content; the circuit's order is
+/// the content order (CircuitDef.regions → taverns).
+public struct Tavern: Sendable, Equatable, Codable {
+    /// Unique identifier (from content).
+    public let id: String
+    /// Display name.
+    public let name: String
+    /// Region this tavern belongs to ("ur", "thebes", "tenochtitlan").
+    public let region: String
+    /// The ruleset played here (referential: rulesets.json id).
+    public let rulesetId: String
+    /// The opponent waiting here (referential: opponents.json id).
+    public let opponentId: String
+    /// R-9/R-13: the minimum stake for a match here.
+    public let minStake: Int
+    /// R-13: the buy-in to sit down at this tavern.
+    public let buyIn: Int
+    /// R-11: the gammon-equivalent double loss, toggled per tavern.
+    public let gammonRule: Bool
+    /// HIST3.1: the tavern's history label.
+    public let label: HistoryLabel
+    /// HIST3.1: the tavern's in-game historical note, if any.
+    public let historyNote: String?
 
-    /// Create a new tavern.
-    static func newTavern() -> Tavern {
-        Tavern(name: "The Ancient Scribe", difficulty: 1, aiLevel: 1, stake: 1, specialRules: [])
+    /// Create from a definition.
+    public init(def: TavernDef) {
+        self.id = def.id
+        self.name = def.name
+        self.region = def.region
+        self.rulesetId = def.ruleset
+        self.opponentId = def.opponent
+        self.minStake = def.minStake
+        self.buyIn = def.buyIn
+        self.gammonRule = def.gammonRule
+        self.label = def.label
+        self.historyNote = def.historyNote
     }
 
-    /// Advance to the next tavern.
-    static func nextTavern(from current: Tavern) -> Tavern {
-        let nextLevel = min(current.difficulty + 1, 5)
-        let names = [
-            "The Ancient Scribe",
-            "The Temple Guard",
-            "The Merchant Quarter",
-            "The Royal Court",
-            "The High Priest",
-        ]
-        let name = names[min(nextLevel - 1, names.count - 1)]
-        return Tavern(
-            name: name,
-            difficulty: nextLevel,
-            aiLevel: nextLevel,
-            stake: current.stake * 2,
-            specialRules: current.specialRules
-        )
-    }
-
-    /// The final tavern.
-    static func finalTavern() -> Tavern {
-        Tavern(name: "The High Priest", difficulty: 5, aiLevel: 5, stake: 16, specialRules: [])
+    /// Create directly (test fixtures).
+    public init(
+        id: String,
+        name: String,
+        region: String,
+        rulesetId: String,
+        opponentId: String,
+        minStake: Int,
+        buyIn: Int,
+        gammonRule: Bool = false,
+        label: HistoryLabel,
+        historyNote: String? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.region = region
+        self.rulesetId = rulesetId
+        self.opponentId = opponentId
+        self.minStake = minStake
+        self.buyIn = buyIn
+        self.gammonRule = gammonRule
+        self.label = label
+        self.historyNote = historyNote
     }
 }

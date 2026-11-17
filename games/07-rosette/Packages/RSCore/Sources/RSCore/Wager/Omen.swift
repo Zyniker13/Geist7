@@ -2,30 +2,56 @@
 
 /// The effect of an omen (R-12: a closed set of effect kinds; R-23: effects
 /// act only on choices, never on dice probabilities).
-public struct OmenEffect: Sendable, Equatable, Codable {
+///
+/// Coded as the roadmap's sample row shows: `{"kind": "reroll", "n": 1}` —
+/// the flat `n` carries the effect's single parameter (re-roll count, split
+/// piece count) when the kind takes one.
+public struct OmenEffect: Sendable, Equatable {
     /// The kind of effect.
     public let kind: OmenKind
-    /// Additional parameters (e.g., number of re-rolls).
-    public let parameters: [String: Int]
+    /// The effect's parameter (re-roll count, split piece count); nil for
+    /// kinds that take none.
+    public let n: Int?
 
-    public init(kind: OmenKind, parameters: [String: Int]) {
+    public init(kind: OmenKind, n: Int? = nil) {
         self.kind = kind
-        self.parameters = parameters
+        self.n = n
     }
 
     /// Create a re-roll omen effect.
     public static func reroll(count: Int) -> OmenEffect {
-        OmenEffect(kind: .reroll, parameters: ["count": count])
+        OmenEffect(kind: .reroll, n: count)
     }
 
     /// Create a safety-toggle omen effect.
     public static func unsafeRosettes(count: Int) -> OmenEffect {
-        OmenEffect(kind: .unsafeRosettes, parameters: ["count": count])
+        OmenEffect(kind: .unsafeRosettes, n: count)
     }
 
     /// Create a split-move omen effect.
     public static func split(count: Int) -> OmenEffect {
-        OmenEffect(kind: .split, parameters: ["count": count])
+        OmenEffect(kind: .split, n: count)
+    }
+}
+
+// MARK: Codable (flat kind + optional n, per the roadmap sample row)
+
+extension OmenEffect: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case kind
+        case n
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.kind = try container.decode(OmenKind.self, forKey: .kind)
+        self.n = try container.decodeIfPresent(Int.self, forKey: .n)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(kind, forKey: .kind)
+        try container.encodeIfPresent(n, forKey: .n)
     }
 }
 

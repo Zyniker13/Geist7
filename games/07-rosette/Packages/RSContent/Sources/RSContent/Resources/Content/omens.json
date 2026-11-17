@@ -1,0 +1,68 @@
+[
+  {
+    "id": "reroll",
+    "name": "Second Throw",
+    "cost": 12,
+    "effect": {
+      "kind": "reroll",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic. The tablet attaches fortunes to squares, which inspired omens; wagering itself is invented."
+  },
+  {
+    "id": "cheap_reroll",
+    "name": "Ashen Throw",
+    "cost": 5,
+    "effect": {
+      "kind": "reroll",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the same re-roll at a cheaper house price."
+  },
+  {
+    "id": "warded_squares",
+    "name": "Open Wards",
+    "cost": 18,
+    "effect": {
+      "kind": "unsafeRosettes",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: rosette safety is a modern-reconstruction rule; this omen suspends it for one turn."
+  },
+  {
+    "id": "open_squares",
+    "name": "Bare Squares",
+    "cost": 10,
+    "effect": {
+      "kind": "unsafeRosettes",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the budget version of the safety suspension."
+  },
+  {
+    "id": "split_path",
+    "name": "Split Path",
+    "cost": 15,
+    "effect": {
+      "kind": "split",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: divides one roll between two pieces."
+  },
+  {
+    "id": "twin_path",
+    "name": "Twin Path",
+    "cost": 25,
+    "effect": {
+      "kind": "split",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the premium split token."
+  }
+]

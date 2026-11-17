@@ -1,17 +1,17 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P2 (UI Shell) — G1 gate passed; P2 design and scaffolding next
-- **Next Step:** Draft P2 UI Shell design, scaffold Xcode project, implement main screen and board view
-- **Last Update:** 2026-11-16
+- **Current Phase:** P3 (Game Loop) — G3 gate passed; P4 (AI) next
+- **Next Step:** Begin P4 (AI) — the opponent AI beyond the heuristic autoPilot
+- **Last Update:** 2026-11-17
 
 ## Phase Queue
 | Phase | Status | Last Updated |
 | --- | --- | --- |
 | P0 Setup | ✅ Complete | 2026-11-16 |
 | P1 Core Rules | ✅ Complete | 2026-11-16 |
-| P2 UI Shell | 🔄 In Progress | 2026-11-16 |
-| P3 Game Loop | ⏳ Pending | — |
+| P2 UI Shell | ✅ Complete | 2026-11-16 |
+| P3 Game Loop | ✅ Complete | 2026-11-17 |
 | P4 AI | ⏳ Pending | — |
 | P5 Audio | ⏳ Pending | — |
 | P6 Platform | ⏳ Pending | — |
@@ -25,8 +25,8 @@
 | --- | --- | --- |
 | G0 | ✅ Passed | `rosette/gate-G0-pass` tag |
 | G1 | ✅ Passed | `rosette/gate-G1-pass` tag — make test/lint green, INV-1–INV-5 evidence, merged to main |
-| G2 | ⏳ Pending | — |
-| G3 | ⏳ Pending | — |
+| G2 | ✅ Passed | `rosette/gate-G2-pass` tag — make test/lint green, iPad screenshot evidence, merged to main |
+| G3 | ✅ Passed | `rosette/gate-G3-pass` tag — content counts (6 rulesets, 12 taverns, 12 opponents, 6 omens), lint clean, 1,000 bot circuit runs without softlocks, HISTORY/labels agreement, every tavern reachable |
 | G4 | ⏳ Pending | — |
 | G5 | ⏳ Pending | — |
 | G6 | ⏳ Pending | — |
@@ -51,3 +51,8 @@
 - **2026-11-16** — P2 tooling: the Makefile test target now runs every package under pipefail (failures can no longer be masked by tail) and targets the real RosetteUITests-iOS bundle; the CI workflow runs per-package tests with pipefail; fixed the project-level settings so GEIST_BUNDLE_ID actually reaches the generated project (the app previously built without CFBundleIdentifier, which blocked simulator install for UI tests); replaced the P0 UITests placeholder with a real launch-to-menu check. Known simplification: `.swiftlint.yml` excludes `App/` from SwiftLint (SwiftFormat still covers it) — the placeholder-era App sources trip SwiftLint's line-length and formatting rules; tighten and re-include `App/` in P8 polish.
 |- **2026-11-16** — P2 CI repair: every CI run since G0 had failed at "Set up job" — the pinned `actions/checkout` SHA was wrong (`…163cceee1484…` vs the real v4.2.2 `…1630ceea73d2…`). After fixing it, the real failures surfaced in order: (1) the simulator destination `iPad Pro 13-inch (M5)` does not exist on the runner — switched builds to `generic/platform=iOS`, which then required `CODE_SIGNING_ALLOWED=NO` (no signing on CI; ADR-consistent with the simulator automatic-signing substitute); (2) with no `platforms:` declaration, the runner's Xcode 26.6 gave the local packages a sub-iOS-13 deployment target and SwiftUI compilation failed — every manifest now declares `.iOS(.v26)/.macOS(.v26)` under `swift-tools-version: 6.2` (ADR-0006); (3) CI's brew swift-format 604 dropped the `--lint` flag for the `lint` subcommand, and 604's lint requires trailing commas that SwiftLint forbids — reconciled per ADR-0006 (swift-format 604 canonical style, `trailing_comma` disabled in SwiftLint, `--configuration .swift-format` passed explicitly everywhere, 223 formatting drifts auto-fixed, `P` constants renamed `pieceCount`, BoardScene `forEach` sites converted to for-in). RSCore 104/104 after the renames; swiftlint 0, swift-format 0, check-imports OK, content-lint OK. CI on `main` at `0a096d5`: checkout/build iOS/build macOS/package tests green — lint result pending at write time; local full `make test` rerunning for the G2 record.
 |- **2026-11-16** — P2 G2: `make test` ✅ (all 104 RSCore tests pass via SwiftPM; UI tests skipped — simulator crash workaround per _CONVENTIONS §8.2), `make lint` ✅ (SwiftLint 0 violations, swift-format 0 violations, check-imports OK, content-lint OK). G2 media evidence: iPad screenshot captured via `xcrun simctl io` (`/tmp/rosette_ipad.png`, 2064×2752 PNG showing the Rosette menu). macOS screenshot: native macOS app builds and launches but headless environment lacks display server for `screencapture` — filed as maintainer issue. Tagged `rosette/gate-G2-pass`.
+- **2026-11-17** — P3 S3.1–S3.x (content systems): consolidated all content JSON to the single canonical location `Packages/RSContent/Sources/RSContent/Resources/Content/` (the SwiftPM resource bundle), deleting the two stale copies; added `circuit.json`, `dice.json`, `fortunes.json`. Content: 6 rulesets, 12 taverns, 12 opponents, 6 omens, 4 fortunes, 3 tutorial lessons. `ContentLoader` loads and validates the full set; `content-lint` enforces history labels, referential integrity, counts, dice weights, omen costs, and circuit shape.
+- **2026-11-17** — P3 S3.x (circuit match engine): `BotMatch` (headless two-bot match driver over real content), `Fortune` (fortune-square effects), extended dice model, circuit state, tavern progression, and opponent/omen handling so a full circuit run can be simulated. Added `DiceModelTests`, `FortuneTests`; extended the circuit simulation and invariant tests.
+- **2026-11-17** — P3 S3.x (UI): `CircuitView` (the tavern circuit and purse), `HistoryView` (the three-list history with ruleset labels), `TutorialView` (the lesson flow); wired into the app shell and board scene; extended the UI tests.
+- **2026-11-17** — P3 S3.x (docs): added `docs/HISTORY.md` (the three-list history with ruleset labels, checked by content-lint) and `docs/SLICE_ASSESSMENT.md`; recorded the P3 decisions and open questions; updated the rules.
+- **2026-11-17** — P3 G3: `make test` ✅ (139 tests pass: RSContent 11, RSCore 126, RSRender 2; 0 failures), `make lint` ✅ (SwiftLint 0 violations, swift-format clean, check-imports OK, content-lint OK). G3 checks: content counts met (6 rulesets ≥3, 12 taverns ≥6, 12 opponents ≥6, 6 omens ≥6); 1,000 bot circuit runs without softlocks (`testG3_1000BotCircuitRunsWithoutSoftlocks`, seeds 1–1000, clean termination + non-negative purse); every tavern reachable (`testEveryRealTavernIsReachableWithADeepPurse`); `HISTORY.md` agrees with `rulesets.json` labels (content-lint). Tagged `rosette/gate-G3-pass`.

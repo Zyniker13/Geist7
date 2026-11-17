@@ -54,6 +54,69 @@ public struct DiceModel: Sendable, Equatable, Codable {
         note: "Marked-tip counts from the excavated Ur sets (R-2, reconstructed)."
     )
 
+    /// Four astragals (knucklebones) for the Tablet ruleset (R-16): the
+    /// tablet attests astragal dice, but not the face-to-value mapping or the
+    /// face odds — both are Reconstructed placeholders (A.9 default 1) flagged
+    /// for HIST review.
+    public static let astragal4 = DiceModel(
+        id: "astragal4",
+        label: "Four astragals (knucklebones)",
+        outcomes: [
+            DiceOutcome(value: 1, weight: 10),
+            DiceOutcome(value: 2, weight: 40),
+            DiceOutcome(value: 3, weight: 40),
+            DiceOutcome(value: 4, weight: 10),
+        ],
+        denominator: 100,
+        note:
+            "Placeholder face odds pending HIST review; the tablet attests astragals but not these values (R-16)."
+    )
+
+    /// Four two-sided throw sticks for the Senet-like ruleset: Kendall's
+    /// reconstruction, one of several (labelled Reconstructed). Four binary
+    /// sticks give the same 1-4-6-4-1 profile as the Ur tetrahedra.
+    public static let stick4 = DiceModel(
+        id: "stick4",
+        label: "Four two-sided throw sticks",
+        outcomes: [
+            DiceOutcome(value: 0, weight: 1),
+            DiceOutcome(value: 1, weight: 4),
+            DiceOutcome(value: 2, weight: 6),
+            DiceOutcome(value: 3, weight: 4),
+            DiceOutcome(value: 4, weight: 1),
+        ],
+        denominator: 16,
+        note: "Four binary throw sticks (Kendall's Senet reconstruction, one of several)."
+    )
+
+    /// Five binary beans for the Patolli ruleset (Durán's account): each bean
+    /// lands marked or blank, and the marked count is the move (0-5).
+    public static let beans5 = DiceModel(
+        id: "beans5",
+        label: "Five binary beans",
+        outcomes: [
+            DiceOutcome(value: 0, weight: 1),
+            DiceOutcome(value: 1, weight: 5),
+            DiceOutcome(value: 2, weight: 10),
+            DiceOutcome(value: 3, weight: 10),
+            DiceOutcome(value: 4, weight: 5),
+            DiceOutcome(value: 5, weight: 1),
+        ],
+        denominator: 32,
+        note: "Five beans per Durán's account of Patolli; marked faces count (Reconstructed)."
+    )
+
+    /// Look up a dice model by its content identifier (rulesets.json `dice`).
+    public static func model(forID id: String) -> DiceModel? {
+        switch id {
+        case "tetra4": return .tetra4
+        case "astragal4": return .astragal4
+        case "stick4": return .stick4
+        case "beans5": return .beans5
+        default: return nil
+        }
+    }
+
     /// Total weight (sum of all outcome weights).
     public var totalWeight: Int {
         outcomes.reduce(0) { $0 + $1.weight }

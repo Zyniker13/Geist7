@@ -57,7 +57,7 @@ public enum OddsCalculator {
         // Move actions draw no randomness, so the probe streams are never
         // stepped; any seed is equivalent. Each probe works on its own copy.
         for move in moves {
-            var probe = hypothetical
+            let probe = hypothetical
             var rng = SeededRNG(seed: 0)
             var omenRng = SeededRNG(seed: 0)
             guard

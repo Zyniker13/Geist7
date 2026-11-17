@@ -52,7 +52,7 @@ public struct TutorialLesson: Sendable, Equatable {
                 "Tap a piece to select it — its legal destinations will highlight in green.",
                 "Tap a highlighted square to move your piece there.",
                 "If you have multiple pieces that can move, choose which one to move.",
-                "You must use the full roll value — if no piece can use it, the turn passes."
+                "You must use the full roll value — if no piece can use it, the turn passes.",
             ],
             rulesetId: "finkel",
             isFirst: true,

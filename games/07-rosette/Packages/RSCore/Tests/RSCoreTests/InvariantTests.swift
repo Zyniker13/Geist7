@@ -34,7 +34,7 @@ final class InvariantTests: XCTestCase {
     // MARK: INV-3
 
     func testINV3_PurseNeverGoesNegative() {
-        var purse = Purse.newPurse()
+        var purse = Purse()
         purse.add(10)
         XCTAssertEqual(purse.balance, 10)
         XCTAssertFalse(purse.pay(11), "paying beyond the balance must fail")

@@ -1,84 +1,119 @@
-/// Generate a random float in [0, 1) from a SeededRNG.
-func nextFloat(rng: inout SeededRNG) -> Float {
-    Float(rng.next(UInt64(1000))) / 1000.0
-}
-
 // MARK: - RosetteBot
 
-/// A simple AI opponent for circuit matches.
+/// The P3 circuit bot: a deterministic, legal-by-construction move chooser
+/// driven by an opponent personality (roadmap §7) and a strength tier.
+/// All scoring uses Int math (_CONVENTIONS §4.2: no Float/Double in Core).
+/// P4's RSAI replaces this for the real difficulty tiers.
 public struct RosetteBot: Sendable {
-    /// The bot's difficulty (1–5).
-    public let difficulty: Int
-    /// The bot's strategy style.
-    public let style: StrategyStyle
+    /// The opponent personality.
+    public let personality: Personality
+    /// Strength tier 1–5 (higher plays with less noise and more foresight).
+    public let strength: Int
 
-    /// Create a bot at a given difficulty and style.
-    public init(difficulty: Int, style: StrategyStyle) {
-        self.difficulty = max(1, min(5, difficulty))
-        self.style = style
+    public init(personality: Personality, strength: Int) {
+        self.personality = personality
+        self.strength = max(1, min(5, strength))
     }
 
-    /// Choose a move from the legal moves for this bot.
+    /// Choose a move from the legal moves, or nil when there are none.
+    /// Deterministic given the same inputs and RNG state.
     public func chooseMove(
-        legalMoves: [Action],
+        from legalMoves: [Move],
+        pieces: [Piece],
+        track: Track,
         rng: inout SeededRNG
-    ) -> Action {
-        guard !legalMoves.isEmpty else {
-            fatalError("Bot called with no legal moves")
-        }
+    ) -> Move? {
+        guard !legalMoves.isEmpty else { return nil }
+        if legalMoves.count == 1 { return legalMoves[0] }
 
-        // Difficulty affects randomness: higher difficulty = more deterministic
-        let randomness = Float(6 - difficulty) / 5.0 // 1.0 (easy) to 0.2 (hard)
-
-        // Style affects preference
-        switch style {
-        case .aggressive:
-            return chooseAggressive(legalMoves, rng: &rng, randomness: randomness)
-        case .positional:
-            return choosePositional(legalMoves, rng: &rng, randomness: randomness)
-        case .balanced:
-            return chooseBalanced(legalMoves, rng: &rng, randomness: randomness)
-        case .random:
-            return legalMoves[rng.next(legalMoves.count)]
+        var best = legalMoves[0]
+        var bestScore = Int.min
+        for move in legalMoves {
+            let owner = pieces.first { $0.id == move.piece }?.owner ?? .player0
+            let score =
+                self.score(move, owner: owner, pieces: pieces, track: track)
+                + noise(rng: &rng)
+            if score > bestScore {
+                bestScore = score
+                best = move
+            }
         }
+        return best
     }
 
-    private func chooseAggressive(
-        _ moves: [Action],
-        rng: inout SeededRNG,
-        randomness: Float
-    ) -> Action {
-        // Prefer captures (simplified: all moves are potential captures for now)
-        if !moves.isEmpty && nextFloat(rng: &rng) < 0.7 * randomness {
-            return moves[rng.next(moves.count)]
+    /// Personality-weighted score for one move (Int only).
+    private func score(
+        _ move: Move,
+        owner: PlayerID,
+        pieces: [Piece],
+        track: Track
+    ) -> Int {
+        var value = move.destination  // mild forward bias
+
+        if move.destination == -1 {
+            // Bearing off wins pieces; greedies chase it harder.
+            value += personality == .greedy ? 900 : 700
+        } else {
+            // Capture: an opponent piece sits on the destination and the
+            // square is not a safe rosette.
+            let captured = pieces.contains {
+                $0.owner != owner && $0.position == move.destination
+            }
+            let safe = track.safeRosetteIndices.contains(move.destination)
+            if captured && !safe {
+                value += personality == .greedy ? 1_200 : 900
+            }
+            // Rosettes grant an extra roll (R-6); safe rosettes also protect.
+            if track.rosetteIndices.contains(move.destination) {
+                value += 150
+                if safe { value += 120 }
+            }
+            // Exposure: an enemy within 1–4 squares behind the destination
+            // can hit it next roll (weighted by how central that roll is).
+            value -= exposure(at: move.destination, owner: owner, pieces: pieces)
         }
-        return moves[rng.next(moves.count)]
+
+        switch personality {
+        case .careful:
+            value += safeBonus(move, track: track)
+        case .greedy:
+            break  // capture/bear-off bonuses above carry the style
+        case .bluffer:
+            value += move.destination / 2  // pushes race tempo
+        case .gambler:
+            value -= safeBonus(move, track: track) / 2  // shrugs at safety
+        }
+        return value
     }
 
-    private func choosePositional(
-        _ moves: [Action],
-        rng: inout SeededRNG,
-        randomness: Float
-    ) -> Action {
-        // Prefer moves that advance pieces toward home
-        // Simplified: pick from the middle of the list
-        let mid = moves.count / 2
-        let range = max(1, moves.count / 3)
-        let start = max(0, mid - range / 2)
-        let end = min(moves.count, start + range)
-        let subset = Array(moves[start..<end])
-        return subset[rng.next(subset.count)]
+    /// Bonus for landing where the piece cannot be sent home.
+    private func safeBonus(_ move: Move, track: Track) -> Int {
+        if move.destination < 0 { return 0 }
+        if track.safeRosetteIndices.contains(move.destination) { return 200 }
+        if track.rosetteIndices.contains(move.destination) { return 60 }
+        return 0
     }
 
-    private func chooseBalanced(
-        _ moves: [Action],
-        rng: inout SeededRNG,
-        randomness: Float
-    ) -> Action {
-        // Mix of aggressive and positional
-        if nextFloat(rng: &rng) < 0.5 {
-            return moves[rng.next(moves.count)]
+    /// Exposure penalty: enemy pieces 1–4 squares behind `square` can capture
+    /// with a matching roll; closer and more-central rolls weigh more.
+    private func exposure(at square: Int, owner: PlayerID, pieces: [Piece]) -> Int {
+        guard square >= 0 else { return 0 }
+        var penalty = 0
+        for piece in pieces
+        where piece.owner != owner && piece.position >= 0 && piece.position < square {
+            let distance = square - piece.position
+            if distance <= 4 {
+                // Central rolls (2–3) are more likely (R-2's 1-4-6-4-1 shape).
+                let weight = distance == 2 || distance == 3 ? 60 : 30
+                penalty += weight
+            }
         }
-        return choosePositional(moves, rng: &rng, randomness: randomness)
+        return penalty
+    }
+
+    /// Deterministic noise; weaker bots shake their picks more.
+    private func noise(rng: inout SeededRNG) -> Int {
+        let spread = (6 - strength) * 30
+        return spread == 0 ? 0 : Int(rng.next(UInt64(spread)))
     }
 }

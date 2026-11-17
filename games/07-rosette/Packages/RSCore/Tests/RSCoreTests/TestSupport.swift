@@ -32,7 +32,8 @@ enum TestSupport {
         omens0: [Omen] = [],
         omens1: [Omen] = [],
         cube: DoublingCube = .centered,
-        cubeDead: Bool = false
+        cubeDead: Bool = false,
+        fortunes: [FortuneSquare] = []
     ) -> MatchState {
         var pieces: [Piece] = []
         for (id, position) in player0.enumerated() {
@@ -67,7 +68,8 @@ enum TestSupport {
             ],
             plies: 0,
             isComplete: false,
-            outcome: nil
+            outcome: nil,
+            fortunes: fortunes
         )
     }
 

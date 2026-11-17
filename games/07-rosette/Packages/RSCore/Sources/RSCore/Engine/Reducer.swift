@@ -251,6 +251,38 @@ public enum Reducer {
         result.plies += 1
         events.insert(Event.pieceMoved(piece: piece, from: from, to: movedPiece.position), at: 0)
 
+        // R-16: a fortune square strikes the piece that landed on it. A good
+        // fortune grants another roll; a bad fortune sends the piece home.
+        // The effect is deterministic by square (no RNG draw), so the dice
+        // and omen streams are untouched (INV-7). A player's own pending
+        // omen takes precedence for the turn.
+        if !result.isComplete, movedPiece.position >= 0, result.pendingOmen == nil,
+            let fortune = result.fortunes.first(where: {
+                $0.rulesetId == result.ruleset.id && $0.square == movedPiece.position
+            })
+        {
+            switch fortune.deck {
+            case .good:
+                result.extraRoll = true
+                events.append(
+                    Event.omenPlayed(omenId: fortune.deck.rawValue, player: result.currentPlayer)
+                )
+            case .bad:
+                var bounced = movedPiece
+                let landed = bounced.position
+                bounced.position = -1
+                pieces[pieceIndex] = bounced
+                result.pieces = pieces
+                // A bad fortune also cancels any rosette extra roll the same
+                // landing earned: the piece went home.
+                result.extraRoll = false
+                events.append(
+                    Event.omenPlayed(omenId: fortune.deck.rawValue, player: result.currentPlayer)
+                )
+                events.append(Event.pieceMoved(piece: piece, from: landed, to: -1))
+            }
+        }
+
         // R-8: bearing off the last piece wins the match.
         if (result.borneOff[result.currentPlayer] ?? 0) == result.ruleset.pieces {
             let opponent: PlayerID = result.currentPlayer == .player0 ? .player1 : .player0

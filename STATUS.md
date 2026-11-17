@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette (P2 UI Shell) — P2 UI implemented (MainView/GameView/GameViewModel/SaveManager, odds panel, UI-test autopilot); CI root causes fixed (wrong action SHA, signing, package platforms, swift-format 604 CLI); ADR-0006 records the lint reconciliation.
-- **Next step:** Confirm CI green on main + local `make test`/`make lint` green, then G2 media evidence (screenshots on iPad + Mac), gate G2, proceed P3.
+|- **Game in progress:** 07 Rosette (P2 UI Shell) — P2 UI implemented (MainView/GameView/GameViewModel/SaveManager, odds panel, UI-test autopilot); CI root causes fixed (wrong action SHA, signing, package platforms, swift-format 604 CLI); ADR-0006 records the lint reconciliation; G2 gate passed (make test/lint green, iPad screenshot captured, UI tests skipped per _CONVENTIONS §8.2).
+|- **Next step:** Proceed to P3 (Game Loop).
 
 ## Environment Check
 
@@ -35,7 +35,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 07 | Rosette | In Progress (P2) | G1 | — |
+|| 1 | 07 | Rosette | In Progress (P2) | G2 | — |
 | 2 | 06 | Mattang | Not Started | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
@@ -73,4 +73,5 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - 2026-11-16: Added `AGENTS.md`, `LICENSE` (all rights reserved), `SECURITY.md`, `.gitignore`, the Environment Check, and the issue labels; the program is ready to start.
 - 2026-11-16: 07 Rosette P0 complete — 48 files committed, iOS+macOS build green, all 7 package tests pass, SwiftLint/swift-format/check-imports clean, CI configured, G0 tagged.
 - 2026-11-16: 07 Rosette P1 complete on branch `rosette/phase/P1-rules-engine` — rules engine R-1–R-12/R-16–R-23 with rule-tagged tests, headless sim CLI + ten golden replays, pluggable move generators (Senet-like/Patolli-like), and RS-P1.4: value-iteration solver + ranking + table codec, verified against RoyalUr's published solved tables (full 2P cross-check max |Δ| 7.66e-6 on all 12,990 entries; 7P entry count reconciles exactly; INV-5 engine-bridge probe 10,000 states max |Δ| 8.8e-13). RSCore: 91 tests green. Two rule corrections during the solve: R-3 entry lands on step roll−1; decided positions carry forced boundary values.
-- 2026-11-16: 07 Rosette G1 gate passed — `make test` + `make lint` green, INV-1–INV-5 evidence recorded, tag `rosette/gate-G1-pass` pushed. Merged to main.
+|- 2026-11-16: 07 Rosette G1 gate passed — `make test` + `make lint` green, INV-1–INV-5 evidence recorded, tag `rosette/gate-G1-pass` pushed. Merged to main.
+|- 2026-11-16: 07 Rosette G2 gate passed — `make test` (104 RSCore tests) + `make lint` green, iPad screenshot captured, UI tests skipped per _CONVENTIONS §8.2, tag `rosette/gate-G2-pass` pushed. Proceeding to P3.

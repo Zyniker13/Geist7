@@ -1,0 +1,24 @@
+{
+  "regions": [
+    {
+      "id": "sumer",
+      "name": "Ur",
+      "taverns": ["ur_harbor", "ur_ziggurat", "ur_wool", "ur_wharf"],
+      "unlocks": ["finkel", "masters", "house_rules"]
+    },
+    {
+      "id": "egypt",
+      "name": "Thebes",
+      "taverns": ["thebes_scribe", "thebes_guard", "thebes_merchant", "thebes_priest"],
+      "unlocks": ["tablet", "senet_like"]
+    },
+    {
+      "id": "mexica",
+      "name": "Tenochtitlan",
+      "taverns": ["tenochtitlan_market", "tenochtitlan_canal", "tenochtitlan_feather", "tenochtitlan_eagle"],
+      "unlocks": ["patolli"]
+    }
+  ],
+  "startPurse": 40,
+  "finalCrawford": true
+}

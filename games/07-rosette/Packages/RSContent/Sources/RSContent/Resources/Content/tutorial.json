@@ -4,10 +4,10 @@
     "title": "Moving Your Pieces",
     "steps": [
       "Roll the dice by tapping the dice cup.",
-      "Tap a piece to select it \u2014 its legal destinations will highlight in green.",
-      "Tap a highlighted square to move your piece there.",
-      "If you have multiple pieces that can move, choose which one to move.",
-      "You must use the full roll value \u2014 if no piece can use it, the turn passes."
+      "Tap a piece that can move — its legal destinations highlight in green.",
+      "Tap a highlighted square to move the piece there.",
+      "A waiting piece enters on the square the roll carries it to.",
+      "If no piece can use the roll, the turn passes automatically."
     ],
     "rulesetId": "finkel",
     "isFirst": true,
@@ -15,12 +15,13 @@
   },
   {
     "id": "tutorial_capture",
-    "title": "Capturing and Rosettes",
+    "title": "Captures and Rosettes",
     "steps": [
-      "Move onto a square occupied by an opponent's piece to capture it \u2014 the captured piece returns to its start.",
-      "Rosette squares (marked with a rosette symbol) are safe \u2014 opponents cannot capture your piece there.",
-      "However, landing on a rosette with an unsafe piece (one that has been marked) ends the safety.",
-      "Capturing a piece earns you extra movement points \u2014 use them wisely!"
+      "Landing on a shared square held by an opponent sends that piece home.",
+      "Landing on any rosette grants another roll.",
+      "The central rosette is safe: an opponent there cannot be captured, and your piece cannot be taken from it.",
+      "The odds panel shows your chance to capture on the next roll.",
+      "Doubling raises the stake; a doubled stake changes what the match is worth."
     ],
     "rulesetId": "finkel",
     "isFirst": false,
@@ -28,13 +29,13 @@
   },
   {
     "id": "tutorial_win",
-    "title": "Winning the Game",
+    "title": "Winning and the Circuit",
     "steps": [
-      "Move all five of your pieces around the board and back to your home row.",
-      "The first player to get all pieces home wins the match.",
-      "If you win before your opponent moves any piece, it's a gammon \u2014 worth double.",
-      "In the circuit, winning at a tavern advances you to the next, harder tavern.",
-      "Collect omens from taverns to gain powerful abilities for future matches."
+      "Bear off all seven pieces to win the match; the exact roll is needed for the last step.",
+      "If the loser has borne off nothing, some taverns double the loss (a gammon).",
+      "In the circuit you pay a buy-in at each tavern; matches pay the tavern's minimum stake.",
+      "When your purse cannot cover the next buy-in, the run ends.",
+      "Between matches, buy omens or pay to learn an opponent's tell."
     ],
     "rulesetId": "finkel",
     "isFirst": false,

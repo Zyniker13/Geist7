@@ -1,110 +1,122 @@
 [
   {
-    "id": "apprentice",
-    "name": "The Apprentice",
-    "description": "A young student still learning the game's basics.",
-    "difficulty": 1,
-    "tavernId": "thebes_scribe",
-    "style": "aggressive",
-    "label": "reconstructed"
+    "id": "harbor_pilot",
+    "name": "The Harbor Pilot",
+    "ai": "careful",
+    "cubeAggression": 2,
+    "omens": [],
+    "tellCost": 5,
+    "label": "invented",
+    "historyNote": "Invented character. All circuit opponents are fiction; none represents a historical person."
+  },
+  {
+    "id": "brick_steward",
+    "name": "The Brick Steward",
+    "ai": "greedy",
+    "cubeAggression": 3,
+    "omens": [],
+    "tellCost": 8,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "wool_counter",
+    "name": "The Wool Counter",
+    "ai": "bluffer",
+    "cubeAggression": 4,
+    "omens": ["reroll"],
+    "tellCost": 10,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "wharf_master",
+    "name": "The Wharf Master",
+    "ai": "gambler",
+    "cubeAggression": 5,
+    "omens": ["split_path"],
+    "tellCost": 12,
+    "label": "invented",
+    "historyNote": "Invented character."
+  },
+  {
+    "id": "court_scribe",
+    "name": "The Court Scribe",
+    "ai": "careful",
+    "cubeAggression": 3,
+    "omens": [],
+    "tellCost": 10,
+    "label": "invented",
+    "historyNote": "Invented character. The tablet's scribe Itti-Marduk-balatu is attested, but this character is not him."
   },
   {
     "id": "guard_captain",
     "name": "The Guard Captain",
-    "description": "A disciplined soldier who plays with military precision.",
-    "difficulty": 2,
-    "tavernId": "thebes_guard",
-    "style": "positional",
-    "label": "reconstructed"
+    "ai": "greedy",
+    "cubeAggression": 4,
+    "omens": ["warded_squares"],
+    "tellCost": 12,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "nubian_trader",
-    "name": "The Nubian Trader",
-    "description": "A calculating merchant who reads opponents like ledgers.",
-    "difficulty": 3,
-    "tavernId": "thebes_merchant",
-    "style": "balanced",
-    "label": "reconstructed"
+    "id": "grain_merchant",
+    "name": "The Grain Merchant",
+    "ai": "bluffer",
+    "cubeAggression": 5,
+    "omens": [],
+    "tellCost": 15,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "court_sage",
-    "name": "The Court Sage",
-    "description": "An elderly advisor whose centuries of play are unmatched.",
-    "difficulty": 4,
-    "tavernId": "thebes_priest",
-    "style": "defensive",
-    "label": "reconstructed"
+    "id": "temple_steward",
+    "name": "The Temple Steward",
+    "ai": "careful",
+    "cubeAggression": 4,
+    "omens": ["open_squares"],
+    "tellCost": 15,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "papyrus_reader",
-    "name": "The Papyrus Reader",
-    "description": "A scholar who memorized every recorded rosette game.",
-    "difficulty": 1,
-    "tavernId": "memphis_scribe",
-    "style": "positional",
-    "label": "reconstructed"
+    "id": "market_steward",
+    "name": "The Market Steward",
+    "ai": "greedy",
+    "cubeAggression": 5,
+    "omens": [],
+    "tellCost": 18,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "loom_master",
-    "name": "The Loom Master",
-    "description": "A master weaver who sees patterns others miss.",
-    "difficulty": 2,
-    "tavernId": "memphis_weaver",
-    "style": "balanced",
-    "label": "reconstructed"
+    "id": "canoe_trader",
+    "name": "The Canoe Trader",
+    "ai": "bluffer",
+    "cubeAggression": 6,
+    "omens": ["twin_path"],
+    "tellCost": 20,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "pyramid_builder",
-    "name": "The Pyramid Builder",
-    "description": "An engineer who approaches the board like a construction project.",
-    "difficulty": 3,
-    "tavernId": "memphis_stone",
-    "style": "positional",
-    "label": "reconstructed"
+    "id": "feather_worker",
+    "name": "The Featherworker",
+    "ai": "gambler",
+    "cubeAggression": 7,
+    "omens": ["cheap_reroll", "split_path"],
+    "tellCost": 22,
+    "label": "invented",
+    "historyNote": "Invented character."
   },
   {
-    "id": "vizier_apprentice",
-    "name": "The Vizier's Apprentice",
-    "description": "A rising star in the vizier's court, hungry for recognition.",
-    "difficulty": 4,
-    "tavernId": "memphis_vizier",
-    "style": "aggressive",
-    "label": "reconstructed"
-  },
-  {
-    "id": " Aten_priest",
-    "name": "The Aten Priest",
-    "description": "A religious devotee who sees divine patterns in every roll.",
-    "difficulty": 1,
-    "tavernId": "akhet_artist",
-    "style": "balanced",
-    "label": "reconstructed"
-  },
-  {
-    "id": "sun_artist",
-    "name": "The Sun Painter",
-    "description": "An artist who paints the board as a living landscape.",
-    "difficulty": 2,
-    "tavernId": "akhet_solar",
-    "style": "defensive",
-    "label": "reconstructed"
-  },
-  {
-    "id": "heretic_scholar",
-    "name": "The Heretic Scholar",
-    "description": "A rebel thinker who challenges traditional strategies.",
-    "difficulty": 3,
-    "tavernId": "akhet_rebel",
-    "style": "aggressive",
-    "label": "reconstructed"
-  },
-  {
-    "id": "pharaoh",
-    "name": "Akhenaten",
-    "description": "The Pharaoh himself \u2014 a master strategist said to play with divine insight.",
-    "difficulty": 5,
-    "tavernId": "akhet_pharaoh",
-    "style": "balanced",
-    "label": "reconstructed"
+    "id": "eagle_table_host",
+    "name": "The Eagle Table Host",
+    "ai": "gambler",
+    "cubeAggression": 8,
+    "omens": ["warded_squares", "twin_path"],
+    "tellCost": 25,
+    "label": "invented",
+    "historyNote": "Invented character. The final tavern's host plays aggressively; no historical person is depicted."
   }
 ]

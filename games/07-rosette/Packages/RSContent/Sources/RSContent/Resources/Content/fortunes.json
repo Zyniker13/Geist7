@@ -1,0 +1,26 @@
+[
+  {
+    "ruleset": "tablet",
+    "square": 2,
+    "omenDeck": "fortune_good",
+    "label": "invented"
+  },
+  {
+    "ruleset": "tablet",
+    "square": 7,
+    "omenDeck": "fortune_bad",
+    "label": "invented"
+  },
+  {
+    "ruleset": "tablet",
+    "square": 10,
+    "omenDeck": "fortune_good",
+    "label": "invented"
+  },
+  {
+    "ruleset": "tablet",
+    "square": 12,
+    "omenDeck": "fortune_bad",
+    "label": "invented"
+  }
+]

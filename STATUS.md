@@ -28,8 +28,8 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 - `xcodegen --version`: 2.46.0 ✓
 - `swiftlint version`: 0.65.1 ✓
 - `swift-format --version`: 604.0.0 ✓
-- `gh auth status`: NOT authenticated (no token file at ~/.hermes/profiles/geist7/gh-token). Using fallback: maintainer items go to "Needs the Maintainer" in STATUS.md.
-- `gh label list`: NOT CHECKED (gh not authenticated). Labels will be created when gh is available.
+- `gh auth status`: authenticated via `GH_TOKEN` from `~/.hermes/profiles/geist7/gh-token` (token added by the maintainer 2026-11-17; `gh auth status` says logged in to Zyniker13 when run with the variable). Maintainer items now file directly as GitHub issues.
+- `gh label list`: verified 2026-11-17 — all required labels exist (`needs-maintainer`, `blocked`, `question`, `program`, and all 25 game slugs).
 
 ## Games
 
@@ -76,3 +76,4 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 |- 2026-11-16: 07 Rosette G1 gate passed — `make test` + `make lint` green, INV-1–INV-5 evidence recorded, tag `rosette/gate-G1-pass` pushed. Merged to main.
 |- 2026-11-16: 07 Rosette G2 gate passed — `make test` (104 RSCore tests) + `make lint` green, iPad screenshot captured, UI tests skipped per _CONVENTIONS §8.2, tag `rosette/gate-G2-pass` pushed. Proceeding to P3.
 |- 2026-11-16: 07 Rosette P3 in progress — RSCore Def types (TavernDef, OpponentDef, OmenDef, RulesetDef) moved to RSCore, RSContent ContentLoader written, 6 JSON content files committed, build green, 104 tests pass.
+- 2026-11-17: gh token added by the maintainer — maintainer items now file as GitHub issues directly. Filed #4 (rosette: macOS screenshot needs a display server; the G2 log claimed it filed but it was not). Closed #3 (rosette CI Set up job) after runs 43943449329/43943537985/43999403187 all went green on main.

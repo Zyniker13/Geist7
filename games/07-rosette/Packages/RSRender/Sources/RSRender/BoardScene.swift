@@ -17,6 +17,16 @@ public final class BoardScene: SKScene {
         didSet { render() }
     }
 
+    /// The region art theme (RS-P6.1). Defaults to Ur; the app sets it from
+    /// the circuit region before the first render.
+    public var theme: RegionTheme = RegionTheme(region: .sumer) {
+        didSet {
+            if theme != oldValue, matchState != nil {
+                render()
+            }
+        }
+    }
+
     // MARK: - Layout constants
 
     private let boardPadding: CGFloat = 20
@@ -25,7 +35,7 @@ public final class BoardScene: SKScene {
 
     // MARK: - Nodes
 
-    private var boardBackground: SKShapeNode?
+    private var boardBackground: SKNode?
     private var squareNodes: [[SKShapeNode]] = []
 
     /// Test-visible access to the laid-out square nodes (RSRenderTests read
@@ -56,8 +66,30 @@ public final class BoardScene: SKScene {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// SpriteKit calls this whenever the hosting view resizes (SwiftUI's
+    /// `.resizeFill` re-sizes the scene after presentation; at first
+    /// presentation the SKView's bounds may still be zero). Re-render so
+    /// the board always fits the real size.
+    override public func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        if matchState != nil {
+            render()
+        }
+    }
+
+    /// Re-render the board from the current match state (also called when
+    /// the hosting view resizes). Exposed for tests.
+    public func refreshLayout() {
+        render()
+    }
+
     /// Layout the board to fit the scene.
     private func layoutBoard() {
+        // A degenerate size (the hosting SKView has no bounds yet, or the
+        // scene was presented before layout) must not wipe the existing
+        // geometry: skip until the size is real.
+        guard size.width > 1, size.height > 1 else { return }
+
         // Calculate board dimensions: 3 rows of 7 squares + 2 extra squares
         let boardWidth = CGFloat(7) * (squareSize + boardGap) - boardGap
         // extra bottom row
@@ -69,6 +101,10 @@ public final class BoardScene: SKScene {
 
         let scaledSquare = squareSize * scale
         let scaledGap = boardGap * scale
+        // Optical balance: the HUD bars cover the screen top and bottom, so
+        // nudge the board up a touch of the square size to re-center it
+        // between them.
+        let boardY = scaledSquare * 0.22
 
         // Clear existing nodes
         for child in self.children {
@@ -77,19 +113,6 @@ public final class BoardScene: SKScene {
         squareNodes = []
         pieceNodes = [:]
         legalMoveHighlight = []
-
-        // Create board background
-        let bg = SKShapeNode(
-            rectOf: CGSize(width: boardWidth, height: boardHeight),
-            cornerRadius: 8 * scale)
-        // papyrus #E2D3A6
-        bg.fillColor = SKColor(red: 0.906, green: 0.827, blue: 0.651, alpha: 1.0)
-        bg.position = CGPoint(x: 0, y: 0)
-        bg.lineWidth = 3 * scale
-        // tavern wood #5A3A22
-        bg.strokeColor = SKColor(red: 0.353, green: 0.227, blue: 0.133, alpha: 1.0)
-        self.addChild(bg)
-        boardBackground = bg
 
         // Create squares
         let trackLength = 14  // Finkel rules
@@ -112,45 +135,80 @@ public final class BoardScene: SKScene {
                 // every row 2 columns right, off the board.)
                 let colOffset = CGFloat(col) - CGFloat(rowInfo.count - 1) / 2.0
                 let x = colOffset * (scaledSquare + scaledGap)
-                let y = CGFloat(rowInfo.row - 1) * (scaledSquare + scaledGap)
+                let y =
+                    CGFloat(rowInfo.row - 1) * (scaledSquare + scaledGap)
+                    + boardY
 
                 let square = SKShapeNode(
                     rectOf: CGSize(width: scaledSquare, height: scaledSquare),
                     cornerRadius: 4 * scale)
 
-                // Determine square type
+                // Determine square type (RS-P6.1: theme colors).
                 let isRosette = [3, 7, 13].contains(squareIndex)
                 let isSafeRosette = [7].contains(squareIndex)
 
                 if isSafeRosette {
-                    // lapis #26619C
-                    square.fillColor = SKColor(red: 0.149, green: 0.380, blue: 0.612, alpha: 0.6)
+                    square.fillColor = theme.lapis.withAlpha(0.6)
                 } else if isRosette {
-                    // gold #C9A13B
-                    square.fillColor = SKColor(red: 0.788, green: 0.631, blue: 0.231, alpha: 0.6)
+                    square.fillColor = theme.lapis.withAlpha(0.45)
                 } else {
-                    // shell #EFE7D3
-                    square.fillColor = SKColor(red: 0.937, green: 0.906, blue: 0.827, alpha: 0.8)
+                    square.fillColor = theme.squareShell.withAlpha(0.85)
                 }
 
-                square.strokeColor = SKColor(red: 0.353, green: 0.227, blue: 0.133, alpha: 1.0)
+                square.strokeColor = theme.frame.withAlpha(0.9)
                 square.lineWidth = 1.5 * scale
                 square.position = CGPoint(x: x, y: y)
                 square.name = "square_\(squareIndex)"
+                square.zPosition = 0
                 self.addChild(square)
                 rowNodes.append(square)
             }
             squareNodes.append(rowNodes)
         }
 
-        // Add rosette symbols
+        // Tavern backdrop behind everything (RS-P6.1): wall, beams, shelf,
+        // lantern glow. Sized to the scene (features live in the visible
+        // margins around the board). zPosition -20, below the board
+        // background (-10).
+        let backdrop = BoardArt.tavernBackdrop(theme: theme, size: size)
+        backdrop.zPosition = -20
+        self.addChild(backdrop)
+
+        // Themed board background (RS-P6.1): worn-wood frame, bitumen
+        // bedding, motif border. Added after the squares but placed behind
+        // them with zPosition -10.
+        let boardRect = CGRect(
+            x: -boardWidth / 2 - 10, y: -boardHeight / 2 - 10 + boardY,
+            width: boardWidth + 20, height: boardHeight + 20)
+        let bg = BoardArt.boardBackground(theme: theme, boardRect: boardRect)
+        bg.zPosition = -10
+        self.addChild(bg)
+        boardBackground = bg
+
+        // Rosette flowers on top of the rosette squares (zPosition 1,
+        // below the pieces).
         for squareIndex in [3, 7, 13] {
             if let sq = squareNode(for: squareIndex) {
-                let symbol = SKLabelNode(text: "✦")
-                symbol.fontColor = SKColor(red: 0.937, green: 0.906, blue: 0.827, alpha: 1.0)
-                symbol.fontSize = scaledSquare * 0.4
-                symbol.position = sq.position
-                self.addChild(symbol)
+                let flower = BoardArt.rosetteFlower(
+                    theme: theme,
+                    radius: scaledSquare * 0.30)
+                flower.position = sq.position
+                flower.zPosition = 1
+                flower.name = "rosetteFlower_\(squareIndex)"
+                self.addChild(flower)
+            }
+        }
+
+        if ProcessInfo.processInfo.arguments.contains("-boardDebug") {
+            print(
+                "[boardDebug] sceneSize=\(size) scale=\(scale) "
+                    + "scaledSquare=\(scaledSquare) children=\(children.count)")
+            for child in children {
+                let frame = child.calculateAccumulatedFrame()
+                print(
+                    "[boardDebug] child \(child.name ?? "<unnamed>") "
+                        + "type=\(type(of: child)) pos=\(child.position) "
+                        + "frame=\(frame)")
             }
         }
     }
@@ -186,7 +244,8 @@ public final class BoardScene: SKScene {
             let label = SKLabelNode(text: "⚀ \(diceValue)")
             label.fontSize = 24
             label.position = CGPoint(x: 0, y: self.size.height / 2 - 40)
-            label.fontColor = .white
+            label.fontColor = theme.gold
+            label.zPosition = 4
             label.name = "diceDisplay"
             self.addChild(label)
         }
@@ -228,24 +287,23 @@ public final class BoardScene: SKScene {
             }
         }
 
-        // Style piece
+        // Style piece (RS-P6.1: theme colors).
         let radius: CGFloat = 18
         let isPlayer0 = piece.owner == .player0
         targetNode.path = CGPath(
             ellipseIn: CGRect(x: -radius, y: -radius, width: radius * 2, height: radius * 2),
             transform: nil)
-        targetNode.fillColor =
-            isPlayer0
-            // lapis
-            ? SKColor(red: 0.149, green: 0.380, blue: 0.612, alpha: 1.0)
-            // shell
-            : SKColor(red: 0.937, green: 0.906, blue: 0.827, alpha: 1.0)
-        // gold
-        targetNode.strokeColor = SKColor(red: 0.788, green: 0.631, blue: 0.231, alpha: 1.0)
+        targetNode.fillColor = isPlayer0 ? theme.lapis : theme.squareShell
+        targetNode.strokeColor = theme.gold
         targetNode.lineWidth = 2
+        targetNode.zPosition = 2
         targetNode.name = "piece_\(piece.owner.rawValue)_\(piece.id)"
 
-        if !playerNodes.values.contains(targetNode) {
+        // Re-parent on every render: layoutBoard() clears the scene graph,
+        // so a cached piece node must be re-added even if it already has a
+        // dictionary entry (it must never sit outside the scene graph).
+        if targetNode.parent !== self {
+            targetNode.removeFromParent()
             self.addChild(targetNode)
         }
     }
@@ -259,10 +317,11 @@ public final class BoardScene: SKScene {
         for index in [3, 7, 13] {
             if let sq = squareNode(for: index) {
                 let highlight = SKShapeNode(circleOfRadius: sq.frame.width / 2 + 4)
-                highlight.strokeColor = SKColor(red: 0.788, green: 0.631, blue: 0.231, alpha: 0.8)
+                highlight.strokeColor = theme.gold.withAlpha(0.8)
                 highlight.lineWidth = 2
                 highlight.position = sq.position
                 highlight.fillColor = .clear
+                highlight.zPosition = 3
                 highlight.name = "rosetteHighlight"
                 self.addChild(highlight)
                 if rosetteHighlight == nil { rosetteHighlight = highlight }
@@ -283,11 +342,11 @@ public final class BoardScene: SKScene {
                 let highlight = SKShapeNode(
                     rectOf: CGSize(width: sq.frame.width - 4, height: sq.frame.height - 4),
                     cornerRadius: 4)
-                // red limestone
-                highlight.strokeColor = SKColor(red: 0.639, green: 0.231, blue: 0.165, alpha: 0.8)
+                highlight.strokeColor = theme.accent.withAlpha(0.8)
                 highlight.lineWidth = 3
                 highlight.position = sq.position
                 highlight.fillColor = .clear
+                highlight.zPosition = 3
                 highlight.name = "legalMoveHighlight"
                 self.addChild(highlight)
                 legalMoveHighlight.append(highlight)

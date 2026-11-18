@@ -50,14 +50,20 @@ public enum Reducer {
         _ action: Action,
         to state: MatchState,
         rng: inout SeededRNG,
-        omenRng: inout SeededRNG
+        omenRng: inout SeededRNG,
+        diceSource: DiceSource? = nil
     ) throws(RuleError) -> Result {
         var current = state
         var events: [Event] = []
 
         switch action {
         case .roll:
-            (current, events) = try applyRoll(to: current, rng: &rng, omenRng: &omenRng)
+            (current, events) = try applyRoll(
+                to: current,
+                rng: &rng,
+                omenRng: &omenRng,
+                diceSource: diceSource
+            )
         case .move(let pieceId):
             (current, events) = try applyMove(to: current, piece: pieceId)
         case .offerDouble:
@@ -80,7 +86,8 @@ public enum Reducer {
     static func applyRoll(
         to state: MatchState,
         rng: inout SeededRNG,
-        omenRng: inout SeededRNG
+        omenRng: inout SeededRNG,
+        diceSource: DiceSource? = nil
     ) throws(RuleError) -> (MatchState, [Event]) {
         guard !state.isComplete else { throw RuleError.matchComplete }
         guard !state.doubleOffered else {
@@ -92,15 +99,19 @@ public enum Reducer {
 
         var result = state
         var events: [Event] = []
-        var amount = result.dice.roll(rng: &rng)
+        // A fixed dice sequence (daily match) takes precedence over the RNG
+        // so every player facing the same date draws the same dice.
+        var amount = diceSource?.next() ?? result.dice.roll(rng: &rng)
         events.append(Event.diceRolled(value: amount))
 
         // Omen: re-roll. The replacement draw comes from the omen stream so
-        // the dice stream's sequence is unchanged (INV-7). Split and safety
-        // omens stay pending: the split is consumed below when it activates,
-        // the safety toggle lasts through the turn and clears at its end.
+        // the dice stream's sequence is unchanged (INV-7). With a fixed
+        // dice sequence the replacement is the next sequence value, so the
+        // daily stream stays identical for everyone. Split and safety omens
+        // stay pending: the split is consumed below when it activates, the
+        // safety toggle lasts through the turn and clears at its end.
         if let pending = result.pendingOmen, pending.effect.kind == .reroll {
-            let replacement = result.dice.roll(rng: &omenRng)
+            let replacement = diceSource?.next() ?? result.dice.roll(rng: &omenRng)
             amount = replacement
             events.append(Event.diceRolled(value: replacement))
             result.pendingOmen = nil

@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-|- **Game in progress:** 07 Rosette — P4 (AI) complete, G4 gate passed; P5 (Audio) next.
-|- **Next step:** P5 (Audio) — Core Audio (AVAudioEngine) SFX + optional ambient loop.
+- **Game in progress:** 07 Rosette — P5 (Meta and Replayability) complete, G5 gate passed; P6 (Aesthetics and Audio Pass) next.
+- **Next step:** P6 (RS-P6.1) — aesthetics and audio pass: art direction from RESEARCH.md, SFX + music via RSAudio, visual pass on the board scene.
 
 ## Environment Check
 
@@ -35,7 +35,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 07 | Rosette | G4 passed (P4 done) | G4 | #4 |
+| 1 | 07 | Rosette | G5 passed (P5 done) | G5 | #4 |
 | 2 | 06 | Mattang | Not Started | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
@@ -79,4 +79,5 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - 2026-11-17: gh token added by the maintainer — maintainer items now file as GitHub issues directly. Filed #4 (rosette: macOS screenshot needs a display server; the G2 log claimed it filed but it was not). Closed #3 (rosette CI Set up job) after runs 43943449329/43943537985/43999403187 all went green on main.
 - 2026-11-17: 07 Rosette P3 complete — content systems (single canonical content location; 6 rulesets / 12 taverns / 12 opponents / 6 omens / 4 fortunes / 3 lessons), circuit match engine (BotMatch, Fortune, dice model, tavern progression), UI (CircuitView, HistoryView, TutorialView), docs (HISTORY, SLICE_ASSESSMENT). G3 gate passed: `make test` (139 tests: RSContent 11, RSCore 126, RSRender 2; 0 failures) + `make lint` green; 1,000 bot circuit runs without softlocks; every tavern reachable; HISTORY/labels agreement. Tag `rosette/gate-G3-pass` pushed. Proceeding to P4.
 - 2026-11-18: 07 Rosette P4 (AI) in progress on branch `rosette/phase/P4-ai` — MatchBot abstraction with OptimalBot (budgeted expectiminimax, ADR-0010), NaiveBot, TableBot, VariantBot; RSAI package with 44 tests. Two cube-validity bugs found via instrumented mirrors and fixed with red/green regression tests: R-21 second-double-in-one-turn (`hasDoubledThisTurn` guard) and R-10 offer-by-non-owner (`notOwner` — the earlier crash at plies=12). Engine seat-fairness confirmed independently (RandomMatch P0 0.455 ≈ 0.5; deep-EMM 2-piece probe 0.514 vs published 0.5186; solver cross-check bit-for-bit). G4 evidence (circuit-completion rates, decision latency) pending full-suite rerun.
-- 2026-11-18: 07 Rosette G4 gate passed — circuit-completion harness (ADR-0011) on the content circuit with region-strength map (Sumer 3, Egypt 4, Mexica 4) and attempt-indexed re-challenge seeds; starting purse calibrated 40 → 80 (roadmap-tunable 20–80) to land optimal completion 0.583 (28/48, band 55–70%) and naive 0.083 (2/24, band 5–15%). Decision latency p95 0.037 s ≤ 0.150 s. `make test`/`make lint` green; tag `rosette/gate-G4-pass`; merged to main. Next: P5 Audio.
+- 2026-11-18: 07 Rosette G4 gate passed — circuit-completion harness (ADR-0011) on the content circuit with region-strength map (Sumer 3, Egypt 4, Mexica 4) and attempt-indexed re-challenge seeds; starting purse calibrated 40 → 80 (roadmap-tunable 20–80) to land optimal completion 0.583 (28/48, band 55–70%) and naive 0.083 (2/24, band 5–15%). Decision latency p95 0.037 s ≤ 0.150 s. `make test`/`make lint` green; tag `rosette/gate-G4-pass`; merged to main. Next: P5 Meta and Replayability.
+- 2026-11-18: 07 Rosette P5 (Meta and Replayability) complete on branch `rosette/phase/P5-meta` — RSMeta package (ADR-0012): daily match derived from the UTC date (deterministic seed + 5,000-roll tetra4 dice sequence, no wall clock or UUIDs), stats with streaks and daily streaks, 20-achievement catalog, local leaderboards (daily wins, circuit purse), JSON MetaStore with corrupt-file fallback; `DiceSource` threaded through Reducer/BotMatch for bit-identical daily replays (INV-1/4/7 preserved). G5 content counts met: omens expanded 6 → 12 (content-lint: 6 rulesets, 12 taverns, 12 opponents, 12 omens). `make test` green (all packages, RSMeta 27/27) + `make lint` 0 errors; HANDOFF refreshed. Tag `rosette/gate-G5-pass`; merged to main. Next: P6 Aesthetics and Audio Pass.

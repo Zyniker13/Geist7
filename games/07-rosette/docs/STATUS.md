@@ -1,8 +1,8 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P6 (Aesthetics and Audio Pass) — in progress
-- **Next Step:** Full `make test`/`make lint` green → snapshot review (G6) → commit, tag `rosette/gate-G6-pass`, merge to main, begin P7 (Platform Features)
+- **Current Phase:** P6 (Aesthetics and Audio Pass) — G6 gate in progress (tests/lint/snapshots/HIST6.1 done; awaiting branch CI)
+- **Next Step:** branch CI green → tag `rosette/gate-G6-pass` → merge to main → begin P7 (Platform Features)
 - **Last Update:** 2026-11-18
 
 ## Phase Queue
@@ -28,7 +28,7 @@
 | G3 | ✅ Passed | `rosette/gate-G3-pass` tag — content counts (6 rulesets, 12 taverns, 12 opponents, 6 omens), lint clean, 1,000 bot circuit runs without softlocks, HISTORY/labels agreement, every tavern reachable |
 | G4 | ✅ Passed | `rosette/gate-G4-pass` tag — optimal circuit completion 0.583 (28/48, band 55–70%), naive 0.083 (2/24, band 5–15%), decision latency p95 0.037 s ≤ 0.150 s (ADR-0010/0011, make test/lint green) |
 | G5 | ✅ Passed | `rosette/gate-G5-pass` tag — RSMeta 27/27 (30-date daily determinism, bit-identical replay), content counts re-pinned, HANDOFF refreshed (record backfilled 2026-11-18) |
-| G6 | ⏳ Pending | — |
+| G6 | 🔄 In progress | `make test` green (7 packages, 209 tests, 0 failures), `make lint` 0 violations, snapshot set approved (3 region boards + menu), HIST6.1 report complete — awaiting branch CI, then tag `rosette/gate-G6-pass` |
 | G7 | ⏳ Pending | — |
 | G8 | ⏳ Pending | — |
 | G9 | ⏳ Pending | — |
@@ -74,6 +74,7 @@
 - **2026-11-18** — P6 tests: `RSRenderTests` +3 (`testUrPaletteMatchesResearch` pins the RESEARCH.md §1 hexes; `testRegionThemesAreDistinct` pins three distinct visual identities; `testSceneLayeringBackdropBelowBoardBelowSquares` pins backdrop(−20) < boardBackground(−10) < squares(0)).
 - **2026-11-18** — P6 S6.1 (snapshot review, first pass): simulator screenshots of all three region boards + the tavern menu exposed four rendering bugs, each fixed with a regression test before the fix: (1) the board was drawn at a fixed 900×1350 in a 2048×2732 scene — `BoardScene.layout` now sizes the board to the scene (9:13, 12% margin, centred); (2) pieces were invisible — `BoardScene` never called `renderPieces`, so the move-highlight pass (which draws pieces) was the only thing showing them; `render` now always renders pieces; (3) `-autoPilot` launched with no match (the launch argument was read but no match was started), so board shots were empty — `RosetteApp` now starts a match when `-startMatch` is set; (4) the top HUD text was unreadable over the light tavern wall — a dark scrim (`.black.opacity(0.45)`, safe-area top) now sits behind the HUD. Also: the board is nudged down 2% of its height so the top HUD clears the board frame, and the tavern shelf/bottles were repositioned below the board's bottom edge so they are visible. `RSRenderTests` +2 (`testBoardFitsSceneWithMargin`, `testRenderAlwaysDrawsPieces`).
 - **2026-11-18** — P6 S6.1 (snapshot review, second pass): the HUD scrim was clipped to the HUD's own frame (the text still bled over the board) — the scrim is now a full-width safe-area band; the top HUD moved below the status bar via `safeAreaPadding(.top)`; the tavern shelf/bottles/lantern were moved to the bottom corners outside the board frame. Final snapshot set (Sumer/Egypt/Mexica boards mid-match + tavern menu) captured and approved by GLM-SELF: boards balanced between the HUD bars, pieces/gold legal-move rings/rosette flowers visible, region palettes distinct (Ur lapis/shell/red limestone; Thebes papyrus/turquoise/carnelian; Tenochtitlan obsidian/shell/cinnabar), tavern details (shelf, bottles, lantern glow) visible, no broken elements.
+- **2026-11-18** — P6 G6 gate evidence: `make test` green — all 7 packages pass (RSAI, RSAudio 24, RSContent, RSCore, RSMeta 27, RSPlatform, RSRender 7; 209 tests total, 0 failures, `TEST_EXIT=0`); `make lint` 0 violations (`LINT_EXIT=0`, content-lint OK: 6 rulesets, 12 taverns, 12 opponents, 12 omens, 4 fortunes, 3 lessons). Snapshot set (g6-final-sumer3/egypt3/mexica3/tavern3) vision-verified: HUD clear of status bar and readable on all boards; boards render correctly with distinct region palettes; menu (title, rosette medallion, six buttons) crisp and readable. HIST6.1 report complete (below): no unlabelled historical claims in text, art, or audio. Awaiting branch CI, then tag `rosette/gate-G6-pass`.
 
 ## HIST6.1 Report (P6 fact-check, 2026-11-18)
 

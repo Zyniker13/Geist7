@@ -117,3 +117,17 @@ public struct RosetteBot: Sendable {
         return spread == 0 ? 0 : Int(rng.next(UInt64(spread)))
     }
 }
+
+// MARK: MatchBot (P4)
+
+extension RosetteBot: MatchBot {
+    /// Bridge the driver's full-state entry to the heuristic chooser: the
+    /// circuit bot only scores moves against the pieces and track.
+    public func chooseMove(
+        from state: MatchState,
+        moves: [Move],
+        rng: inout SeededRNG
+    ) -> Move? {
+        chooseMove(from: moves, pieces: state.pieces, track: state.track, rng: &rng)
+    }
+}

@@ -45,7 +45,7 @@ coverage: gen
 	@echo "  xcrun xccov view --report Rosette-iOS.xctest 2>&1 | tee COVERAGE.md"
 
 sim: gen
-	@N=${N:-200}; echo "Running $$N seeded AI-vs-AI games..."; $(SWIFT) run --package-path Tools/sim sim --count $$N 2>&1 | tee sim.log
+	@N=$(if $(N),$(N),200); echo "Running $$N seeded AI-vs-AI games..."; $(SWIFT) run --package-path Tools/sim sim --count $$N 2>&1 | tee sim.log
 
 all: test lint
 

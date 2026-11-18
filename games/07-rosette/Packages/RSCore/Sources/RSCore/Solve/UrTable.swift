@@ -7,7 +7,7 @@ import Foundation
 /// (UInt32), the layer offsets as UInt64 values, the win probabilities as
 /// UInt16 in 1/65535 units in the ranking's dense order, and an FNV-1a
 /// 64-bit checksum of everything before it.
-public struct UrTable {
+public struct UrTable: Sendable {
 
     public let pieces: Int
     public let values: [UInt16]
@@ -21,6 +21,32 @@ public struct UrTable {
         self.values = values
         self.layerStart = layerStart
         self.ranking = UrRanking(pieces: pieces)
+    }
+
+    /// Whether a table lookup is defined for `position`: it must belong to
+    /// this table's piece count (the stones on the shared track plus the
+    /// private run and the hand must sum to the solved count) and map
+    /// inside the value array. Queries outside the table's coverage return
+    /// false instead of an out-of-range index — the 2-piece fixture must
+    /// not be consulted about 7-piece positions.
+    public func covers(_ position: UrPosition) -> Bool {
+        guard position.hand0 == pieces && position.hand1 == pieces else {
+            return false
+        }
+        guard UrPosition.isValidShared(position.shared) else { return false }
+        // `sharedCount0/1` are indexed by the ranking's base-3 pattern, not by
+        // the packed field; convert first (a packed mask can exceed the 3^8
+        // pattern range whenever any square past the fourth is occupied).
+        let base3 = UrPosition.packedToBase3[Int(position.shared)]
+        guard base3 >= 0 else { return false }
+        guard
+            Int(position.private0) + position.hand0
+                + ranking.sharedCount0(base3) == pieces,
+            Int(position.private1) + position.hand1
+                + ranking.sharedCount1(base3) == pieces
+        else { return false }
+        let index = ranking.index(of: position)
+        return index >= 0 && index < values.count
     }
 
     /// Win probability for the player about to roll from `position`.

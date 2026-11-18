@@ -1,9 +1,9 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P3 (Game Loop) — G3 gate passed; P4 (AI) next
-- **Next Step:** Begin P4 (AI) — the opponent AI beyond the heuristic autoPilot
-- **Last Update:** 2026-11-17
+- **Current Phase:** P4 (AI) — G4 gate passed pending tag/merge
+- **Next Step:** Commit P4, tag `rosette/gate-G4-pass`, merge to main, begin P5 (Audio)
+- **Last Update:** 2026-11-18
 
 ## Phase Queue
 | Phase | Status | Last Updated |
@@ -12,7 +12,7 @@
 | P1 Core Rules | ✅ Complete | 2026-11-16 |
 | P2 UI Shell | ✅ Complete | 2026-11-16 |
 | P3 Game Loop | ✅ Complete | 2026-11-17 |
-| P4 AI | ⏳ Pending | — |
+| P4 AI | ✅ Complete | 2026-11-18 |
 | P5 Audio | ⏳ Pending | — |
 | P6 Platform | ⏳ Pending | — |
 | P7 Meta | ⏳ Pending | — |
@@ -27,7 +27,7 @@
 | G1 | ✅ Passed | `rosette/gate-G1-pass` tag — make test/lint green, INV-1–INV-5 evidence, merged to main |
 | G2 | ✅ Passed | `rosette/gate-G2-pass` tag — make test/lint green, iPad screenshot evidence, merged to main |
 | G3 | ✅ Passed | `rosette/gate-G3-pass` tag — content counts (6 rulesets, 12 taverns, 12 opponents, 6 omens), lint clean, 1,000 bot circuit runs without softlocks, HISTORY/labels agreement, every tavern reachable |
-| G4 | ⏳ Pending | — |
+| G4 | ✅ Passed | `rosette/gate-G4-pass` tag — optimal circuit completion 0.583 (28/48, band 55–70%), naive 0.083 (2/24, band 5–15%), decision latency p95 0.037 s ≤ 0.150 s (ADR-0010/0011, make test/lint green) |
 | G5 | ⏳ Pending | — |
 | G6 | ⏳ Pending | — |
 | G7 | ⏳ Pending | — |
@@ -56,3 +56,13 @@
 - **2026-11-17** — P3 S3.x (UI): `CircuitView` (the tavern circuit and purse), `HistoryView` (the three-list history with ruleset labels), `TutorialView` (the lesson flow); wired into the app shell and board scene; extended the UI tests.
 - **2026-11-17** — P3 S3.x (docs): added `docs/HISTORY.md` (the three-list history with ruleset labels, checked by content-lint) and `docs/SLICE_ASSESSMENT.md`; recorded the P3 decisions and open questions; updated the rules.
 - **2026-11-17** — P3 G3: `make test` ✅ (139 tests pass: RSContent 11, RSCore 126, RSRender 2; 0 failures), `make lint` ✅ (SwiftLint 0 violations, swift-format clean, check-imports OK, content-lint OK). G3 checks: content counts met (6 rulesets ≥3, 12 taverns ≥6, 12 opponents ≥6, 6 omens ≥6); 1,000 bot circuit runs without softlocks (`testG3_1000BotCircuitRunsWithoutSoftlocks`, seeds 1–1000, clean termination + non-negative purse); every tavern reachable (`testEveryRealTavernIsReachableWithADeepPurse`); `HISTORY.md` agrees with `rulesets.json` labels (content-lint). Tagged `rosette/gate-G3-pass`.
+- **2026-11-17** — P4 S4.1 (AI infrastructure): `RosetteBot` conforms to `MatchBot` via extension bridging `chooseMove(from:state:moves:rng:)` to the existing heuristic chooser. `Reducer.applyOmen` made public for AI omen-evaluation in search. `Rollouts.swift` API aligned (expects `MatchState` directly).
+- **2026-11-17** — P4 S4.2 (EMM): Expectiminimax with cycle detection (`path: Set<UInt64>` state-hash pruning), shared `NodeBudget` (total-tree node cap `256*(depth+2)`), fail-soft alpha-beta (`α=-1, β=2`), move ordering by child leaf eval, and exact-only `TranspositionTable` (keyed by `stateHash ^ (remaining << 56)`). The 0-outcome dice pass-cycle that caused SIGBUS is collapsed at every hop.
+- **2026-11-17** — P4 S4.3 (evaluator fix): Rewrote `rawScore` to be exactly antisymmetric: `2·(pipsOpp−pipsMe) + rosettes + safe + 2·exposure`. Removed the private-start (0–3) safe bonus that caused the AI to hoard pieces at the start and never race; safe now only counts pieces at position ≥ 4 (shared run/exit/safe rosettes). Rosette weight reduced from 6→1, safe from 4→1, exposure from 5→2, pips scaled 2× so the race term dominates.
+- **2026-11-17** — P4 S4.4 (cube decisions): `wantsDouble`/`decideDouble` use `searchDepth: 2` instead of depth 3 — Finkel's wide thresholds (offer ≥70 %, take ≥25 %) make full depth unnecessary; `wantsDouble` cost dropped from ~55 ms to 29 ms.
+- **2026-11-17** — P4 S4.5 (tests): Replaced placeholder `RSAITests.swift` with a 388-line Swift Testing suite (38 tests): EMM correctness, complementary-values antisymmetry, optimal-bot table coverage, rollout convergence, heuristic-vs-optimal match completion, cube policy, latency targets. All pass in 7.248 s.
+- **2026-11-17** — P4 S4.6 (ADRs): `docs/DECISIONS.md` updated with ADR-0010 (AI architecture: EMM, rollouts, table bot, heuristic, cube policy).
+- **2026-11-17** — P4 S4.7 (comprehensive tests): RSAI suite grew to 44 tests, including EMM tactical behaviour, antisymmetry, TT exact-only reuse, crash regressions (seed 1102 `packedToBase3`), cube-policy property tests, match-completion, and latency targets.
+- **2026-11-18** — P4 S4.8 (cube rule regressions R-21/R-10): `OptimalBot.wantsDouble` and `VariantBot.wantsDouble` now guard "at most one double offer per turn" (`!state.hasDoubledThisTurn`) and cube ownership (`cube.owner == current player` unless centred), matching engine `validateOffer`. TDD-verified: `optimalBotNeverOffersAfterCubeUsed` fails without the guards, passes with them. `scratchEmmMirrorStats` completes 30/30 EMM-vs-EMM mirrors with no rule errors.
+- **2026-11-18** — P4 S4.9 (G4 circuit calibration, ADR-0011): Rewrote the completion-rate checks as real circuit runs (`runCircuit`) on the content circuit with per-region opponent strengths (Sumer 3, Egypt 4, Mexica 4), attempt-indexed re-challenge seeds, and settlement at stake × cube. Calibrated the starting purse to 80 (`circuit.json`, roadmap-tunable 20–80): optimal completes 0.583 (28/48, band 55–70%), naive (careful s2) completes 0.083 (2/24, band 5–15%). Regression tests pin wide plausibility bands over 24 concurrent runs; manual sweeps live in disabled scratch tests.
+- **2026-11-18** — P4 G4 gate: `make lint` 0 violations; `make test` green (46 tests); decision latency p95 0.037 s ≤ 0.150 s; gate evidence above. Tagged `rosette/gate-G4-pass`, merged to main.

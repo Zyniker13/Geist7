@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette — P6 (Aesthetics and Audio Pass) in progress: RS-P6.1 board art per region + tavern backdrops done (ADR-0013), RS-P6.2 music/SFX done (RSAudio 24/24), HIST6.1 fact-check done (two unhedged UI claims fixed); snapshot review fixing rendering bugs (board sizing, invisible pieces, autoPilot launch, HUD scrim).
-- **Next step:** finish G6 snapshot approval (vision model was briefly down on the provider side; retrying), full `make test`/`make lint`, tag `rosette/gate-G6-pass`, merge to main, begin P7 (Platform Features).
+- **Game in progress:** 07 Rosette — P6 (Aesthetics and Audio Pass) complete, G6 gate passed: RS-P6.1 board art per region + tavern backdrops (ADR-0013), RS-P6.2 music/SFX (RSAudio 24/24), HIST6.1 fact-check (two unhedged UI claims fixed), snapshot review fixed four rendering bugs (board sizing, invisible pieces, autoPilot launch, HUD scrim).
+- **Next step:** confirm main CI green on the G6 merge, then begin P7 (Platform Features).
 
 ## Environment Check
 
@@ -35,7 +35,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 07 | Rosette | P6 in progress (G5 passed) | G5 | #4 |
+| 1 | 07 | Rosette | P7 next (G6 passed) | G6 | #4 |
 | 2 | 06 | Mattang | Not Started | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
@@ -81,3 +81,4 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - 2026-11-18: 07 Rosette P4 (AI) in progress on branch `rosette/phase/P4-ai` — MatchBot abstraction with OptimalBot (budgeted expectiminimax, ADR-0010), NaiveBot, TableBot, VariantBot; RSAI package with 44 tests. Two cube-validity bugs found via instrumented mirrors and fixed with red/green regression tests: R-21 second-double-in-one-turn (`hasDoubledThisTurn` guard) and R-10 offer-by-non-owner (`notOwner` — the earlier crash at plies=12). Engine seat-fairness confirmed independently (RandomMatch P0 0.455 ≈ 0.5; deep-EMM 2-piece probe 0.514 vs published 0.5186; solver cross-check bit-for-bit). G4 evidence (circuit-completion rates, decision latency) pending full-suite rerun.
 - 2026-11-18: 07 Rosette G4 gate passed — circuit-completion harness (ADR-0011) on the content circuit with region-strength map (Sumer 3, Egypt 4, Mexica 4) and attempt-indexed re-challenge seeds; starting purse calibrated 40 → 80 (roadmap-tunable 20–80) to land optimal completion 0.583 (28/48, band 55–70%) and naive 0.083 (2/24, band 5–15%). Decision latency p95 0.037 s ≤ 0.150 s. `make test`/`make lint` green; tag `rosette/gate-G4-pass`; merged to main. Next: P5 Meta and Replayability.
 - 2026-11-18: 07 Rosette P5 (Meta and Replayability) complete on branch `rosette/phase/P5-meta` — RSMeta package (ADR-0012): daily match derived from the UTC date (deterministic seed + 5,000-roll tetra4 dice sequence, no wall clock or UUIDs), stats with streaks and daily streaks, 20-achievement catalog, local leaderboards (daily wins, circuit purse), JSON MetaStore with corrupt-file fallback; `DiceSource` threaded through Reducer/BotMatch for bit-identical daily replays (INV-1/4/7 preserved). G5 content counts met: omens expanded 6 → 12 (content-lint: 6 rulesets, 12 taverns, 12 opponents, 12 omens). `make test` green (all packages, RSMeta 27/27) + `make lint` 0 errors; HANDOFF refreshed. Tag `rosette/gate-G5-pass`; merged to main. Next: P6 Aesthetics and Audio Pass.
+- 2026-11-18: 07 Rosette P6 (Aesthetics and Audio) complete on branch `rosette/phase/P6-aesthetics` — RS-P6.1: `RegionTheme` (Ur pinned to RESEARCH.md §1; Thebes/Tenochtitlan reconstruction-inspired) + `BoardArt` (board background, tavern backdrop, pure geometry, no assets, ADR-0013); RS-P6.2: `RSAudio` (procedural synth, original 8-bar D-Dorian tavern loop, event-mapped SFX, headless-safe, 24 tests). Snapshot review found and fixed four rendering bugs (board sized to scene, pieces always rendered, `-startMatch` launch, HUD scrim + safe-area top padding), each with a regression test. HIST6.1 fact-check: all content/UI text checked against HISTORY.md/RESEARCH.md; two unhedged UI claims fixed (tagline culture, age hedge). `make test` green (7 packages, 209 tests, 0 failures) + `make lint` 0 violations; snapshot set (3 region boards + menu) vision-verified. Tag `rosette/gate-G6-pass`; merged to main. Next: P7 Platform Features.

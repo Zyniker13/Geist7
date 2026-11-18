@@ -1,8 +1,8 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P6 (Aesthetics and Audio Pass) — G6 gate in progress (tests/lint/snapshots/HIST6.1 done; awaiting branch CI)
-- **Next Step:** branch CI green → tag `rosette/gate-G6-pass` → merge to main → begin P7 (Platform Features)
+- **Current Phase:** P6 (Aesthetics and Audio Pass) — ✅ Complete, G6 gate passed
+- **Next Step:** Begin P7 (Platform Features)
 - **Last Update:** 2026-11-18
 
 ## Phase Queue
@@ -14,7 +14,7 @@
 | P3 Content and Systems | ✅ Complete | 2026-11-17 |
 | P4 AI Opponents | ✅ Complete | 2026-11-18 |
 | P5 Meta and Replayability | ✅ Complete | 2026-11-18 |
-| P6 Aesthetics and Audio Pass | 🔄 In progress | 2026-11-18 |
+| P6 Aesthetics and Audio Pass | ✅ Complete | 2026-11-18 |
 | P7 Platform Features | ⏳ Pending | — |
 | P8 Polish, Accessibility, and Performance | ⏳ Pending | — |
 | P9 Beta and TestFlight / P10 Release Prep | ⏳ Pending | — |
@@ -28,7 +28,7 @@
 | G3 | ✅ Passed | `rosette/gate-G3-pass` tag — content counts (6 rulesets, 12 taverns, 12 opponents, 6 omens), lint clean, 1,000 bot circuit runs without softlocks, HISTORY/labels agreement, every tavern reachable |
 | G4 | ✅ Passed | `rosette/gate-G4-pass` tag — optimal circuit completion 0.583 (28/48, band 55–70%), naive 0.083 (2/24, band 5–15%), decision latency p95 0.037 s ≤ 0.150 s (ADR-0010/0011, make test/lint green) |
 | G5 | ✅ Passed | `rosette/gate-G5-pass` tag — RSMeta 27/27 (30-date daily determinism, bit-identical replay), content counts re-pinned, HANDOFF refreshed (record backfilled 2026-11-18) |
-| G6 | 🔄 In progress | `make test` green (7 packages, 209 tests, 0 failures), `make lint` 0 violations, snapshot set approved (3 region boards + menu), HIST6.1 report complete — awaiting branch CI, then tag `rosette/gate-G6-pass` |
+| G6 | ✅ Passed | `rosette/gate-G6-pass` tag — `make test` green (7 packages, 209 tests, 0 failures), `make lint` 0 violations, snapshot set vision-verified (3 region boards + menu), HIST6.1 report complete (no unlabelled historical claims); merged to main |
 | G7 | ⏳ Pending | — |
 | G8 | ⏳ Pending | — |
 | G9 | ⏳ Pending | — |

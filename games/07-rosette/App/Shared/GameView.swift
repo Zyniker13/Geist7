@@ -1,5 +1,6 @@
 // MARK: - GameView
 
+import RSAudio
 import RSCore
 import RSRender
 import SpriteKit
@@ -11,6 +12,8 @@ struct GameView: View {
     @State private var selectedPiece: PieceID?
     @State private var showResults = false
     @State private var showPauseMenu = false
+    /// The audio layer (RS-P6.2): deterministic procedural music + SFX.
+    @State private var audio = AudioController()
 
     let onMatchComplete: (Outcome) -> Void
     /// Whether the results overlay offers "Play Again" (hidden in circuit
@@ -42,6 +45,7 @@ struct GameView: View {
         fortunes: [FortuneSquare] = [],
         omens1: [Omen] = [],
         stake: Int,
+        region: String = "sumer",
         useAI: Bool = true,
         seed: UInt64 = 42,
         showPlayAgain: Bool = true,
@@ -56,7 +60,8 @@ struct GameView: View {
                 stakeValue: stake,
                 useAI: useAI,
                 seed: LaunchArguments.seed ?? seed,
-                autoSave: false
+                autoSave: false,
+                region: region
             ))
         self.onMatchComplete = onMatchComplete
         self.showPlayAgain = showPlayAgain
@@ -78,6 +83,24 @@ struct GameView: View {
             BoardView(viewModel: viewModel)
                 .ignoresSafeArea()
 
+            // Scrim behind the HUD bars: keeps player info legible over
+            // light tavern walls (e.g. Egypt's sand tone).
+            VStack(spacing: 0) {
+                LinearGradient(
+                    colors: [.black.opacity(0.55), .clear],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: 140)
+                Spacer()
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.55)],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: 150)
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+
             // HUD overlay
             VStack(spacing: 0) {
                 // Top bar: player info and dice
@@ -88,7 +111,9 @@ struct GameView: View {
                 // Bottom bar: action buttons
                 bottomBar
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.bottom)
+            .safeAreaPadding(.top)
         }
         .overlay(alignment: .center) {
             if viewModel.isPaused {
@@ -105,6 +130,16 @@ struct GameView: View {
             if state.isComplete, let outcome = viewModel.outcome {
                 onMatchComplete(outcome)
             }
+        }
+        .onAppear {
+            audio.startMusic()
+            viewModel.kickAutoPilotIfNeeded()
+        }
+        .onDisappear {
+            audio.stopMusic()
+        }
+        .onReceive(viewModel.$lastEvents) { events in
+            audio.handle(events: events)
         }
     }
 
@@ -125,8 +160,12 @@ struct GameView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                } else {
+                } else if viewModel.matchState.plies == 0 {
                     Text("Roll to start")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                } else {
+                    Text("Roll dice")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -365,6 +404,7 @@ enum BoardSceneHost {
         // hosting view, so a nominal iPad-portrait size is enough here.
         let scene = BoardScene(size: CGSize(width: 1024, height: 1366))
         scene.scaleMode = .resizeFill
+        scene.theme = RegionTheme(region: RSRegion(contentID: viewModel.regionID))
         scene.matchState = viewModel.matchState
         scene.onSquareTap = { squareIndex in
             // Find one of the current player's movable pieces on this square.

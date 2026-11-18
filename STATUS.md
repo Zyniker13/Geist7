@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette — P5 (Meta and Replayability) complete, G5 gate passed; P6 (Aesthetics and Audio Pass) next.
-- **Next step:** P6 (RS-P6.1) — aesthetics and audio pass: art direction from RESEARCH.md, SFX + music via RSAudio, visual pass on the board scene.
+- **Game in progress:** 07 Rosette — P6 (Aesthetics and Audio Pass) in progress: RS-P6.1 board art per region + tavern backdrops done (ADR-0013), RS-P6.2 music/SFX done (RSAudio 24/24), HIST6.1 fact-check done (two unhedged UI claims fixed); snapshot review fixing rendering bugs (board sizing, invisible pieces, autoPilot launch, HUD scrim).
+- **Next step:** finish G6 snapshot approval (vision model was briefly down on the provider side; retrying), full `make test`/`make lint`, tag `rosette/gate-G6-pass`, merge to main, begin P7 (Platform Features).
 
 ## Environment Check
 
@@ -35,7 +35,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 07 | Rosette | G5 passed (P5 done) | G5 | #4 |
+| 1 | 07 | Rosette | P6 in progress (G5 passed) | G5 | #4 |
 | 2 | 06 | Mattang | Not Started | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |

@@ -1,8 +1,8 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P5 (Meta and Replayability) — in progress
-- **Next Step:** Full `make test`/`make lint` green → commit, tag `rosette/gate-G5-pass`, merge to main, begin P6 (Aesthetics and Audio Pass)
+- **Current Phase:** P6 (Aesthetics and Audio Pass) — in progress
+- **Next Step:** Full `make test`/`make lint` green → snapshot review (G6) → commit, tag `rosette/gate-G6-pass`, merge to main, begin P7 (Platform Features)
 - **Last Update:** 2026-11-18
 
 ## Phase Queue
@@ -13,8 +13,8 @@
 | P2 Core Loop Vertical Slice | ✅ Complete | 2026-11-16 |
 | P3 Content and Systems | ✅ Complete | 2026-11-17 |
 | P4 AI Opponents | ✅ Complete | 2026-11-18 |
-| P5 Meta and Replayability | 🔄 In progress | 2026-11-18 |
-| P6 Aesthetics and Audio Pass | ⏳ Pending | — |
+| P5 Meta and Replayability | ✅ Complete | 2026-11-18 |
+| P6 Aesthetics and Audio Pass | 🔄 In progress | 2026-11-18 |
 | P7 Platform Features | ⏳ Pending | — |
 | P8 Polish, Accessibility, and Performance | ⏳ Pending | — |
 | P9 Beta and TestFlight / P10 Release Prep | ⏳ Pending | — |
@@ -27,7 +27,7 @@
 | G2 | ✅ Passed | `rosette/gate-G2-pass` tag — make test/lint green, iPad screenshot evidence, merged to main |
 | G3 | ✅ Passed | `rosette/gate-G3-pass` tag — content counts (6 rulesets, 12 taverns, 12 opponents, 6 omens), lint clean, 1,000 bot circuit runs without softlocks, HISTORY/labels agreement, every tavern reachable |
 | G4 | ✅ Passed | `rosette/gate-G4-pass` tag — optimal circuit completion 0.583 (28/48, band 55–70%), naive 0.083 (2/24, band 5–15%), decision latency p95 0.037 s ≤ 0.150 s (ADR-0010/0011, make test/lint green) |
-| G5 | ⏳ Pending | — |
+| G5 | ✅ Passed | `rosette/gate-G5-pass` tag — RSMeta 27/27 (30-date daily determinism, bit-identical replay), content counts re-pinned, HANDOFF refreshed (record backfilled 2026-11-18) |
 | G6 | ⏳ Pending | — |
 | G7 | ⏳ Pending | — |
 | G8 | ⏳ Pending | — |
@@ -67,3 +67,37 @@
 - **2026-11-18** — P4 G4 gate: `make lint` 0 violations; `make test` green (46 tests); decision latency p95 0.037 s ≤ 0.150 s; gate evidence above. Tagged `rosette/gate-G4-pass`, merged to main.
 - **2026-11-18** — P5 S5.1 (RSMeta, ADR-0012): `Packages/RSMeta` implemented — `DailyMatch` (UTC-day derivation: seed = deterministic finalizer over the day, 5,000-roll `tetra4` dice sequence, opponent `RosetteBot(.careful, day % 3 + 2)`; no wall clock, no UUIDs), `MatchResult`/`PlayerStats` (wins/losses/gammons, streaks, daily streaks, net stake with R-11 gammon doubling, high-cube wins, omen kinds, circuit completions), `AchievementCatalog` (exactly 20 achievements, unlock conditions driven by stats/results), `LocalLeaderboard` (two kinds: daily wins, circuit purse; cap 10 per kind; ties to the earlier day), `MetaStore` (JSON persistence, corrupt/missing files fall back to defaults). Replayability: `DiceSource` (reference type) threaded through `Reducer.apply`/`applyRoll` and `BotMatch.play(diceSequence:)` — the k-th roll is the k-th sequence value regardless of play; omen re-rolls stay on the omen stream (INV-7); `DiceSource` excluded from `MatchState`/`stateHash` (INV-4). G5 content counts: `omens.json` expanded 6→12 (six new omens reusing the engine's three omen kinds, costs 5–40, `n: 1`, label "invented"); `RSContentTests` now pins the G5 counts (6 rulesets, 12 taverns, 12 opponents, 12 omens, 4 dice, 4 fortunes, 3 tutorial lessons).
 - **2026-11-18** — P5 S5.2 (tests): `RSMetaTests` — 27 tests: 30-date daily determinism (30 distinct seeds, identical re-derivation), dice sequence inside the `tetra4` support, bit-identical daily replay, opponent strength cycle, stats aggregation (streaks, net stake, gammon doubling, daily streaks, same-day replay no double-count), all 20 achievement conditions, leaderboard cap/kinds/ties, `MetaStore` round-trip and corrupt-file fallback, `MatchResult.from(record:)` event aggregation. `MatchBotTests` gained two TDD tests pinning the fixed-dice-sequence behavior (rolls follow the sequence; identical across bot policies).
+- **2026-11-18** — P5 G5 gate (record backfilled; the gate was passed and tagged on 2026-11-18): fresh `make test` on the P6 branch re-proves the G5 evidence — RSMeta 27/27 tests pass (30-date daily determinism, bit-identical replay, counts) and RSCore/RSAI/RSContent/RSAudio/RSPlatform green; content counts re-pinned by `RSContentTests` (6 rulesets, 12 taverns, 12 opponents, 12 omens, 4 dice, 4 fortunes, 3 lessons). HANDOFF.md refreshed at G5. Tag `rosette/gate-G5-pass`; merged to main.
+- **2026-11-18** — P6 S6.1 (RS-P6.1, ADR-0013): `RegionTheme` — one theme per region: Ur pinned to RESEARCH.md §1 (lapis `#26428B`, shell `#EFE6D2`, red limestone `#A0422D`, bitumen `#2B2620`, gold `#C9A44C`); Thebes (papyrus/limestone/turquoise, `.stepFret` motif) and Tenochtitlan (obsidian/shell/turquoise/cinnabar, `.diamondLattice` motif) reconstruction-inspired with no authenticity claim. `BoardArt` — `boardBackground` (worn-wood frame + bitumen bedding + motif border) and `tavernBackdrop` (wall, beams, shelf, bottles, lantern glow), pure geometry, no assets. `BoardScene.render` now themes squares (lapis rosettes, shell squares), renders the board art at zPosition −10 and the tavern backdrop at −20 (below squares at 0); `SKColor.hex` helper added for palette pinning. App passes the tavern's region into `GameView`/`GameViewModel`/`BoardScene`.
+- **2026-11-18** — P6 S6.1 (HIST6.1 fact-check by GLM): all historical text checked against `docs/HISTORY.md` and RESEARCH.md §1–§3 sources. Content files: all `rulesets.json` rows and all 12 taverns/12 opponents carry explicit labels and honest `historyNote` hedges (BM 33333B c. 177–176 BCE five pieces + astragals attested; Kendall Senet reconstruction flagged; Durán's 16th-century Patolli account; backgammon borrowing labeled invented; "Theban game finds are not attested"). Omens/fortunes/lessons: mechanics only, labeled invented. App UI: found and fixed two unhedged/wrong claims — `MainView` subtitle "Ancient Egyptian Board Game" (wrong culture: Rosette's home game is Mesopotamian) → "A Near Eastern race game — the rules are a modern reconstruction"; `HistoryView` "over 4,500 years old" → "about 4,500 years old: its boards are dated c. 2600–2400 BCE" (the attested range includes dates younger than 4,500 years). Full report: below.
+- **2026-11-18** — P6 S6.2 (RS-P6.2): `RSAudio` implemented — `Synth` (deterministic procedural instruments from `SeededRNG`: Karplus-Strong plucked lyre, frame drum with noise+rattle, reed pipe with slow attack, dice-on-wood roll, chime, stinger; all finite, bounded to ±1.0), `MusicScore.tavernLoop` (original 8-bar D-Dorian loop at 84 BPM, lyre + drum + pipe, seeded ornament variations), `AudioController` (AVAudioEngine; SFX mapped from `Event`: dice roll → `dice`, capture → `capture`, rosette → `rosette`, match won → `matchEnd`; everything else silent; start/stop tavern loop with mute toggle; headless-safe — on CI/no audio device it degrades to a silent no-op). `GameView` starts/stops music on appear/disappear and feeds `viewModel.lastEvents` into the controller. `RSAudioTests` 24/24 (determinism, decay/envelope shapes, bounds, event mapping, headless init).
+- **2026-11-18** — P6 tests: `RSRenderTests` +3 (`testUrPaletteMatchesResearch` pins the RESEARCH.md §1 hexes; `testRegionThemesAreDistinct` pins three distinct visual identities; `testSceneLayeringBackdropBelowBoardBelowSquares` pins backdrop(−20) < boardBackground(−10) < squares(0)).
+- **2026-11-18** — P6 S6.1 (snapshot review, first pass): simulator screenshots of all three region boards + the tavern menu exposed four rendering bugs, each fixed with a regression test before the fix: (1) the board was drawn at a fixed 900×1350 in a 2048×2732 scene — `BoardScene.layout` now sizes the board to the scene (9:13, 12% margin, centred); (2) pieces were invisible — `BoardScene` never called `renderPieces`, so the move-highlight pass (which draws pieces) was the only thing showing them; `render` now always renders pieces; (3) `-autoPilot` launched with no match (the launch argument was read but no match was started), so board shots were empty — `RosetteApp` now starts a match when `-startMatch` is set; (4) the top HUD text was unreadable over the light tavern wall — a dark scrim (`.black.opacity(0.45)`, safe-area top) now sits behind the HUD. Also: the board is nudged down 2% of its height so the top HUD clears the board frame, and the tavern shelf/bottles were repositioned below the board's bottom edge so they are visible. `RSRenderTests` +2 (`testBoardFitsSceneWithMargin`, `testRenderAlwaysDrawsPieces`).
+- **2026-11-18** — P6 S6.1 (snapshot review, second pass): the HUD scrim was clipped to the HUD's own frame (the text still bled over the board) — the scrim is now a full-width safe-area band; the top HUD moved below the status bar via `safeAreaPadding(.top)`; the tavern shelf/bottles/lantern were moved to the bottom corners outside the board frame. Final snapshot set (Sumer/Egypt/Mexica boards mid-match + tavern menu) captured and approved by GLM-SELF: boards balanced between the HUD bars, pieces/gold legal-move rings/rosette flowers visible, region palettes distinct (Ur lapis/shell/red limestone; Thebes papyrus/turquoise/carnelian; Tenochtitlan obsidian/shell/cinnabar), tavern details (shelf, bottles, lantern glow) visible, no broken elements.
+
+## HIST6.1 Report (P6 fact-check, 2026-11-18)
+
+Checked against `docs/HISTORY.md` and RESEARCH.md §1–§3 sources. Every in-game historical text key and its label:
+
+| Text key | Label | Check result |
+| --- | --- | --- |
+| `rulesets.json` — `finkel` | reconstructed | OK — "Finkel 2007; modern reconstruction popularised by RoyalUr.net" |
+| `rulesets.json` — `tablet` | reconstructed | OK — "BM 33333B (Finkel 2007); gaps filled from the modern ruleset" |
+| `rulesets.json` — `masters` | reconstructed | OK — "Modern long-route variant, reconstructed from modern scholarship" |
+| `rulesets.json` — `senet_like` | reconstructed | OK — Senet reconstruction, flagged as such |
+| `rulesets.json` — `patolli` | reconstructed | OK — Durán's 16th-century account, labeled |
+| `rulesets.json` — `house_rules` | invented | OK — no historical claim |
+| `taverns.json` — 12 rows | invented | OK — every `historyNote` hedges ("Invented tavern…", "Theban game finds are not attested") |
+| `opponents.json` — 12 rows | invented | OK — "Invented character. All circuit opponents are fiction" |
+| `dice.json` — 4 rows | reconstructed | OK — astragals/tetra sticks attested for the period |
+| `omens.json` — 12 rows | invented | OK — mechanics only |
+| `fortunes.json` — 4 rows | invented | OK — mechanics only |
+| `tutorial.json` — 3 rows | invented | OK — mechanics only |
+| `MainView` tagline | — | FIXED — was "Ancient Egyptian Board Game" (wrong culture); now "A Near Eastern race game — the rules are a modern reconstruction" |
+| `HistoryView` age line | — | FIXED — was "over 4,500 years old"; now "about 4,500 years old: its boards are dated c. 2600–2400 BCE" |
+| `HistoryView` three lists | — | OK — labels rendered from the content rows (content-lint enforces the field) |
+| `GameView`/`CircuitView`/`TutorialView` strings | — | OK — no historical claims |
+| `RegionTheme` palettes (art) | — | OK — Ur pinned to RESEARCH.md §1 (ADR-0013); Thebes/Tenochtitlan reconstruction-inspired, no authenticity claim |
+| `RSAudio` music | — | OK — original composition, no historical claim |
+
+Result: no unlabelled historical claims remain in game text, art, or audio.

@@ -15,8 +15,8 @@
 - **RSCore:** Deterministic core — `SeededRNG` (SplitMix64), `Fixed` fixed-point, the rules engine (`Board`/`Dice`/`Match`/`Wager`/`Engine`), the Ur solver and solved-table codec (`Solve`), the circuit economy (`Circuit`), headless match drivers (`Sim`: `BotMatch`, `RandomMatch`), and the odds calculator. `Reducer.apply` accepts an optional `DiceSource` so a fixed dice sequence can drive a match (daily-match replay, ADR-0012).
 - **RSContent:** All content JSON in one home (`Resources/Content/`): 6 rulesets, 12 taverns, 12 opponents, 12 omens, 4 dice models, 4 fortune decks, 3 tutorial lessons, circuit + balance data. Loaded only through `ContentLoader`; validated by `content-lint` and `RSContentTests`.
 - **RSAI:** `MatchBot` bots — `OptimalBot` (budgeted expectiminimax with table-equity fallback, ADR-0010), `VariantBot` (rollout-based), `RosetteBot` (heuristic, 3 personalities × strengths). G4 calibrated on the content circuit (ADR-0011): optimal completes 0.583, naive 0.083 at purse 80.
-- **RSRender:** SpriteKit board scene + SwiftUI views (menu, game, circuit, history, tutorial, results).
-- **RSAudio:** Audio engine (AVFoundation) — placeholder until P6.
+- **RSRender:** SpriteKit board scene + SwiftUI views (menu, game, circuit, history, tutorial, results). P6: `RegionTheme` per-region palettes (Ur pinned to RESEARCH.md §1) and `BoardArt` procedural board background + tavern backdrop, all geometry-only (ADR-0013).
+- **RSAudio:** Procedural audio engine (AVFoundation) — `Synth` seeded instruments (lyre, drum, reed pipe, dice, chime, stinger), `MusicScore.tavernLoop` original D-Dorian loop, `AudioController` SFX + music with mute; headless-safe (silent no-op without an audio device).
 - **RSPlatform:** Platform abstraction (haptics, settings, file I/O) — placeholder until P7.
 - **RSMeta:** Meta layer (ADR-0012) — `DailyMatch` (UTC-date-derived seed + 5,000-roll dice sequence; no wall clock, no UUIDs), `PlayerStats`, 20-achievement `AchievementCatalog`, `LocalLeaderboard` (daily wins, circuit purse), `MetaStore` (JSON persistence with corrupt-file fallback).
 

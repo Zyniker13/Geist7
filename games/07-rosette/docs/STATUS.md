@@ -1,24 +1,23 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P4 (AI) — G4 gate passed pending tag/merge
-- **Next Step:** Commit P4, tag `rosette/gate-G4-pass`, merge to main, begin P5 (Audio)
+- **Current Phase:** P5 (Meta and Replayability) — in progress
+- **Next Step:** Full `make test`/`make lint` green → commit, tag `rosette/gate-G5-pass`, merge to main, begin P6 (Aesthetics and Audio Pass)
 - **Last Update:** 2026-11-18
 
 ## Phase Queue
 | Phase | Status | Last Updated |
 | --- | --- | --- |
 | P0 Setup | ✅ Complete | 2026-11-16 |
-| P1 Core Rules | ✅ Complete | 2026-11-16 |
-| P2 UI Shell | ✅ Complete | 2026-11-16 |
-| P3 Game Loop | ✅ Complete | 2026-11-17 |
-| P4 AI | ✅ Complete | 2026-11-18 |
-| P5 Audio | ⏳ Pending | — |
-| P6 Platform | ⏳ Pending | — |
-| P7 Meta | ⏳ Pending | — |
-| P8 Content | ⏳ Pending | — |
-| P9 Polish | ⏳ Pending | — |
-| P10 Release | ⏳ Pending | — |
+| P1 Rules Engine Prototype | ✅ Complete | 2026-11-16 |
+| P2 Core Loop Vertical Slice | ✅ Complete | 2026-11-16 |
+| P3 Content and Systems | ✅ Complete | 2026-11-17 |
+| P4 AI Opponents | ✅ Complete | 2026-11-18 |
+| P5 Meta and Replayability | 🔄 In progress | 2026-11-18 |
+| P6 Aesthetics and Audio Pass | ⏳ Pending | — |
+| P7 Platform Features | ⏳ Pending | — |
+| P8 Polish, Accessibility, and Performance | ⏳ Pending | — |
+| P9 Beta and TestFlight / P10 Release Prep | ⏳ Pending | — |
 
 ## Gate Queue
 | Gate | Status | Evidence |
@@ -66,3 +65,5 @@
 - **2026-11-18** — P4 S4.8 (cube rule regressions R-21/R-10): `OptimalBot.wantsDouble` and `VariantBot.wantsDouble` now guard "at most one double offer per turn" (`!state.hasDoubledThisTurn`) and cube ownership (`cube.owner == current player` unless centred), matching engine `validateOffer`. TDD-verified: `optimalBotNeverOffersAfterCubeUsed` fails without the guards, passes with them. `scratchEmmMirrorStats` completes 30/30 EMM-vs-EMM mirrors with no rule errors.
 - **2026-11-18** — P4 S4.9 (G4 circuit calibration, ADR-0011): Rewrote the completion-rate checks as real circuit runs (`runCircuit`) on the content circuit with per-region opponent strengths (Sumer 3, Egypt 4, Mexica 4), attempt-indexed re-challenge seeds, and settlement at stake × cube. Calibrated the starting purse to 80 (`circuit.json`, roadmap-tunable 20–80): optimal completes 0.583 (28/48, band 55–70%), naive (careful s2) completes 0.083 (2/24, band 5–15%). Regression tests pin wide plausibility bands over 24 concurrent runs; manual sweeps live in disabled scratch tests.
 - **2026-11-18** — P4 G4 gate: `make lint` 0 violations; `make test` green (46 tests); decision latency p95 0.037 s ≤ 0.150 s; gate evidence above. Tagged `rosette/gate-G4-pass`, merged to main.
+- **2026-11-18** — P5 S5.1 (RSMeta, ADR-0012): `Packages/RSMeta` implemented — `DailyMatch` (UTC-day derivation: seed = deterministic finalizer over the day, 5,000-roll `tetra4` dice sequence, opponent `RosetteBot(.careful, day % 3 + 2)`; no wall clock, no UUIDs), `MatchResult`/`PlayerStats` (wins/losses/gammons, streaks, daily streaks, net stake with R-11 gammon doubling, high-cube wins, omen kinds, circuit completions), `AchievementCatalog` (exactly 20 achievements, unlock conditions driven by stats/results), `LocalLeaderboard` (two kinds: daily wins, circuit purse; cap 10 per kind; ties to the earlier day), `MetaStore` (JSON persistence, corrupt/missing files fall back to defaults). Replayability: `DiceSource` (reference type) threaded through `Reducer.apply`/`applyRoll` and `BotMatch.play(diceSequence:)` — the k-th roll is the k-th sequence value regardless of play; omen re-rolls stay on the omen stream (INV-7); `DiceSource` excluded from `MatchState`/`stateHash` (INV-4). G5 content counts: `omens.json` expanded 6→12 (six new omens reusing the engine's three omen kinds, costs 5–40, `n: 1`, label "invented"); `RSContentTests` now pins the G5 counts (6 rulesets, 12 taverns, 12 opponents, 12 omens, 4 dice, 4 fortunes, 3 tutorial lessons).
+- **2026-11-18** — P5 S5.2 (tests): `RSMetaTests` — 27 tests: 30-date daily determinism (30 distinct seeds, identical re-derivation), dice sequence inside the `tetra4` support, bit-identical daily replay, opponent strength cycle, stats aggregation (streaks, net stake, gammon doubling, daily streaks, same-day replay no double-count), all 20 achievement conditions, leaderboard cap/kinds/ties, `MetaStore` round-trip and corrupt-file fallback, `MatchResult.from(record:)` event aggregation. `MatchBotTests` gained two TDD tests pinning the fixed-dice-sequence behavior (rolls follow the sequence; identical across bot policies).

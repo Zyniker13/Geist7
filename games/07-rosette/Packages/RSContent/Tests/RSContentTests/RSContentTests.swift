@@ -10,7 +10,7 @@ import XCTest
 
 final class RSContentTests: XCTestCase {
 
-    // MARK: Validation and counts (§5, G3 levels)
+    // MARK: Validation and counts (§5, G5 levels)
 
     func testValidateAllIsClean() throws {
         let result = try ContentLoader().validateAll()
@@ -23,7 +23,7 @@ final class RSContentTests: XCTestCase {
         XCTAssertEqual(try loader.loadRulesets().count, 6, "six rulesets")
         XCTAssertEqual(try loader.loadTaverns().count, 12, "12 taverns (3 regions × 4)")
         XCTAssertEqual(try loader.loadOpponents().count, 12, "12 opponents")
-        XCTAssertEqual(try loader.loadOmens().count, 6, "six omens")
+        XCTAssertEqual(try loader.loadOmens().count, 12, "twelve omens (G5)")
         XCTAssertEqual(try loader.loadFortunes().count, 4, "four fortune squares")
         XCTAssertEqual(try loader.loadTutorial().count, 3, "three tutorial lessons")
     }

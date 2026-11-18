@@ -21,6 +21,10 @@ public enum BotMatch {
     /// rolls and lets the bot choose among the legal moves. Omens are held
     /// but not played by the driver (P5 wires omen play into the UI flow;
     /// the driver keeps them pending for the recorded replay).
+    ///
+    /// `diceSequence` (P5 daily match): a fixed dice stream that drives
+    /// every roll before the seeded RNG; the k-th roll is the k-th value
+    /// for every player facing the same sequence.
     public static func play(
         seed: UInt64,
         ruleset: RuleSet,
@@ -32,7 +36,8 @@ public enum BotMatch {
         omens0: [Omen] = [],
         omens1: [Omen] = [],
         maxCube: Int = 64,
-        maxActions: Int = 100_000
+        maxActions: Int = 100_000,
+        diceSequence: [Int]? = nil
     ) throws -> Record {
         var state = MatchState.newMatch(
             ruleset: ruleset,
@@ -47,6 +52,9 @@ public enum BotMatch {
 
         var rng = SeededRNG(seed: seed)
         var omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
+        // A caller-supplied dice sequence (the daily match) drives every
+        // roll before the seeded RNG does; exhaustion falls back to the RNG.
+        let diceSource: DiceSource? = diceSequence.map { DiceSource(values: $0) }
         var actions: [Action] = []
         var events: [Event] = []
 
@@ -109,7 +117,13 @@ public enum BotMatch {
                 }
                 action = .move(move.piece)
             }
-            let result = try Reducer.apply(action, to: state, rng: &rng, omenRng: &omenRng)
+            let result = try Reducer.apply(
+                action,
+                to: state,
+                rng: &rng,
+                omenRng: &omenRng,
+                diceSource: diceSource
+            )
             state = result.state
             actions.append(action)
             events.append(contentsOf: result.events)

@@ -64,5 +64,71 @@
     },
     "label": "invented",
     "historyNote": "Invented mechanic: the premium split token."
+  },
+  {
+    "id": "lucky_throw",
+    "name": "Lucky Throw",
+    "cost": 8,
+    "effect": {
+      "kind": "reroll",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: a cheap re-roll sold at the back rooms of the tavern."
+  },
+  {
+    "id": "storm_throw",
+    "name": "Storm Throw",
+    "cost": 20,
+    "effect": {
+      "kind": "reroll",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the expensive re-roll, priced for players who distrust their first throw."
+  },
+  {
+    "id": "bare_wards",
+    "name": "Bare Wards",
+    "cost": 22,
+    "effect": {
+      "kind": "unsafeRosettes",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the mid-price safety suspension, between the budget and premium wards."
+  },
+  {
+    "id": "open_wards",
+    "name": "Open Wards",
+    "cost": 30,
+    "effect": {
+      "kind": "unsafeRosettes",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the premium safety suspension, for players who fear the rosettes most."
+  },
+  {
+    "id": "forked_path",
+    "name": "Forked Path",
+    "cost": 14,
+    "effect": {
+      "kind": "split",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: a split token a little cheaper than the standard split path."
+  },
+  {
+    "id": "twin_fork",
+    "name": "Twin Fork",
+    "cost": 35,
+    "effect": {
+      "kind": "split",
+      "n": 1
+    },
+    "label": "invented",
+    "historyNote": "Invented mechanic: the top-priced split token in the house deck."
   }
 ]

@@ -214,6 +214,87 @@ final class MatchBotTests: XCTestCase {
             XCTAssertLessThan(record.actions.count, 100_000)
         }
     }
+    func testFixedDiceSequenceDrivesRolls() throws {
+        // A caller-supplied dice sequence (the daily match, P5) must drive
+        // every roll: the k-th diceRolled event equals the k-th sequence
+        // value, independent of the RNG seed. A full Finkel match takes
+        // ~400 rolls, so 5000 values never exhaust mid-match.
+        var rng = SeededRNG(seed: 7)
+        let sequence = (0..<5000).map { _ in DiceModel.tetra4.roll(rng: &rng) }
+        let record = try BotMatch.play(
+            seed: 99,
+            ruleset: .finkel,
+            dice: .tetra4,
+            stake: 2,
+            bot0: RosetteBot(personality: .careful, strength: 2),
+            bot1: RosetteBot(personality: .careful, strength: 2),
+            diceSequence: sequence
+        )
+        let rolls = record.events.compactMap { event -> Int? in
+            if case .diceRolled(let value) = event { return value }
+            return nil
+        }
+        XCTAssertFalse(rolls.isEmpty)
+        XCTAssertLessThanOrEqual(rolls.count, sequence.count)
+        for (index, value) in rolls.enumerated() {
+            XCTAssertEqual(value, sequence[index], "roll \(index)")
+        }
+    }
+
+    func testDiceSequenceIdenticalAcrossBotPolicies() throws {
+        // "Same for everyone": two players facing the same date draw the
+        // same dice stream no matter how they play. The k-th roll of each
+        // match equals the shared sequence prefix.
+        var rng = SeededRNG(seed: 1234)
+        let sequence = (0..<5000).map { _ in DiceModel.tetra4.roll(rng: &rng) }
+        let a = try BotMatch.play(
+            seed: 5,
+            ruleset: .finkel,
+            dice: .tetra4,
+            stake: 2,
+            bot0: RosetteBot(personality: .careful, strength: 1),
+            bot1: RosetteBot(personality: .careful, strength: 4),
+            diceSequence: sequence
+        )
+        let b = try BotMatch.play(
+            seed: 5,
+            ruleset: .finkel,
+            dice: .tetra4,
+            stake: 2,
+            bot0: RosetteBot(personality: .careful, strength: 4),
+            bot1: RosetteBot(personality: .careful, strength: 1),
+            diceSequence: sequence
+        )
+        func rolls(_ record: BotMatch.Record) -> [Int] {
+            record.events.compactMap { event -> Int? in
+                if case .diceRolled(let value) = event { return value }
+                return nil
+            }
+        }
+        let ra = rolls(a), rb = rolls(b)
+        let shared = min(ra.count, rb.count)
+        XCTAssertGreaterThanOrEqual(shared, 10)
+        for index in 0..<shared {
+            XCTAssertEqual(ra[index], rb[index], "shared roll \(index)")
+            XCTAssertEqual(ra[index], sequence[index], "sequence roll \(index)")
+        }
+    }
+
+    func testDiceSequenceExhaustionFallsBackToRNG() throws {
+        // A sequence shorter than the match falls back to the seeded RNG
+        // rather than crashing (INV-1: the match still completes).
+        let record = try BotMatch.play(
+            seed: 42,
+            ruleset: .finkel,
+            dice: .tetra4,
+            stake: 2,
+            bot0: RosetteBot(personality: .careful, strength: 2),
+            bot1: RosetteBot(personality: .careful, strength: 2),
+            diceSequence: [2, 0]
+        )
+        XCTAssertTrue(record.finalState.isComplete)
+        XCTAssertTrue(record.finalState.pieceConservationValid)
+    }
 }
 
 extension MatchState {

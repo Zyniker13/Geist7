@@ -55,13 +55,13 @@ public struct Opponent: Sendable, Equatable {
     }
 
     /// R-24: the opponent's tell — its doubling and take thresholds, rounded
-    /// to 5%. Derived from cubeAggression until P4 wires real thresholds.
+    /// to 5%. The thresholds come from `Personality.cubeThresholds`, the same
+    /// source RSAI's CubePolicy plays by, so the tell is honest.
     public func tell() -> String {
-        let aggression = max(0, min(10, cubeAggression))
-        let doublePct = 70 - aggression * 2  // 70% down to 50%
-        let rounded = (doublePct / 5) * 5
-        let takePct = ((25 + aggression) / 5) * 5
-        return "Doubles near \(rounded)%, takes near \(takePct)%."
+        let thresholds = personality.cubeThresholds(aggression: cubeAggression)
+        let roundedDouble = (thresholds.double / 5) * 5
+        let roundedTake = (thresholds.take / 5) * 5
+        return "Doubles near \(roundedDouble)%, takes near \(roundedTake)%."
     }
 
     /// Build the circuit bot for this opponent at the tavern's strength.
@@ -83,4 +83,30 @@ public enum Personality: String, Sendable, Codable, CaseIterable {
     case bluffer
     /// Takes risks; doubles early and often.
     case gambler
+
+    /// The personality's shift of the doubling threshold, in percentage
+    /// points (A.5: gambler −10%, careful +5%; bluffers bluff early, which
+    /// reads as the same −10% shift; greedy plays the base line).
+    var doubleThresholdShift: Int {
+        switch self {
+        case .careful: return 5
+        case .greedy: return 0
+        case .bluffer: return -10
+        case .gambler: return -10
+        }
+    }
+
+    /// This personality's doubling and take thresholds, in integer percent,
+    /// for an opponent with content `cubeAggression` 0–10 (A.4/A.5: the
+    /// optimal double threshold is 70%; aggression lowers it, and the
+    /// personality shifts it further). The take threshold falls with
+    /// aggression (riskier players accept more). `Opponent.tell()` reports
+    /// these rounded to 5% (R-24), and RSAI's CubePolicy plays by them —
+    /// one source of truth so the tell can never lie.
+    public func cubeThresholds(aggression: Int) -> (double: Int, take: Int) {
+        let level = max(0, min(10, aggression))
+        let double = (70 - 2 * level + doubleThresholdShift)
+        let take = 25 - level
+        return (double: max(45, min(80, double)), take: max(10, min(35, take)))
+    }
 }

@@ -1,9 +1,10 @@
 // MARK: - BotMatch
 
-/// Deterministic bot-vs-bot match driver: like `RandomMatch`, but move
-/// choices come from `RosetteBot` personalities instead of uniform picks.
-/// Used by the circuit simulation (G3: bot circuit runs) and by tests that
-/// exercise personality behaviour. Three independent streams derive from one
+/// Deterministic bot-vs-bot match driver: like `RandomMatch`, but choices
+/// come from `MatchBot` bots — the heuristic `RosetteBot` personalities, or
+/// RSAI's table and expectiminimax bots (ADR-0011). Used by the circuit
+/// simulation (G3: bot circuit runs; G4: AI completion metrics) and by tests
+/// that exercise bot behaviour. Three independent streams derive from one
 /// seed (dice, omen, and driver bookkeeping) so replaying the recorded
 /// actions through the reducer alone reproduces the match bit for bit.
 public enum BotMatch {
@@ -14,19 +15,23 @@ public enum BotMatch {
         public let finalState: MatchState
     }
 
-    /// Play one full match between two bots. The cube is left centred and
-    /// untouched (cube play enters with the P4 policies); omens are held but
-    /// not played by the driver.
+    /// Play one full match between two bots. On fresh turns the driver asks
+    /// the bot whether to offer a double before rolling (R-10) and, on a
+    /// pending double, asks the decider to accept or concede; otherwise it
+    /// rolls and lets the bot choose among the legal moves. Omens are held
+    /// but not played by the driver (P5 wires omen play into the UI flow;
+    /// the driver keeps them pending for the recorded replay).
     public static func play(
         seed: UInt64,
         ruleset: RuleSet,
         dice: DiceModel,
         stake: Int,
-        bot0: RosetteBot,
-        bot1: RosetteBot,
+        bot0: any MatchBot,
+        bot1: any MatchBot,
         fortunes: [FortuneSquare] = [],
         omens0: [Omen] = [],
         omens1: [Omen] = [],
+        maxCube: Int = 64,
         maxActions: Int = 100_000
     ) throws -> Record {
         var state = MatchState.newMatch(
@@ -48,8 +53,27 @@ public enum BotMatch {
         for _ in 0..<maxActions {
             if state.isComplete { break }
             let action: Action
-            if !state.hasRolled {
-                action = .roll
+            if state.doubleOffered {
+                // A pending double: the decider (the opponent of the player
+                // who offered) accepts or concedes (R-10).
+                let decider: PlayerID = state.currentPlayer == .player0 ? .player1 : .player0
+                let bot = decider == .player0 ? bot0 : bot1
+                var pickRng = SeededRNG(
+                    seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
+                action = bot.decideDouble(state: state, rng: &pickRng)
+                    ? .acceptDouble : .concede
+            } else if !state.hasRolled {
+                // A fresh turn: the bot may offer a double before rolling
+                // (R-10), when the cube rules allow one.
+                let bot = state.currentPlayer == .player0 ? bot0 : bot1
+                var pickRng = SeededRNG(
+                    seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
+                if canOfferDouble(in: state, maxCube: maxCube),
+                    bot.wantsDouble(state: state, rng: &pickRng) {
+                    action = .offerDouble
+                } else {
+                    action = .roll
+                }
             } else {
                 let moves = MoveGen.legalMoves(
                     for: state.currentPlayer,
@@ -66,9 +90,8 @@ public enum BotMatch {
                 let bot = state.currentPlayer == .player0 ? bot0 : bot1
                 guard
                     let move = bot.chooseMove(
-                        from: moves,
-                        pieces: state.pieces,
-                        track: state.track,
+                        from: state,
+                        moves: moves,
                         rng: &pickRng
                     )
                 else {
@@ -86,5 +109,15 @@ public enum BotMatch {
             throw RuleError.illegalAction("Match did not complete within \(maxActions) actions")
         }
         return Record(actions: actions, events: events, finalState: state)
+    }
+
+    /// Whether the current player may offer a double right now: the cube is
+    /// not dead (R-22 Crawford), no double has been offered or accepted this
+    /// turn (R-21), the player owns the cube or it is centred, and the value
+    /// may not pass `maxCube` (R-10).
+    public static func canOfferDouble(in state: MatchState, maxCube: Int = 64) -> Bool {
+        !state.cubeDead
+            && !state.hasDoubledThisTurn
+            && state.cube.validateOffer(by: state.currentPlayer, maxCube: maxCube) == nil
     }
 }

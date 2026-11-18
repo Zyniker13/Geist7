@@ -108,6 +108,27 @@ public enum Reducer {
 
         result.hasRolled = true
 
+        // The post-roll transition (split omens, move enumeration, pass-on-
+        // no-move) is shared with the AI's search, which must replay the
+        // engine's roll semantics exactly (ADR-0011).
+        return try postRoll(to: result, amount: amount, events: events)
+    }
+
+    /// The state transition after a dice value has been drawn: a roll of 0
+    /// passes (R-3), a split omen divides the roll (R-12), otherwise the
+    /// legal moves for the amount are enumerated; with none the turn passes.
+    /// Shared by `applyRoll` and by the AI's chance-node search (RS-P4.1,
+    /// ADR-0011) so both paths can never drift apart. `events` carries the
+    /// caller's accumulated events (applyRoll's original and replacement
+    /// `diceRolled` records) and is returned appended to.
+    public static func postRoll(
+        to state: MatchState,
+        amount: Int,
+        events: [Event]
+    ) throws(RuleError) -> (MatchState, [Event]) {
+        var result = state
+        var events = events
+
         // R-3: a roll of 0 passes.
         if amount == 0 {
             events.append(Event.turnPassed)
@@ -159,7 +180,11 @@ public enum Reducer {
 
     // MARK: - Move (R-3, R-4, R-5, R-6, R-7, R-8)
 
-    static func applyMove(
+    /// Apply one piece move to the current state. Public so the AI's search
+    /// and the live reducer drive the identical move semantics (ADR-0011);
+    /// the move must be legal (`movablePieceIds`), which is the caller's
+    /// contract exactly as for `.move` actions.
+    public static func applyMove(
         to state: MatchState,
         piece: PieceID
     ) throws(RuleError) -> (MatchState, [Event]) {
@@ -461,8 +486,9 @@ public enum Reducer {
 
     // MARK: - Turn end
 
-    /// Pass the turn to the other player and clear per-turn state.
-    static func endTurn(_ state: MatchState) -> MatchState {
+    /// Pass the turn to the other player and clear per-turn state. Public so
+    /// the AI's search can model the pass transition exactly (ADR-0011).
+    public static func endTurn(_ state: MatchState) -> MatchState {
         var result = state
         result.currentPlayer = result.currentPlayer == .player0 ? .player1 : .player0
         result.diceValue = nil

@@ -18,7 +18,8 @@ let package = Package(
         .target(
             name: "RSAI",
             dependencies: ["RSCore", "RSContent"],
-            path: "Sources/RSAI"
+            path: "Sources/RSAI",
+            resources: [.copy("ur_finkel.bin")]
         ),
         .testTarget(
             name: "RSAITests",

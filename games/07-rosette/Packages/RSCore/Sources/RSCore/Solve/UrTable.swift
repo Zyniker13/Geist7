@@ -7,7 +7,7 @@ import Foundation
 /// (UInt32), the layer offsets as UInt64 values, the win probabilities as
 /// UInt16 in 1/65535 units in the ranking's dense order, and an FNV-1a
 /// 64-bit checksum of everything before it.
-public struct UrTable {
+public struct UrTable: Sendable {
 
     public let pieces: Int
     public let values: [UInt16]

@@ -8,7 +8,7 @@ import Foundation
 /// hash map. Layers group positions by the total number of borne-off
 /// pieces; a layer only reads itself and higher layers, so the solve runs
 /// one layer at a time.
-public struct UrRanking {
+public struct UrRanking: Sendable {
 
     /// Pieces per player (1…7). The Finkel ruleset uses 7.
     public let pieces: Int
@@ -164,7 +164,7 @@ public struct UrRanking {
         self.layerStart = starts
     }
 
-    public let handPairBounds: (Int, Int, Int) -> (low: Int, high: Int)?
+    public let handPairBounds: @Sendable (Int, Int, Int) -> (low: Int, high: Int)?
 
     /// Number of first-player pieces on the shared squares of pattern `s`.
     public func sharedCount0(_ s: Int) -> Int { sharedN0[s] }

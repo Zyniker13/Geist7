@@ -63,7 +63,7 @@ public struct UrPosition: Sendable, Equatable, Hashable {
     }
 
     /// A shared field is valid when every 2-bit group is 0, 1 or 2.
-    static func isValidShared(_ shared: UInt32) -> Bool {
+    public static func isValidShared(_ shared: UInt32) -> Bool {
         var value = shared
         for _ in 0..<8 {
             if value & 3 == 3 { return false }

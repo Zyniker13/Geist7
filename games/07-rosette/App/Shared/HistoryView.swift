@@ -64,7 +64,7 @@ struct HistoryView: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             Text(
-                "The Royal Game of Ur is over 4,500 years old. The board, the pieces, and the dice are attested in the archaeological record. How the game was played is not fully recorded: the modern rules below are a reconstruction, and the Babylonian tablet of Itti-Marduk-balāṭu describes a later five-piece variant. Every element in this game carries its label — Attested, Reconstructed, or Invented — so you always know what the evidence supports."
+                "The Royal Game of Ur is about 4,500 years old: its boards are dated c. 2600–2400 BCE. The board, the pieces, and the dice are attested in the archaeological record. How the game was played is not fully recorded: the modern rules below are a reconstruction, and the Babylonian tablet of Itti-Marduk-balāṭu describes a later five-piece variant. Every element in this game carries its label — Attested, Reconstructed, or Invented — so you always know what the evidence supports."
             )
             .font(.caption)
             .foregroundColor(.secondary)

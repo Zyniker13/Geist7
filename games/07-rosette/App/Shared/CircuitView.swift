@@ -464,6 +464,7 @@ struct CircuitMatchView: View {
                 fortunes: match.fortunes,
                 omens1: match.omens1,
                 stake: match.stake,
+                region: match.tavern.region,
                 showPlayAgain: false,
                 onMatchComplete: { outcome in
                     guard !completed else { return }

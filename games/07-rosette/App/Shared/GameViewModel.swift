@@ -19,6 +19,23 @@ enum LaunchArguments {
         else { return nil }
         return value
     }
+
+    /// "-region ID": override the board region (P6 snapshot captures).
+    /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
+    static var region: String? {
+        let args = ProcessInfo.processInfo.arguments
+        guard
+            let index = args.firstIndex(of: "-region"),
+            index + 1 < args.count
+        else { return nil }
+        return args[index + 1]
+    }
+
+    /// "-startMatch": jump straight into a single match from the menu
+    /// (P6 snapshot captures).
+    static var startMatch: Bool {
+        ProcessInfo.processInfo.arguments.contains("-startMatch")
+    }
 }
 
 /// ViewModel for the Rosette game screen. Bridges SwiftUI to RSCore's
@@ -46,6 +63,8 @@ public final class GameViewModel: ObservableObject {
     @Published public private(set) var errorText: String?
     /// The last event description, for the activity line.
     @Published public private(set) var lastEventText: String = ""
+    /// The events from the last applied action, for the audio layer (RS-P6.2).
+    @Published public private(set) var lastEvents: [Event] = []
 
     // MARK: - Derived state
 
@@ -79,6 +98,8 @@ public final class GameViewModel: ObservableObject {
     private let autoPilot: Bool
     /// The applied action history, for snapshot saves (deterministic replay).
     private var recordedActions: [RecordedAction] = []
+    /// The content region id this match is themed for (RS-P6.1; default: Ur).
+    public let regionID: String
 
     // MARK: - Lifecycle
 
@@ -104,7 +125,8 @@ public final class GameViewModel: ObservableObject {
         useAI: Bool = false,
         seed: UInt64 = 42,
         autoSave: Bool = true,
-        autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot")
+        autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot"),
+        region: String = "sumer"
     ) {
         let defaults = GameViewModel.contentDefaults()
         self.ruleset = ruleset ?? defaults.ruleset
@@ -118,6 +140,7 @@ public final class GameViewModel: ObservableObject {
         self.seed = seed
         self.autoSave = autoSave
         self.autoPilot = autoPilot
+        self.regionID = LaunchArguments.region ?? region
         self.rng = SeededRNG(seed: seed)
         self.omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
         self.matchState = GameViewModel.emptyMatch
@@ -145,6 +168,7 @@ public final class GameViewModel: ObservableObject {
         self.seed = snapshot.seed
         self.autoSave = autoSave
         self.autoPilot = autoPilot
+        self.regionID = "sumer"
         self.rng = SeededRNG(seed: snapshot.seed)
         self.omenRng = SeededRNG(seed: snapshot.seed &+ 0x9E37_79B9_7F4A_7C15)
         self.recordedActions = []
@@ -280,6 +304,7 @@ public final class GameViewModel: ObservableObject {
         aiThinking = false
         errorText = nil
         lastEventText = ""
+        lastEvents = []
     }
 
     /// Pause or resume the match.
@@ -297,6 +322,7 @@ public final class GameViewModel: ObservableObject {
             if let recorded = GameViewModel.recorded(from: action) {
                 recordedActions.append(recorded)
             }
+            lastEvents = result.events
             errorText = nil
             for event in result.events {
                 record(event)
@@ -413,6 +439,14 @@ public final class GameViewModel: ObservableObject {
 
     /// How long the AI waits before acting (fast in autoPilot UI-test runs).
     private var aiDelay: TimeInterval { autoPilot ? 0.05 : 0.5 }
+
+    /// Kick the AI loop when a match appears with nothing yet applied.
+    /// autoPilot runs must self-start, including the opening roll: no
+    /// human tap ever calls applyAction to schedule the first turn.
+    public func kickAutoPilotIfNeeded() {
+        guard autoPilot, !matchState.isComplete, !isPaused else { return }
+        scheduleAIIfNeeded()
+    }
 
     /// Schedule the next AI action when an AI-controlled side must act.
     private func scheduleAIIfNeeded() {

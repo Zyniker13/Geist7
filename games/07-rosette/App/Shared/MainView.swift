@@ -28,9 +28,13 @@ struct MainView: View {
                     .foregroundColor(Color(red: 0.788, green: 0.631, blue: 0.231))  // gold
                     .padding(.top, 60)
 
-                Text("Ancient Egyptian Board Game")
+                Text("A Near Eastern race game — the rules are a modern reconstruction")
                     .font(.caption)
                     .foregroundColor(.gray)
+
+                Spacer()
+
+                RosetteMedallion()
 
                 Spacer()
 
@@ -109,6 +113,9 @@ struct MainView: View {
             }
             .onAppear {
                 resumeSnapshot = SaveManager.resumeCandidate()
+                if LaunchArguments.startMatch {
+                    showGame = true
+                }
             }
             .sheet(isPresented: $showNewGame) {
                 NewGameView(

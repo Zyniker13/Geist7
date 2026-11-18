@@ -34,9 +34,11 @@ public final class SolvedTableStore: Sendable {
     }
 
     /// The win probability of the player about to roll in `position`.
-    /// Returns nil when no table is loaded or the position is outside it.
+    /// Returns nil when no table is loaded or the position is outside the
+    /// table's coverage (never an out-of-range index).
     public func winProbability(forRoller position: UrPosition) -> Double? {
-        table?.winProbability(at: position)
+        guard let table, table.covers(position) else { return nil }
+        return table.winProbability(at: position)
     }
 
     /// Whether a table is loaded and usable.

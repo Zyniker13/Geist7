@@ -219,6 +219,32 @@ final class SolveTests: XCTestCase {
         XCTAssertEqual(ranking.index(of: initial), 0)
     }
 
+    /// Coverage decisions index the ranking's base-3 pattern table, never
+    /// the packed shared field: a packed mask (2 bits per square) reaches
+    /// 65,535 while the pattern table has 3^8 = 6,561 entries, so passing
+    /// the mask directly crashed on any occupied shared square past the
+    /// fourth (regression: seed-1102 match crash, "Index out of range").
+    /// Coverage itself stays exact: the two-piece table covers exactly the
+    /// all-in-hand empty-board tuple and rejects everything else.
+    func testTable_CoversHandlesPackedSharedMasks() throws {
+        let table = try committedTable()
+        let initial = UrPosition(shared: 0, private0: 0, private1: 0, hand0: 2, hand1: 2)
+        XCTAssertTrue(table.covers(initial))
+        // A roller piece on shared square 7 (offset 14) makes the packed
+        // mask 0x4000 = 16,384 > 6,561 — crashed before the fix.
+        let farSquare = UrPosition(
+            shared: 1 << 14, private0: 0, private1: 0, hand0: 2, hand1: 2)
+        XCTAssertFalse(table.covers(farSquare))
+        // Mid-range masks below the pattern count once crashed nothing but
+        // answered with the wrong pattern's counts; they must be rejected.
+        let nearSquare = UrPosition(
+            shared: 1 << 2, private0: 0, private1: 0, hand0: 2, hand1: 2)
+        XCTAssertFalse(table.covers(nearSquare))
+        // Hand counts outside the table's piece count are never covered.
+        let threeInHand = UrPosition(shared: 0, private0: 0, private1: 0, hand0: 3, hand1: 2)
+        XCTAssertFalse(table.covers(threeInHand))
+    }
+
     // MARK: - Table codec
 
     /// Serialization round-trips through deserialize with identical values.

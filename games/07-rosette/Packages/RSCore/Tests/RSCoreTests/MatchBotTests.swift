@@ -14,9 +14,8 @@ final class ScriptedBot: MatchBot {
     }
 
     func chooseMove(
-        from moves: [Move],
-        pieces: [Piece],
-        track: Track,
+        from state: MatchState,
+        moves: [Move],
         rng: inout SeededRNG
     ) -> Move? {
         moves.first
@@ -28,6 +27,14 @@ final class ScriptedBot: MatchBot {
 
     func wantsDouble(state: MatchState, rng: inout SeededRNG) -> Bool {
         offersDouble
+    }
+
+    func chooseOmen(
+        state: MatchState,
+        options: [Omen],
+        rng: inout SeededRNG
+    ) -> Omen? {
+        nil
     }
 }
 

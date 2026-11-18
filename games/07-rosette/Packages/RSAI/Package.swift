@@ -23,7 +23,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RSAITests",
-            dependencies: ["RSAI"],
+            dependencies: ["RSAI", "RSContent"],
             path: "Tests/RSAITests"
         ),
     ]

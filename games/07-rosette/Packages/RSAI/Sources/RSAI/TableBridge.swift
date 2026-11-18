@@ -7,7 +7,7 @@ import RSCore
 /// ruleset is played by expectiminimax instead.
 ///
 /// The conversion mirrors `Tools/SolveUr/Inv5Check.swift`'s `tuple(from:)`
-/// and is pinned by tests against it (ADR-0011).
+/// and is pinned by tests against it (ADR-0010).
 public enum TableBridge {
 
     /// Whether `ruleset` is exactly the layout the solved table covers.

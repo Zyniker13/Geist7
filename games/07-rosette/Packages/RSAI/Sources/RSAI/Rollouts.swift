@@ -21,11 +21,13 @@ public enum Rollouts {
         /// Total plies rolled out (for cost accounting).
         public let plies: Int
 
-        public var winRate: Double { count > 0 ? Double(wins) / Double(count) : 0 }
-        public var gammonWinRate: Double { count > 0 ? Double(gammonWins) / Double(count) : 0 }
-        public var gammonLossRate: Double { count > 0 ? Double(gammonLosses) / Double(count) : 0 }
+        public var winRate: Double { !isEmpty ? Double(wins) / Double(count) : 0 }
+        public var gammonWinRate: Double { !isEmpty ? Double(gammonWins) / Double(count) : 0 }
+        public var gammonLossRate: Double { !isEmpty ? Double(gammonLosses) / Double(count) : 0 }
         /// Number of completed rollouts.
         public var count: Int { wins + losses }
+        // swiftlint:disable:next empty_count
+        public var isEmpty: Bool { count == 0 }
     }
 
     /// Play `count` rollouts from `state`, measuring from `me`'s

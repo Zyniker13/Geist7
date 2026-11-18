@@ -2,7 +2,7 @@
 
 /// Deterministic bot-vs-bot match driver: like `RandomMatch`, but choices
 /// come from `MatchBot` bots — the heuristic `RosetteBot` personalities, or
-/// RSAI's table and expectiminimax bots (ADR-0011). Used by the circuit
+/// RSAI's table and expectiminimax bots (ADR-0010). Used by the circuit
 /// simulation (G3: bot circuit runs; G4: AI completion metrics) and by tests
 /// that exercise bot behaviour. Three independent streams derive from one
 /// seed (dice, omen, and driver bookkeeping) so replaying the recorded
@@ -60,16 +60,26 @@ public enum BotMatch {
                 let bot = decider == .player0 ? bot0 : bot1
                 var pickRng = SeededRNG(
                     seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
-                action = bot.decideDouble(state: state, rng: &pickRng)
+                action =
+                    bot.decideDouble(state: state, rng: &pickRng)
                     ? .acceptDouble : .concede
             } else if !state.hasRolled {
-                // A fresh turn: the bot may offer a double before rolling
-                // (R-10), when the cube rules allow one.
+                // A fresh turn: first omen play (R-12) — the bot may invoke
+                // a held omen before rolling, since the effects shape the
+                // upcoming roll (re-roll, split, unsafe rosettes). Then the
+                // cube question (R-10), then the roll.
                 let bot = state.currentPlayer == .player0 ? bot0 : bot1
                 var pickRng = SeededRNG(
                     seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
-                if canOfferDouble(in: state, maxCube: maxCube),
-                    bot.wantsDouble(state: state, rng: &pickRng) {
+                let held = state.omensHeld[state.currentPlayer] ?? []
+                if state.pendingOmen == nil, !held.isEmpty,
+                    let omen = bot.chooseOmen(state: state, options: held, rng: &pickRng),
+                    held.contains(omen)
+                {
+                    action = .playOmen(omenId: omen.id)
+                } else if canOfferDouble(in: state, maxCube: maxCube),
+                    bot.wantsDouble(state: state, rng: &pickRng)
+                {
                     action = .offerDouble
                 } else {
                     action = .roll

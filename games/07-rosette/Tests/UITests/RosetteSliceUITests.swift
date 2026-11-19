@@ -1,10 +1,12 @@
 // RosetteSliceUITests — G2 vertical-slice checks.
 //
-// The app is launched in autoPilot mode: both sides play the simple
-// heuristic AI with fast timers and a fixed seed, so the match plays out
-// deterministically to the results screen. The test asserts the slice's
-// contract: a full Finkel match completes, and a double is offered AND
-// accepted along the way (the cube reads ×2).
+// The app is launched in autoPilot mode with fast timers and a fixed seed,
+// so the match plays out deterministically to the results screen. Since the
+// RS-P7 AI wiring, an AI match fields the §7 bot for its ruleset (the
+// solved-table OptimalBot for the Finkel quick match); the autoPilot plays
+// both sides with it and answers doubles by always accepting. The test
+// asserts the slice's contract: a full Finkel match completes, and a double
+// is offered AND accepted along the way (the cube reads ×2).
 
 import XCTest
 
@@ -80,7 +82,9 @@ final class RosetteSliceUITests: XCTestCase {
         done.tap()
 
         let result = app.staticTexts["Daily Result"]
-        XCTAssertTrue(result.waitForExistence(timeout: 10), "returning from the daily match should show today's result")
+        XCTAssertTrue(
+            result.waitForExistence(timeout: 10),
+            "returning from the daily match should show today's result")
         let text = result.label
         XCTAssertTrue(
             text.contains("Won") || text.contains("Lost"),

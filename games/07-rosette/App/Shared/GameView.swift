@@ -1,5 +1,6 @@
 // MARK: - GameView
 
+import RSAI
 import RSCore
 import RSMeta
 import RSAudio
@@ -36,7 +37,12 @@ struct GameView: View {
                 stakeValue: stake,
                 omenId: omen,
                 useAI: useAI,
-                seed: LaunchArguments.seed ?? seed
+                seed: LaunchArguments.seed ?? seed,
+                // §7: Finkel opponents play via the solved table; the plain
+                // heuristic can cycle on mutual capture-avoidance (seed-42
+                // regression). The quick match is always Finkel, so it gets
+                // OptimalBot (RS-P7 open item).
+                opponentBot: useAI ? OptimalBot() : nil
             ))
         self.onMatchComplete = onMatchComplete
         self.onLeaveResults = nil
@@ -65,7 +71,14 @@ struct GameView: View {
             useAI: useAI,
             seed: LaunchArguments.seed ?? seed,
             autoSave: false,
-            region: region
+            region: region,
+            // §7: Finkel taverns play via the solved table (OptimalBot);
+            // variant taverns use the expectiminimax bot (VariantBot). The
+            // plain heuristic can cycle on mutual capture-avoidance
+            // (seed-42 regression), so no tavern fields it.
+            opponentBot: useAI
+                ? (ruleset == RuleSet.finkel ? OptimalBot() : VariantBot()) as any MatchBot
+                : nil
         )
         vm.onMatchComplete = onMatchComplete
         _viewModel = StateObject(wrappedValue: vm)

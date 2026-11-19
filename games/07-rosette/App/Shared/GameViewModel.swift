@@ -547,7 +547,9 @@ public final class GameViewModel: ObservableObject {
         // The daily opponent answers through its MatchBot policy; the
         // built-in heuristic answers otherwise (R-10).
         let accept: Bool
-        if let opponentBot {
+        if let opponentBot, answerer == .player1 {
+            // The player1 opponent answers through its own MatchBot policy;
+            // the human side (autoPilot or manual) answers below (R-10).
             accept = opponentBot.decideDouble(state: matchState, rng: &aiRng)
         } else {
             accept =
@@ -558,33 +560,61 @@ public final class GameViewModel: ObservableObject {
         aiThinking = false
     }
 
-    /// AI turn: roll, maybe offer a double, then pick the best heuristic move.
+    /// AI turn: offer per policy (R-10: before rolling), then roll and move.
     private func aiTurn() {
         guard !matchState.isComplete, !isPaused else { return }
         guard autoPilot || matchState.currentPlayer == .player1 else { return }
 
         aiThinking = true
 
+        // R-10: a double is offered on a fresh turn, BEFORE the roll. The
+        // player1 opponent offers per its MatchBot policy; the autoPilot
+        // demo side offers on a modest lead so the cube mechanic actually
+        // gets exercised (a strength-based trigger usually fires only past
+        // 75% win probability, where a rational opponent declines and the
+        // demo never shows an accepted double). Eligibility matches the
+        // human Double button (fresh turn, once per turn, cube alive). The
+        // offer used to sit after applyAction(.roll), where the !hasRolled
+        // guard made it unreachable and the cube could never double from an
+        // AI turn (slice-test regression).
+        if !matchState.hasRolled, !matchState.isComplete,
+            !matchState.hasDoubledThisTurn, !matchState.cubeDead,
+            matchState.cube.owner == -1
+                || matchState.cube.owner == matchState.currentPlayer.rawValue
+        {
+            let wants: Bool
+            if matchState.currentPlayer == .player1 {
+                wants = opponentBot?.wantsDouble(state: matchState, rng: &aiRng)
+                    ?? shouldOfferDouble()
+            } else {
+                wants = shouldOfferDoubleDemo()
+            }
+            if wants {
+                applyAction(.offerDouble)
+                if matchState.doubleOffered {
+                    aiThinking = false
+                    // The answer chain continues through applyAction, which
+                    // schedules the responder; scheduling aiTurn again here
+                    // would run parallel chains.
+                    return
+                }
+                // The engine rejected the offer (e.g. the cube owner rule);
+                // fall through and play the roll instead of spinning.
+            }
+        }
+
         if !matchState.hasRolled {
             applyAction(.roll)
-            // A double may be offered before rolling this turn (R-10): the
-            // same eligibility the human Double button uses (fresh turn,
-            // once per turn, cube alive), and only while the AI side still
-            // holds the turn (a busted roll passes it).
-            if !matchState.hasRolled, !matchState.isComplete,
-                matchState.currentPlayer == .player1,
-                !matchState.hasDoubledThisTurn, !matchState.cubeDead
-            {
-                let wants =
-                    opponentBot?.wantsDouble(state: matchState, rng: &aiRng)
-                    ?? shouldOfferDouble()
-                if wants {
-                    applyAction(.offerDouble)
-                }
-            }
-        } else if !legalMoves.isEmpty {
+        }
+        if !legalMoves.isEmpty {
+            // In autoPilot the app plays both sides with its best available
+            // bot (the plain heuristic cycles on mutual capture-avoidance at
+            // seed 42 and ran 4,000+ plies); without a bot it keeps the
+            // built-in heuristic. Manual play is untouched: aiTurn only runs
+            // for the AI side then (see the guard above).
             if let move = opponentBot?.chooseMove(
-                from: matchState, moves: legalMoves, rng: &aiRng) ?? pickBestAIMove()
+                from: matchState, moves: legalMoves, rng: &aiRng)
+                ?? pickBestAIMove()
             {
                 applyAction(.move(move.piece))
             }
@@ -603,6 +633,20 @@ public final class GameViewModel: ObservableObject {
         let opponent: PlayerID = matchState.currentPlayer == .player0 ? .player1 : .player0
         let other = matchState.borneOff[opponent] ?? 0
         return own > other && own >= 3
+    }
+
+    /// The autoPilot demo side's cube trigger: offer on the first meaningful
+    /// lead so an accepted double actually appears in demo matches and UI
+    /// tests. The strength-based rule above fires near the end of a game,
+    /// where the responder's equity is already below the take threshold and
+    /// it rationally declines instead; even a two-piece borne-off lead can
+    /// already be past 75% win probability in this capture-heavy game, so
+    /// the demo offers as soon as it has borne off one more piece.
+    private func shouldOfferDoubleDemo() -> Bool {
+        let own = matchState.borneOff[matchState.currentPlayer] ?? 0
+        let opponent: PlayerID = matchState.currentPlayer == .player0 ? .player1 : .player0
+        let other = matchState.borneOff[opponent] ?? 0
+        return own > other && own >= 1
     }
 
     /// Pick the best move for the AI: capture, enter, bear off, then advance.

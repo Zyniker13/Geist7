@@ -50,7 +50,13 @@ final class RosettePerfUITests: XCTestCase {
     /// measure relaunching and resuming the saved match.
     func testResumeSavedMatch() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-autoPilot", "-seed", "42", "-startMatch"]
+        // "-aiDelay 0.5" keeps the autoPilot match incomplete for the whole
+        // test window: at autoPilot's default 0.01 s ply pace a match
+        // completes in seconds, and completion deletes the autosave by
+        // design — the resume entry point would then be legitimately absent.
+        app.launchArguments = [
+            "-autoPilot", "-seed", "42", "-aiDelay", "0.5", "-startMatch",
+        ]
         app.launch()
         // Let the autoPilot apply several moves so the autosave slot is
         // populated (every applied action rewrites it).
@@ -96,15 +102,20 @@ final class RosettePerfUITests: XCTestCase {
         /// readout for the frame-rate evidence.
         func testMatchMemoryDuringPlay() throws {
             let app = XCUIApplication()
-            app.launchArguments = ["-autoPilot", "-showFPS", "-seed", "42", "-startMatch"]
+            app.launchArguments = [
+                "-autoPilot", "-showFPS", "-seed", "42", "-aiDelay", "0.5",
+                "-startMatch",
+            ]
             app.launch()
 
             let memory = XCTMemoryMetric(application: app)
             let options = XCTMeasureOptions()
             options.iterationCount = 1
+            // autoStop mode: the metric samples for the whole block (the
+            // 15 s play window), then stops when the block returns —
+            // stopMeasuring() is illegal without the .manuallyStop option.
             measure(metrics: [memory], options: options) {
                 sleep(15)
-                stopMeasuring()
             }
 
             // Frame-rate evidence: the SKView overlay (showsFPS) renders live fps

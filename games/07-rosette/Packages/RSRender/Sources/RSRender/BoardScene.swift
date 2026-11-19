@@ -58,6 +58,19 @@ public final class BoardScene: SKScene {
     /// off so headless tests are deterministic.
     public var reduceMotionEnabled = false
 
+    /// Called once, on the first frame cycle after the scene is presented
+    /// (P8 performance instrumentation; nil in production).
+    public var onFirstFrame: (() -> Void)?
+    private var firstFrameMarked = false
+
+    override public func update(_ currentTime: TimeInterval) {
+        super.update(currentTime)
+        if !firstFrameMarked {
+            firstFrameMarked = true
+            onFirstFrame?()
+        }
+    }
+
     /// The dice value shown on the last render, so the pop animation only
     /// runs when the value actually changes.
     private var lastDiceValue: Int?
@@ -94,6 +107,16 @@ public final class BoardScene: SKScene {
 
     /// Layout the board to fit the scene.
     private func layoutBoard() {
+        let debugStart = ProcessInfo.processInfo.arguments.contains("-boardDebug")
+            ? CFAbsoluteTimeGetCurrent() : 0
+        defer {
+            if debugStart > 0 {
+                print(
+                    "[boardDebug] layoutBoard took "
+                        + String(format: "%.1f", (CFAbsoluteTimeGetCurrent() - debugStart) * 1000)
+                        + " ms (size \(size))")
+            }
+        }
         // A degenerate size (the hosting SKView has no bounds yet, or the
         // scene was presented before layout) must not wipe the existing
         // geometry: skip until the size is real.

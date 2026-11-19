@@ -10,37 +10,80 @@ import RSPlatform
 
 /// Launch-argument parsing for UI-test scenarios.
 enum LaunchArguments {
+    /// The parsed set. Parsing takes an explicit argument list so unit tests
+    /// can exercise it without mutating ProcessInfo.
+    struct Parsed: Equatable {
+        var seed: UInt64?
+        var aiDelay: Double?
+        var region: String?
+        var daily = false
+        var startMatch = false
+        var leftHanded = false
+    }
+
     /// "-seed N": override the deterministic match seed (UI tests).
-    static var seed: UInt64? {
-        let args = ProcessInfo.processInfo.arguments
+    static var seed: UInt64? { current.seed }
+
+    /// "-aiDelay N": seconds between autoPilot plies (UI tests). The demo
+    /// default of 0.01 s completes a match in a couple of seconds; tests
+    /// that need the match to stay incomplete across a relaunch slow it
+    /// down. Scoped to autoPilot so normal play is untouched.
+    static var aiDelay: Double? { current.aiDelay }
+
+    /// "-daily": open today's daily match at launch (UI tests).
+    static var daily: Bool { current.daily }
+
+    /// "-region ID": override the board region (P6 snapshot captures).
+    /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
+    static var region: String? { current.region }
+
+    /// "-startMatch": jump straight into a single match from the menu
+    /// (P6 snapshot captures).
+    static var startMatch: Bool { current.startMatch }
+
+    /// "-leftHanded": force the mirrored left-handed layout (RS-P8.4 UI
+    /// tests), regardless of the persisted Settings toggle.
+    static var leftHanded: Bool { current.leftHanded }
+
+    private static var current: Parsed {
+        parse(ProcessInfo.processInfo.arguments)
+    }
+
+    static func parse(_ args: [String]) -> Parsed {
+        var result = Parsed()
+        result.seed = uintValue(after: "-seed", in: args)
+        result.aiDelay = doubleValue(after: "-aiDelay", in: args)
+        if
+            let index = args.firstIndex(of: "-region"),
+            index + 1 < args.count
+        {
+            result.region = args[index + 1]
+        }
+        result.daily = args.contains("-daily")
+        result.startMatch = args.contains("-startMatch")
+        result.leftHanded = args.contains("-leftHanded")
+        return result
+    }
+
+    /// The unsigned value following `flag` in `args`, if present and parseable.
+    private static func uintValue(after flag: String, in args: [String]) -> UInt64? {
         guard
-            let index = args.firstIndex(of: "-seed"),
+            let index = args.firstIndex(of: flag),
             index + 1 < args.count,
             let value = UInt64(args[index + 1])
         else { return nil }
         return value
     }
 
-    /// "-daily": open today's daily match at launch (UI tests).
-    static var daily: Bool {
-        ProcessInfo.processInfo.arguments.contains("-daily")
-    }
-
-    /// "-region ID": override the board region (P6 snapshot captures).
-    /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
-    static var region: String? {
-        let args = ProcessInfo.processInfo.arguments
+    /// The positive value following `flag` in `args`, if present and parseable.
+    private static func doubleValue(after flag: String, in args: [String]) -> Double? {
         guard
-            let index = args.firstIndex(of: "-region"),
-            index + 1 < args.count
+            let index = args.firstIndex(of: flag),
+            index + 1 < args.count,
+            let value = Double(args[index + 1]),
+            value > 0
         else { return nil }
-        return args[index + 1]
-    }
-
-    /// "-startMatch": jump straight into a single match from the menu
-    /// (P6 snapshot captures).
-    static var startMatch: Bool {
-        ProcessInfo.processInfo.arguments.contains("-startMatch")
+        return value
     }
 }
 
@@ -214,6 +257,8 @@ public final class GameViewModel: ObservableObject {
         self.matchState = GameViewModel.emptyMatch
         var state = self.makeMatch(stake: snapshot.stakeValue)
 
+        BoardDebug.mark("vm snapshot init: replay begin (\(snapshot.actions.count) actions)")
+
         // Fold the saved actions through the reducer with fresh streams from
         // the stored seed. A failed step means a corrupt save; stop there.
         for recorded in snapshot.actions {
@@ -227,6 +272,7 @@ public final class GameViewModel: ObservableObject {
                 break
             }
         }
+        BoardDebug.mark("vm snapshot init: replay done")
 
         self.matchState = state
         deriveViewState()
@@ -515,10 +561,16 @@ public final class GameViewModel: ObservableObject {
 
     // MARK: - AI (simple heuristic for P2; RS-AI replaces it in P4)
 
-    /// How long the AI waits before acting (fast in autoPilot UI-test runs;
-    /// heuristic-vs-heuristic autoPilot matches run thousands of plies, so
-    /// the demo cadence is 0.01 s to keep a full match inside test budgets).
-    private var aiDelay: TimeInterval { autoPilot ? 0.01 : 0.5 }
+    /// Delay before the AI applies its action. Normal play waits 0.5 s;
+    /// autoPilot demo matches run as fast as possible (0.01 s) unless
+    /// "-aiDelay N" slows them down — UI tests use that override to keep a
+    /// match incomplete across a relaunch.
+    private var aiDelay: TimeInterval {
+        if autoPilot, let override = LaunchArguments.aiDelay {
+            return override
+        }
+        return autoPilot ? 0.01 : 0.5
+    }
 
     /// Kick the AI loop when a match appears with nothing yet applied.
     /// autoPilot runs must self-start, including the opening roll: no

@@ -37,7 +37,8 @@ public enum BotMatch {
         omens1: [Omen] = [],
         maxCube: Int = 64,
         maxActions: Int = 100_000,
-        diceSequence: [Int]? = nil
+        diceSequence: [Int]? = nil,
+        onAction: ((Action, PlayerID) -> Void)? = nil
     ) throws -> Record {
         var state = MatchState.newMatch(
             ruleset: ruleset,
@@ -61,10 +62,12 @@ public enum BotMatch {
         for _ in 0..<maxActions {
             if state.isComplete { break }
             let action: Action
+            let actor: PlayerID
             if state.doubleOffered {
                 // A pending double: the decider (the opponent of the player
                 // who offered) accepts or concedes (R-10).
                 let decider: PlayerID = state.currentPlayer == .player0 ? .player1 : .player0
+                actor = decider
                 let bot = decider == .player0 ? bot0 : bot1
                 var pickRng = SeededRNG(
                     seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
@@ -76,6 +79,7 @@ public enum BotMatch {
                 // a held omen before rolling, since the effects shape the
                 // upcoming roll (re-roll, split, unsafe rosettes). Then the
                 // cube question (R-10), then the roll.
+                actor = state.currentPlayer
                 let bot = state.currentPlayer == .player0 ? bot0 : bot1
                 var pickRng = SeededRNG(
                     seed: seed &+ UInt64(state.plies) &+ 0x2545_F491_4F6C_DD1D)
@@ -93,6 +97,7 @@ public enum BotMatch {
                     action = .roll
                 }
             } else {
+                actor = state.currentPlayer
                 let moves = MoveGen.legalMoves(
                     for: state.currentPlayer,
                     amount: state.diceValue ?? 0,
@@ -127,6 +132,7 @@ public enum BotMatch {
             state = result.state
             actions.append(action)
             events.append(contentsOf: result.events)
+            onAction?(action, actor)
         }
 
         guard state.isComplete else {

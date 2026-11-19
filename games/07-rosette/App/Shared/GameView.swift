@@ -1,7 +1,9 @@
 // MARK: - GameView
 
-import RSAudio
+import RSAI
 import RSCore
+import RSMeta
+import RSAudio
 import RSRender
 import SpriteKit
 import SwiftUI
@@ -19,6 +21,9 @@ struct GameView: View {
     /// Whether the results overlay offers "Play Again" (hidden in circuit
     /// matches, where the circuit session drives the next match).
     private let showPlayAgain: Bool
+    /// Dismisses the results overlay when the flow that pushed this match
+    /// owns the navigation (daily); nil keeps only the menu controls.
+    private let onLeaveResults: (() -> Void)?
 
     init(
         stake: Int = 1,
@@ -32,9 +37,15 @@ struct GameView: View {
                 stakeValue: stake,
                 omenId: omen,
                 useAI: useAI,
-                seed: LaunchArguments.seed ?? seed
+                seed: LaunchArguments.seed ?? seed,
+                // §7: Finkel opponents play via the solved table; the plain
+                // heuristic can cycle on mutual capture-avoidance (seed-42
+                // regression). The quick match is always Finkel, so it gets
+                // OptimalBot (RS-P7 open item).
+                opponentBot: useAI ? OptimalBot() : nil
             ))
         self.onMatchComplete = onMatchComplete
+        self.onLeaveResults = nil
         self.showPlayAgain = true
     }
 
@@ -51,19 +62,28 @@ struct GameView: View {
         showPlayAgain: Bool = true,
         onMatchComplete: @escaping (Outcome) -> Void
     ) {
-        _viewModel = StateObject(
-            wrappedValue: GameViewModel(
-                ruleset: ruleset,
-                dice: dice,
-                fortunes: fortunes,
-                omens1: omens1,
-                stakeValue: stake,
-                useAI: useAI,
-                seed: LaunchArguments.seed ?? seed,
-                autoSave: false,
-                region: region
-            ))
+        let vm = GameViewModel(
+            ruleset: ruleset,
+            dice: dice,
+            fortunes: fortunes,
+            omens1: omens1,
+            stakeValue: stake,
+            useAI: useAI,
+            seed: LaunchArguments.seed ?? seed,
+            autoSave: false,
+            region: region,
+            // §7: Finkel taverns play via the solved table (OptimalBot);
+            // variant taverns use the expectiminimax bot (VariantBot). The
+            // plain heuristic can cycle on mutual capture-avoidance
+            // (seed-42 regression), so no tavern fields it.
+            opponentBot: useAI
+                ? (ruleset == RuleSet.finkel ? OptimalBot() : VariantBot()) as any MatchBot
+                : nil
+        )
+        vm.onMatchComplete = onMatchComplete
+        _viewModel = StateObject(wrappedValue: vm)
         self.onMatchComplete = onMatchComplete
+        self.onLeaveResults = nil
         self.showPlayAgain = showPlayAgain
     }
 
@@ -72,9 +92,39 @@ struct GameView: View {
         snapshot: SavedMatch,
         onMatchComplete: @escaping (Outcome) -> Void
     ) {
-        _viewModel = StateObject(wrappedValue: GameViewModel(snapshot: snapshot))
+        let vm = GameViewModel(snapshot: snapshot)
+        vm.onMatchComplete = onMatchComplete
+        _viewModel = StateObject(wrappedValue: vm)
         self.onMatchComplete = onMatchComplete
+        self.onLeaveResults = nil
         self.showPlayAgain = true
+    }
+
+    /// Play today's daily match (RS-P7.1): the date-seeded dice sequence
+    /// (everyone that UTC day draws the same dice) against the daily
+    /// opponent bot, at the daily stake. A daily is one sitting: no
+    /// autosave, and "Play Again" returns to the menu rather than
+    /// restarting the same match.
+    init(
+        daily: DailyMatch,
+        onMatchComplete: @escaping (Outcome) -> Void,
+        onLeaveResults: @escaping () -> Void
+    ) {
+        let vm = GameViewModel(
+            ruleset: .finkel,
+            dice: .tetra4,
+            stakeValue: 2,
+            useAI: true,
+            seed: daily.seed,
+            autoSave: false,
+            opponentBot: DailyMatch.opponent(forDay: daily.day),
+            diceSource: DiceSource(values: daily.diceSequence)
+        )
+        vm.onMatchComplete = onMatchComplete
+        _viewModel = StateObject(wrappedValue: vm)
+        self.onMatchComplete = onMatchComplete
+        self.onLeaveResults = onLeaveResults
+        self.showPlayAgain = false
     }
 
     var body: some View {
@@ -125,12 +175,6 @@ struct GameView: View {
                 resultsOverlay
             }
         }
-        .onReceive(viewModel.$matchState) { state in
-            // Fire match completion when the state becomes complete.
-            if state.isComplete, let outcome = viewModel.outcome {
-                onMatchComplete(outcome)
-            }
-        }
         .onAppear {
             audio.startMusic()
             viewModel.kickAutoPilotIfNeeded()
@@ -141,6 +185,10 @@ struct GameView: View {
         .onReceive(viewModel.$lastEvents) { events in
             audio.handle(events: events)
         }
+        #if os(macOS)
+        // Mac keyboard 1-7 picks a piece (RS-P7.2b).
+        .macKeyboard { viewModel.handleNumberKey($0) }
+        #endif
     }
 
     // MARK: - Top Bar
@@ -381,6 +429,19 @@ struct GameView: View {
                                 .background(Color.blue)
                                 .cornerRadius(8)
                         }
+                    }
+
+                    if let onLeaveResults {
+                        Button(action: onLeaveResults) {
+                            Text("Done")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 16)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
+                        .accessibilityIdentifier("Results Done")
                     }
 
                     Button(action: { showPauseMenu = true }) {

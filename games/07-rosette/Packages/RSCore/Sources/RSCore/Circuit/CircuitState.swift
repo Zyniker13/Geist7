@@ -12,7 +12,7 @@
 /// softlock. Between matches the player may buy omens (R-14, up to two
 /// held, R-12) or pay an opponent's tell cost to learn its cube thresholds
 /// (R-24).
-public struct CircuitState: Sendable, Equatable {
+public struct CircuitState: Sendable, Equatable, Codable {
     /// The taverns in circuit order (from circuit.json + taverns.json).
     public let taverns: [Tavern]
     /// R-22: the Crawford rule applies in circuit finals.

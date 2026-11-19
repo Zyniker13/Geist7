@@ -11,17 +11,20 @@ let package = Package(
         .library(name: "RSPlatform", targets: ["RSPlatform"])
     ],
     dependencies: [
-        .package(path: "../RSCore")
+        .package(path: "../RSCore"),
+        .package(path: "../RSAI"),
+        .package(path: "../RSContent"),
+        .package(path: "../RSMeta"),
     ],
     targets: [
         .target(
             name: "RSPlatform",
-            dependencies: ["RSCore"],
+            dependencies: ["RSCore", "RSAI", "RSMeta"],
             path: "Sources/RSPlatform"
         ),
         .testTarget(
             name: "RSPlatformTests",
-            dependencies: ["RSPlatform"],
+            dependencies: ["RSPlatform", "RSAI", "RSContent", "RSMeta"],
             path: "Tests/RSPlatformTests"
         ),
     ]

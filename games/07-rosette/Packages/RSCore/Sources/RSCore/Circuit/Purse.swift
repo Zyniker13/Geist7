@@ -2,7 +2,7 @@
 
 /// The player's purse (R-13): the money carried through a circuit run.
 /// INV-3: the balance never goes negative.
-public struct Purse: Sendable, Equatable {
+public struct Purse: Sendable, Equatable, Codable {
     /// Current balance.
     public var balance: Int
     /// Total earned this circuit.

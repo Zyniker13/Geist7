@@ -146,6 +146,8 @@ targets:
       - path: Packages/RSPlatform/Sources/RSPlatform
     dependencies:
       - package: RSCore
+      - package: RSAI
+      - package: RSMeta
     settings:
       base:
         SWIFT_EMIT_LOC_STRINGS: YES
@@ -193,6 +195,17 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
 
+  RosetteUnitTests-macOS:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/UnitTests
+    dependencies:
+      - target: Rosette-macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   Rosette-iOS:
     build:
@@ -213,6 +226,7 @@ schemes:
     test:
       config: Debug
       targets:
+        - RosetteUnitTests-macOS
         - RosetteUITests-macOS
   SolveUr:
     build:

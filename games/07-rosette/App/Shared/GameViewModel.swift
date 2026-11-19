@@ -20,6 +20,11 @@ enum LaunchArguments {
         return value
     }
 
+    /// "-daily": open today's daily match at launch (UI tests).
+    static var daily: Bool {
+        ProcessInfo.processInfo.arguments.contains("-daily")
+    }
+
     /// "-region ID": override the board region (P6 snapshot captures).
     /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
     static var region: String? {
@@ -72,6 +77,18 @@ public final class GameViewModel: ObservableObject {
     public var isComplete: Bool { matchState.isComplete }
     /// The match outcome, once complete.
     public var outcome: Outcome? { matchState.outcome }
+
+    /// Called exactly once when the match becomes complete while this view
+    /// model is alive; the view layer settles (records results, dismisses).
+    /// Fired from the action path rather than a @Published subscription:
+    /// onReceive delivered the final state change before `outcome` was
+    /// derived, so the completion branch saw a nil outcome and never fired
+    /// (a finished match then went unrecorded — G6 daily smoke).
+    public var onMatchComplete: ((Outcome) -> Void)?
+
+    /// True when the match is already complete at construction (a restored
+    /// finished match must not re-fire settlement).
+    private var completionFired = false
     /// Whether a double offer is pending.
     public var doublePending: Bool { matchState.doubleOffered }
 
@@ -100,6 +117,17 @@ public final class GameViewModel: ObservableObject {
     private var recordedActions: [RecordedAction] = []
     /// The content region id this match is themed for (RS-P6.1; default: Ur).
     public let regionID: String
+    /// Player 1's bot when the match is driven by a `MatchBot` (the daily
+    /// opponent, RS-P7.1). When nil, the built-in heuristic plays player 1.
+    private let opponentBot: (any MatchBot)?
+    /// The bot's own deterministic stream (bots never touch the dice or omen
+    /// streams, INV-4).
+    private var aiRng: SeededRNG
+    /// The fixed dice stream for the daily match (RS-P7.1): when set, every
+    /// roll consumes the stream instead of the seeded RNG. A replay input,
+    /// not gameplay state (INV-4) — daily matches never autosave, so it is
+    /// never persisted.
+    private let diceSource: DiceSource?
 
     // MARK: - Lifecycle
 
@@ -126,7 +154,9 @@ public final class GameViewModel: ObservableObject {
         seed: UInt64 = 42,
         autoSave: Bool = true,
         autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot"),
-        region: String = "sumer"
+        region: String = "sumer",
+        opponentBot: (any MatchBot)? = nil,
+        diceSource: DiceSource? = nil
     ) {
         let defaults = GameViewModel.contentDefaults()
         self.ruleset = ruleset ?? defaults.ruleset
@@ -141,11 +171,15 @@ public final class GameViewModel: ObservableObject {
         self.autoSave = autoSave
         self.autoPilot = autoPilot
         self.regionID = LaunchArguments.region ?? region
+        self.opponentBot = opponentBot
+        self.diceSource = diceSource
+        self.aiRng = SeededRNG(seed: seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: seed)
         self.omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
         self.matchState = GameViewModel.emptyMatch
         self.matchState = self.makeMatch(stake: stakeValue)
         deriveViewState()
+        self.completionFired = matchState.isComplete
     }
 
     /// Restore a saved match by deterministic replay of its action history.
@@ -169,6 +203,10 @@ public final class GameViewModel: ObservableObject {
         self.autoSave = autoSave
         self.autoPilot = autoPilot
         self.regionID = "sumer"
+        // A restored snapshot is a quick match: no fixed dice, heuristic AI.
+        self.opponentBot = nil
+        self.diceSource = nil
+        self.aiRng = SeededRNG(seed: snapshot.seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: snapshot.seed)
         self.omenRng = SeededRNG(seed: snapshot.seed &+ 0x9E37_79B9_7F4A_7C15)
         self.recordedActions = []
@@ -180,7 +218,8 @@ public final class GameViewModel: ObservableObject {
         for recorded in snapshot.actions {
             guard let action = GameViewModel.action(from: recorded) else { continue }
             do {
-                let result = try Reducer.apply(action, to: state, rng: &rng, omenRng: &omenRng)
+                let result = try Reducer.apply(
+                    action, to: state, rng: &rng, omenRng: &omenRng, diceSource: diceSource)
                 state = result.state
                 recordedActions.append(recorded)
             } catch {
@@ -190,6 +229,7 @@ public final class GameViewModel: ObservableObject {
 
         self.matchState = state
         deriveViewState()
+        self.completionFired = matchState.isComplete
     }
 
     /// Map a recorded action back to its engine action.
@@ -270,6 +310,22 @@ public final class GameViewModel: ObservableObject {
         applyAction(.move(pieceId))
     }
 
+    /// Apply the Nth (1-indexed) legal move (RS-P7.2b: Mac keyboard 1-7).
+    ///
+    /// Only acts for the human player (player0) on a fresh, rolled turn with
+    /// legal moves — never while paused, in autoPilot, or while a double is
+    /// pending (a double must be answered, not moved). Returns true when a
+    /// move was applied.
+    @discardableResult
+    public func handleNumberKey(_ n: Int) -> Bool {
+        guard !isPaused, !matchState.isComplete, !autoPilot else { return false }
+        guard matchState.currentPlayer == .player0 else { return false }
+        guard !matchState.doubleOffered, matchState.hasRolled, !legalMoves.isEmpty else { return false }
+        guard n >= 1, n <= legalMoves.count else { return false }
+        applyAction(.move(legalMoves[n - 1].piece))
+        return true
+    }
+
     /// Offer a double (R-10): before rolling, once per turn.
     public func offerDouble() {
         guard !isPaused else { return }
@@ -317,7 +373,8 @@ public final class GameViewModel: ObservableObject {
     /// Apply an action through the reducer and re-derive view state.
     func applyAction(_ action: Action) {
         do {
-            let result = try Reducer.apply(action, to: matchState, rng: &rng, omenRng: &omenRng)
+            let result = try Reducer.apply(
+                action, to: matchState, rng: &rng, omenRng: &omenRng, diceSource: diceSource)
             matchState = result.state
             if let recorded = GameViewModel.recorded(from: action) {
                 recordedActions.append(recorded)
@@ -328,6 +385,7 @@ public final class GameViewModel: ObservableObject {
                 record(event)
             }
             deriveViewState()
+            fireCompletionIfNeeded()
             // S2.4: autosave every applied action while the match runs.
             if autoSave {
                 if matchState.isComplete {
@@ -341,6 +399,13 @@ public final class GameViewModel: ObservableObject {
         }
 
         scheduleAIIfNeeded()
+    }
+
+    /// Fire the completion callback exactly once when the match ends.
+    private func fireCompletionIfNeeded() {
+        guard !completionFired, matchState.isComplete, let outcome = matchState.outcome else { return }
+        completionFired = true
+        onMatchComplete?(outcome)
     }
 
     /// Map an engine action to its recorded (Codable) form.
@@ -437,8 +502,10 @@ public final class GameViewModel: ObservableObject {
 
     // MARK: - AI (simple heuristic for P2; RS-AI replaces it in P4)
 
-    /// How long the AI waits before acting (fast in autoPilot UI-test runs).
-    private var aiDelay: TimeInterval { autoPilot ? 0.05 : 0.5 }
+    /// How long the AI waits before acting (fast in autoPilot UI-test runs;
+    /// heuristic-vs-heuristic autoPilot matches run thousands of plies, so
+    /// the demo cadence is 0.01 s to keep a full match inside test budgets).
+    private var aiDelay: TimeInterval { autoPilot ? 0.01 : 0.5 }
 
     /// Kick the AI loop when a match appears with nothing yet applied.
     /// autoPilot runs must self-start, including the opening roll: no
@@ -477,9 +544,16 @@ public final class GameViewModel: ObservableObject {
         aiThinking = true
         let answerer: PlayerID = matchState.currentPlayer == .player0 ? .player1 : .player0
         let offerer = matchState.currentPlayer
-        let accept =
-            autoPilot
-            || (matchState.borneOff[answerer] ?? 0) >= (matchState.borneOff[offerer] ?? 0)
+        // The daily opponent answers through its MatchBot policy; the
+        // built-in heuristic answers otherwise (R-10).
+        let accept: Bool
+        if let opponentBot {
+            accept = opponentBot.decideDouble(state: matchState, rng: &aiRng)
+        } else {
+            accept =
+                autoPilot
+                || (matchState.borneOff[answerer] ?? 0) >= (matchState.borneOff[offerer] ?? 0)
+        }
         applyAction(accept ? .acceptDouble : .concede)
         aiThinking = false
     }
@@ -493,20 +567,34 @@ public final class GameViewModel: ObservableObject {
 
         if !matchState.hasRolled {
             applyAction(.roll)
-            // The AI may offer a double when clearly ahead (R-10: before rolling).
-            if !matchState.hasRolled && !matchState.isComplete && shouldOfferDouble() {
-                applyAction(.offerDouble)
+            // A double may be offered before rolling this turn (R-10): the
+            // same eligibility the human Double button uses (fresh turn,
+            // once per turn, cube alive), and only while the AI side still
+            // holds the turn (a busted roll passes it).
+            if !matchState.hasRolled, !matchState.isComplete,
+                matchState.currentPlayer == .player1,
+                !matchState.hasDoubledThisTurn, !matchState.cubeDead
+            {
+                let wants =
+                    opponentBot?.wantsDouble(state: matchState, rng: &aiRng)
+                    ?? shouldOfferDouble()
+                if wants {
+                    applyAction(.offerDouble)
+                }
             }
         } else if !legalMoves.isEmpty {
-            if let move = pickBestAIMove() {
+            if let move = opponentBot?.chooseMove(
+                from: matchState, moves: legalMoves, rng: &aiRng) ?? pickBestAIMove()
+            {
                 applyAction(.move(move.piece))
             }
         }
 
         aiThinking = false
-        // Keep the chain moving: the next roll/action is scheduled whenever
-        // an AI-controlled side is next to act.
-        scheduleAIIfNeeded()
+        // The chain continues through applyAction, which schedules the next
+        // AI action after every applied action; scheduling again here would
+        // run parallel chains and break the daily match's single-stream
+        // replay order.
     }
 
     /// Decide whether the AI should offer a double.
@@ -519,7 +607,16 @@ public final class GameViewModel: ObservableObject {
 
     /// Pick the best move for the AI: capture, enter, bear off, then advance.
     private func pickBestAIMove() -> Move? {
-        // 1) Capture: destination holds an opponent piece not on a safe rosette.
+        // 1) Bear off. Taking the capture-first order seen in early testing,
+        // captures reset the same front pieces forever and neither side ever
+        // drains its pieces (the seed-42 autoPilot match ran 4,000+ plies
+        // with pieces 5/6 nearly unmoved); bearing off whenever the roll
+        // allows is what makes an autoPilot match converge at all.
+        if let bearOff = legalMoves.first(where: { $0.destination == -1 }) {
+            return bearOff
+        }
+
+        // 2) Capture: destination holds an opponent piece not on a safe rosette.
         for move in legalMoves {
             guard move.destination >= 0 else { continue }
             let opponentThere = matchState.pieces.contains {
@@ -531,7 +628,7 @@ public final class GameViewModel: ObservableObject {
             }
         }
 
-        // 2) Enter a piece from off-board (entry square = amount - 1).
+        // 3) Enter a piece from off-board (entry square = amount - 1).
         if let amount = matchState.diceValue {
             let entrySquare = amount - 1
             if let enter = legalMoves.first(where: { $0.destination == entrySquare }) {
@@ -539,12 +636,20 @@ public final class GameViewModel: ObservableObject {
             }
         }
 
-        // 3) Bear off.
-        if let bearOff = legalMoves.first(where: { $0.destination == -1 }) {
-            return bearOff
+        // 4) Advance: prefer the BACKMOST piece so progress spreads across
+        // all seven pieces. Taking the first enumerated move always rides
+        // the leading pieces, so a capture resets the same few pieces and
+        // the tail never moves — the seed-42 autoPilot match ran thousands
+        // of plies without a single piece 5/6 move and never bore off.
+        let advanceCandidates = legalMoves.filter { $0.destination >= 0 }
+        if let first = advanceCandidates.first {
+            let backmost = advanceCandidates.reduce(first) { best, candidate in
+                let bestPos = matchState.pieces.first { $0.id == best.piece }?.position ?? 0
+                let movePos = matchState.pieces.first { $0.id == candidate.piece }?.position ?? 0
+                return movePos < bestPos ? candidate : best
+            }
+            return backmost
         }
-
-        // 4) Advance.
         return legalMoves.first
     }
 }

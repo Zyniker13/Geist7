@@ -146,6 +146,8 @@ targets:
       - path: Packages/RSPlatform/Sources/RSPlatform
     dependencies:
       - package: RSCore
+      - package: RSAI
+      - package: RSMeta
     settings:
       base:
         SWIFT_EMIT_LOC_STRINGS: YES

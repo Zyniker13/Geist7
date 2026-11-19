@@ -13,6 +13,10 @@ import SwiftUI
 @MainActor
 final class CircuitSession: ObservableObject {
 
+    /// The Game Center bridge, injected by the view once its environment
+    /// has it (RS-P7.1: the circuit purse doubles as a leaderboard score).
+    weak var gameCenter: GameCenterManager?
+
     /// One match waiting to be played at the current tavern.
     struct PendingMatch: Identifiable {
         let id = UUID()
@@ -121,6 +125,7 @@ final class CircuitSession: ObservableObject {
     func buy(_ omen: OmenDef) {
         guard canBuy(omen) else { return }
         _ = circuit.buyOmen(omen)
+        persistCircuit()
     }
 
     /// Whether this opponent's tell has been learned (R-24).
@@ -134,6 +139,7 @@ final class CircuitSession: ObservableObject {
             !circuit.learnedTells.contains(def.id)
         else { return }
         _ = circuit.learnTell(def)
+        persistCircuit()
     }
 
     // MARK: Match flow
@@ -142,6 +148,7 @@ final class CircuitSession: ObservableObject {
     func sitDown() {
         guard let tavern = currentTavern, !circuit.isRunEnded, pendingMatch == nil else { return }
         guard circuit.payBuyIn() else { return }
+        persistCircuit()
         let ruleset =
             rulesetByID[tavern.rulesetId]
             ?? GameViewModel.contentDefaults().ruleset
@@ -184,6 +191,11 @@ final class CircuitSession: ObservableObject {
             ? "Won \(outcome.score(for: .player0)) at \(match.tavern.name)"
             : "Lost \(abs(outcome.score(for: .player0))) at \(match.tavern.name)"
         pendingMatch = nil
+        persistCircuit()
+        // The purse doubles as the circuit's Game Center score (RS-P7.1).
+        if let gameCenter {
+            Task { await gameCenter.reportCircuitPurse(circuit.purse.balance) }
+        }
     }
 
     /// Forfeit the pending match: recorded as a loss at the stake.
@@ -192,6 +204,7 @@ final class CircuitSession: ObservableObject {
         circuit.recordResult(won: false, stake: match.stake)
         lastResultText = "Forfeited the match at \(match.tavern.name)"
         pendingMatch = nil
+        persistCircuit()
     }
 
     /// Start a fresh run (after a run ends).
@@ -199,7 +212,31 @@ final class CircuitSession: ObservableObject {
         if let fresh = try? loader.newCircuitState() {
             circuit = fresh
             lastResultText = ""
+            persistCircuit()
         }
+    }
+
+    // MARK: iCloud sync (RS-P7.1)
+
+    /// The app-wide sync manager (the local file-store substitute).
+    private let cloud = CloudSyncManager.shared
+    /// Whether the launch-time restore has run (it runs once per model).
+    private var didRestore = false
+
+    /// Restore the stored circuit at first presentation (the store copy
+    /// wins when present — see CloudSyncManager for the policy).
+    func restoreFromCloud() async {
+        guard !didRestore else { return }
+        didRestore = true
+        if let stored = await cloud.pull() {
+            circuit = stored
+        }
+    }
+
+    /// Push the current circuit state to the store (best-effort).
+    private func persistCircuit() {
+        let state = circuit
+        Task { await cloud.push(state) }
     }
 }
 
@@ -208,6 +245,7 @@ final class CircuitSession: ObservableObject {
 /// The tavern-circuit screen: purse, tavern ladder, omen shop, and tells.
 struct CircuitView: View {
     @StateObject private var session = CircuitSession()
+    @EnvironmentObject private var gameCenter: GameCenterManager
 
     var body: some View {
         Group {
@@ -223,6 +261,12 @@ struct CircuitView: View {
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
+        .task {
+            // Restore the stored circuit once per presentation (RS-P7.1) and
+            // hand the session the Game Center bridge from the environment.
+            session.gameCenter = gameCenter
+            await session.restoreFromCloud()
+        }
     }
 
     private var circuitContent: some View {

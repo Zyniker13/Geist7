@@ -12,6 +12,8 @@ struct MainView: View {
     @State private var showCircuit = false
     @State private var showTutorial = false
     @State private var showHistory = false
+    @State private var showDaily = false
+    @State private var showSettings = false
     @State private var newGameStake: Int = 1
     @State private var newGameUseAI = true
     @State private var newGameOmen: String = "none"
@@ -50,6 +52,10 @@ struct MainView: View {
                         menuButton("Tavern Circuit")
                     }
 
+                    Button(action: { showDaily = true }) {
+                        menuButton("Daily Match")
+                    }
+
                     Button(action: { showNewGame = true }) {
                         menuButton("Single Match")
                     }
@@ -62,10 +68,9 @@ struct MainView: View {
                         menuButton("Rules & History")
                     }
 
-                    Button(action: {}) {
+                    Button(action: { showSettings = true }) {
                         menuButton("Settings")
                     }
-                    .disabled(true)  // Placeholder for P7
                 }
                 .padding(.horizontal, 40)
 
@@ -95,6 +100,9 @@ struct MainView: View {
             .navigationDestination(isPresented: $showCircuit) {
                 CircuitView()
             }
+            .navigationDestination(isPresented: $showDaily) {
+                DailyMatchView()
+            }
             .navigationDestination(isPresented: $showTutorial) {
                 TutorialView()
             }
@@ -116,6 +124,12 @@ struct MainView: View {
                 if LaunchArguments.startMatch {
                     showGame = true
                 }
+                if LaunchArguments.daily {
+                    showDaily = true
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
             .sheet(isPresented: $showNewGame) {
                 NewGameView(

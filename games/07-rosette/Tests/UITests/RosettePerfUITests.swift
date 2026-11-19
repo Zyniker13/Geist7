@@ -13,6 +13,7 @@
 
 import XCTest
 
+@MainActor
 final class RosettePerfUITests: XCTestCase {
 
     override func setUpWithError() throws {
@@ -58,14 +59,19 @@ final class RosettePerfUITests: XCTestCase {
 
         let resume = XCUIApplication()
         resume.launchArguments = []
-
-        let clock = XCTClockMetric()
         resume.launch()
-        let menu = waitForMenu(resume)
-        clock.start()
-        // The resume row appears on the menu when an autosave exists.
+        _ = waitForMenu(resume)
+
+        // The resume row appears on the menu when an autosave exists. The
+        // budget covers the resume interaction itself (tap → interactive
+        // board), not the process launch (that is the cold-start budget).
         let resumeButton = resume.buttons["Resume Match"].firstMatch
         XCTAssertTrue(resumeButton.exists, "an autosave should offer a resume entry point")
+
+        // Wall clock is legitimate here: this is a performance assertion in
+        // the UI test layer, not game logic (see .swiftlint.yml banned_api).
+        // swiftlint:disable:next banned_api
+        let started = Date()
         resumeButton.tap()
         // The board is the SKView-backed match screen; its HUD carries the
         // borne-off counter once the scene is interactive.
@@ -73,14 +79,13 @@ final class RosettePerfUITests: XCTestCase {
             NSPredicate(format: "label CONTAINS 'Borne off'")
         ).firstMatch
         _ = hud.waitForExistence(timeout: 10)
-        clock.stop()
 
-        let time = clock.measurements.first?.value ?? 999
+        // swiftlint:disable:next banned_api
+        let elapsed = Date().timeIntervalSince(started)
         XCTAssertLessThan(
-            time, 1.0,
-            "resume to an interactive board must take < 1.0 s (took \(time) s)"
+            elapsed, 1.0,
+            "resume to an interactive board must take < 1.0 s (took \(elapsed) s)"
         )
-        _ = menu
     }
 
     // MARK: Memory + frame overlay

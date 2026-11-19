@@ -22,7 +22,7 @@ final class AccessibilityUITests: XCTestCase {
 
         let topBar = app.descendants(matching: .any).matching(
             NSPredicate(
-                format: "label BEGINSWITH 'Your turn' OR label BEGINSWITH 'Opponent's turn'")
+                format: "label BEGINSWITH 'Your turn' OR label BEGINSWITH 'Opponent'")
         ).firstMatch
         let odds = app.descendants(matching: .any).matching(
             NSPredicate(format: "label BEGINSWITH 'Win rate:'")
@@ -71,10 +71,18 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertTrue(leftHanded.waitForExistence(timeout: 5), "left-handed toggle should exist")
         XCTAssertTrue(haptics.exists, "haptics toggle should exist")
 
-        // The left-handed toggle is real: flipping it must persist.
+        // The left-handed toggle is real: flipping it must persist. The
+        // flip is asserted with a short poll — a tap that lands while the
+        // sheet settles can read stale.
         leftHanded.tap()
-        XCTAssertEqual(leftHanded.value as? String, "1", "toggle should read on after tap")
-        app.buttons["Done"].tap()
+        var flipped = false
+        for _ in 0..<10 {
+            let fresh = app.switches["Left-Handed Layout"]
+            if (fresh.value as? String) == "1" { flipped = true; break }
+            usleep(200_000)
+        }
+        XCTAssertTrue(flipped, "toggle should read on after tap")
+        closeSettings(app)
 
         openSettings(app)
         let persisted = app.switches["Left-Handed Layout"]
@@ -82,7 +90,7 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertEqual(persisted.value as? String, "1", "the flipped toggle should persist")
         persisted.tap()  // restore the default for other tests
         XCTAssertEqual(persisted.value as? String, "0")
-        app.buttons["Done"].tap()
+        closeSettings(app)
     }
 
     /// RS-P8.4: with -leftHanded the top bar mirrors — the opponent info
@@ -94,7 +102,7 @@ final class AccessibilityUITests: XCTestCase {
 
         let topBar = app.descendants(matching: .any).matching(
             NSPredicate(
-                format: "label BEGINSWITH 'Your turn' OR label BEGINSWITH 'Opponent's turn'")
+                format: "label BEGINSWITH 'Your turn' OR label BEGINSWITH 'Opponent'")
         ).firstMatch
         XCTAssertTrue(topBar.waitForExistence(timeout: 10), "the game top bar should appear")
 
@@ -111,6 +119,34 @@ final class AccessibilityUITests: XCTestCase {
                 "with -leftHanded the opponent info should occupy the trailing half (mirrored)")
         }
         _ = frame
+    }
+
+    // MARK: Dynamic Type (RS-P8.1)
+
+    /// RS-P8.1: at the largest accessibility text size the Settings
+    /// toggles and menu buttons must still render (labels grow, no fixed
+    /// frames clip them), and the app must not crash.
+    func testDynamicTypeLargestAccessibilitySizeRendersControls() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-UIPreferredContentSizeCategoryName", "AX5",
+        ]
+        app.launch()
+
+        // Settings first: two toggles must exist and stay hittable.
+        openSettings(app)
+        let leftHanded = app.switches["Left-Handed Layout"]
+        let haptics = app.switches["Haptic Feedback"]
+        XCTAssertTrue(leftHanded.waitForExistence(timeout: 5), "left-handed toggle should exist at AX5")
+        XCTAssertTrue(haptics.exists, "haptics toggle should exist at AX5")
+        XCTAssertTrue(leftHanded.isHittable, "the left-handed toggle must stay hittable at AX5")
+        app.buttons["Done"].tap()
+
+        // The main menu title scales (48 pt base → grows at AX5); the menu
+        // buttons must still be present and on screen.
+        let play = app.buttons["Play the Keeper"]
+        XCTAssertTrue(play.waitForExistence(timeout: 10), "menu should render at AX5")
+        XCTAssertTrue(play.frame.width > 0 && play.frame.height > 0, "menu button must not collapse at AX5")
     }
 
     // MARK: Helpers
@@ -130,5 +166,16 @@ final class AccessibilityUITests: XCTestCase {
         let sheetSettings = app.buttons["Settings"]
         XCTAssertTrue(sheetSettings.waitForExistence(timeout: 5))
         sheetSettings.tap()
+    }
+
+    /// Close the Settings sheet: the toolbar Done when it renders, a
+    /// swipe-down dismissal otherwise (robust at large Dynamic Type).
+    private func closeSettings(_ app: XCUIApplication) {
+        let done = app.buttons["Done"]
+        if done.waitForExistence(timeout: 2) {
+            done.tap()
+        } else {
+            app.swipeDown()
+        }
     }
 }

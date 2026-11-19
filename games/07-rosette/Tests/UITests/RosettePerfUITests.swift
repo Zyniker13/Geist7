@@ -64,7 +64,7 @@ final class RosettePerfUITests: XCTestCase {
         app.terminate()
 
         let resume = XCUIApplication()
-        resume.launchArguments = []
+        resume.launchArguments = ["-boardDebug"]
         resume.launch()
         _ = waitForMenu(resume)
 

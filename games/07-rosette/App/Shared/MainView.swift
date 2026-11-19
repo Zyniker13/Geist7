@@ -6,6 +6,10 @@ import SwiftUI
 
 /// Main menu screen: start a new game, load a save, or read the rules.
 struct MainView: View {
+    /// RS-P8.1: the title scales with Dynamic Type instead of a fixed
+    /// point size.
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 48
+
     @State private var showGame = false
     @State private var showResume = false
     @State private var showNewGame = false
@@ -25,7 +29,7 @@ struct MainView: View {
             VStack(spacing: 24) {
                 // Title
                 Text("Rosette")
-                    .font(.system(size: 48, design: .serif))
+                    .font(.system(size: titleSize, design: .serif))
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0.788, green: 0.631, blue: 0.231))  // gold
                     .padding(.top, 60)
@@ -43,7 +47,10 @@ struct MainView: View {
                 // Menu buttons
                 VStack(spacing: 16) {
                     if resumeSnapshot != nil {
-                        Button(action: { showResume = true }) {
+                        Button(action: {
+                            BoardDebug.mark("resume tapped")
+                            showResume = true
+                        }) {
                             menuButton("Resume Match")
                         }
                     }
@@ -120,6 +127,7 @@ struct MainView: View {
                 }
             }
             .onAppear {
+                BoardDebug.mark("menu onAppear")
                 resumeSnapshot = SaveManager.resumeCandidate()
                 if LaunchArguments.startMatch {
                     showGame = true

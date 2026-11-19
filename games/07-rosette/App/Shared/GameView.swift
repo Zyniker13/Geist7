@@ -18,6 +18,14 @@ struct GameView: View {
     /// The audio layer (RS-P6.2): deterministic procedural music + SFX.
     @State private var audio = AudioController()
 
+    // RS-P8.4: haptics share the audio layer's event stream.
+    @State private var haptics = HapticsRouter(player: HapticsRouter.defaultPlayer())
+
+    // RS-P8.4: left-handed layout, persisted by the Settings toggle and
+    // force-enabled by the -leftHanded launch argument in UI tests.
+    @AppStorage(GameViewLayout.leftHandedKey) private var leftHandedStored = false
+    private var leftHandedLayout: Bool { leftHandedStored || LaunchArguments.leftHanded }
+
     let onMatchComplete: (Outcome) -> Void
     /// Whether the results overlay offers "Play Again" (hidden in circuit
     /// matches, where the circuit session drives the next match).
@@ -71,7 +79,7 @@ struct GameView: View {
             stakeValue: stake,
             useAI: useAI,
             seed: LaunchArguments.seed ?? seed,
-            autoSave: false,
+            autoSave: true,
             region: region,
             // §7: Finkel taverns play via the solved table (OptimalBot);
             // variant taverns use the expectiminimax bot (VariantBot). The
@@ -185,6 +193,9 @@ struct GameView: View {
         }
         .onReceive(viewModel.$lastEvents) { events in
             audio.handle(events: events)
+            // RS-P8.4: haptics follow the same event stream as audio,
+            // gated by the Settings toggle.
+            haptics.handle(events: events)
         }
         #if os(macOS)
         // Mac keyboard 1-7 picks a piece (RS-P7.2b).
@@ -235,6 +246,9 @@ struct GameView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
+        // RS-P8.4: mirror the top bar for left-handed play — each player's
+        // info block swaps sides.
+        .environment(\.layoutDirection, GameViewLayout.layoutDirection(leftHanded: leftHandedLayout))
         // RS-P8.1: one VoiceOver element announces turn, score, and dice.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(topBarAccessibilityLabel)
@@ -367,6 +381,9 @@ struct GameView: View {
                         .foregroundColor(.white)
                 }
             }
+            // RS-P8.4: mirror the action row for left-handed play — the
+            // primary Roll Dice control swaps ends.
+            .environment(\.layoutDirection, GameViewLayout.layoutDirection(leftHanded: leftHandedLayout))
         }
         .padding()
         .background(Color.black.opacity(0.7))
@@ -478,6 +495,7 @@ struct GameView: View {
 enum BoardSceneHost {
     /// Build the scene and wire the tap handler.
     static func makeScene(viewModel: GameViewModel) -> BoardScene {
+        BoardDebug.mark("makeScene begin")
         // The scene lays out to its own size; .resizeFill stretches it to the
         // hosting view, so a nominal iPad-portrait size is enough here.
         let scene = BoardScene(size: CGSize(width: 1024, height: 1366))
@@ -496,6 +514,8 @@ enum BoardSceneHost {
                 viewModel.movePiece(piece.id)
             }
         }
+        scene.onFirstFrame = { BoardDebug.mark("scene first frame") }
+        BoardDebug.mark("makeScene end")
         return scene
     }
 
@@ -528,11 +548,13 @@ enum BoardSceneHost {
         @ObservedObject var viewModel: GameViewModel
 
         func makeUIView(context: Context) -> SKView {
+            BoardDebug.mark("makeUIView begin")
             let skView = SKView()
             BoardSceneHost.configure(skView)
             let scene = BoardSceneHost.makeScene(viewModel: viewModel)
             skView.presentScene(scene)
             context.coordinator.scene = scene
+            BoardDebug.mark("makeUIView end (scene presented)")
             return skView
         }
 

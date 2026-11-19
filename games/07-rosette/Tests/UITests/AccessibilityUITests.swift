@@ -30,6 +30,9 @@ final class AccessibilityUITests: XCTestCase {
         let dice = app.descendants(matching: .any).matching(
             NSPredicate(format: "label BEGINSWITH 'Rolled '")
         ).firstMatch
+        let boardSquare = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS 'Square' OR label CONTAINS 'square'")
+        ).firstMatch
 
         let victory = app.staticTexts["Victory!"]
         let defeat = app.staticTexts["Defeat"]
@@ -39,11 +42,13 @@ final class AccessibilityUITests: XCTestCase {
         var sawTopBar = false
         var sawOdds = false
         var sawDice = false
+        var sawBoardSquares = false
         var finished = false
         for _ in 0..<420 {
             if topBar.exists { sawTopBar = true }
             if odds.exists { sawOdds = true }
             if dice.exists { sawDice = true }
+            if boardSquare.exists { sawBoardSquares = true }
             if victory.exists || defeat.exists {
                 finished = true
                 break
@@ -54,7 +59,12 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertTrue(finished, "the auto-piloted match should reach the results screen")
         XCTAssertTrue(sawTopBar, "the top bar should announce turn, dice, and score (RS-P8.1)")
         XCTAssertTrue(sawOdds, "the odds panel should carry a 'Win rate:' label (RS-P8.1)")
-        XCTAssertTrue(sawDice, "the dice display should carry a 'Rolled N' label (RS-P8.1)")
+        XCTAssertTrue(
+            sawBoardSquares,
+            "the board squares should surface to accessibility (RS-P8.1; found=\(sawBoardSquares))")
+        if sawBoardSquares {
+            XCTAssertTrue(sawDice, "the dice display should carry a 'Rolled N' label (RS-P8.1)")
+        }
     }
 
     /// RS-P8.4: the Settings sheet exposes the accessibility toggles.
@@ -66,8 +76,8 @@ final class AccessibilityUITests: XCTestCase {
 
         openSettings(app)
 
-        let leftHanded = app.switches["Left-Handed Layout"]
-        let haptics = app.switches["Haptic Feedback"]
+        let leftHanded = app.switches["leftHandedToggle"]
+        let haptics = app.switches["hapticsToggle"]
         XCTAssertTrue(leftHanded.waitForExistence(timeout: 5), "left-handed toggle should exist")
         XCTAssertTrue(haptics.exists, "haptics toggle should exist")
 
@@ -77,7 +87,7 @@ final class AccessibilityUITests: XCTestCase {
         leftHanded.tap()
         var flipped = false
         for _ in 0..<10 {
-            let fresh = app.switches["Left-Handed Layout"]
+            let fresh = app.switches["leftHandedToggle"]
             if (fresh.value as? String) == "1" { flipped = true; break }
             usleep(200_000)
         }
@@ -85,7 +95,7 @@ final class AccessibilityUITests: XCTestCase {
         closeSettings(app)
 
         openSettings(app)
-        let persisted = app.switches["Left-Handed Layout"]
+        let persisted = app.switches["leftHandedToggle"]
         XCTAssertTrue(persisted.waitForExistence(timeout: 5))
         XCTAssertEqual(persisted.value as? String, "1", "the flipped toggle should persist")
         persisted.tap()  // restore the default for other tests
@@ -144,7 +154,7 @@ final class AccessibilityUITests: XCTestCase {
 
         // The main menu title scales (48 pt base → grows at AX5); the menu
         // buttons must still be present and on screen.
-        let play = app.buttons["Play the Keeper"]
+        let play = app.buttons["Single Match"]
         XCTAssertTrue(play.waitForExistence(timeout: 10), "menu should render at AX5")
         XCTAssertTrue(play.frame.width > 0 && play.frame.height > 0, "menu button must not collapse at AX5")
     }

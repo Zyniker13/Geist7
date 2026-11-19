@@ -19,6 +19,7 @@ enum LaunchArguments {
         var daily = false
         var startMatch = false
         var leftHanded = false
+        var autoResume = false
     }
 
     /// "-seed N": override the deterministic match seed (UI tests).
@@ -45,6 +46,10 @@ enum LaunchArguments {
     /// tests), regardless of the persisted Settings toggle.
     static var leftHanded: Bool { current.leftHanded }
 
+    /// "-autoResume": at the menu, immediately push the saved match
+    /// (perf probing: measures the resume path without a UI-test tap).
+    static var autoResume: Bool { current.autoResume }
+
     private static var current: Parsed {
         parse(ProcessInfo.processInfo.arguments)
     }
@@ -62,6 +67,7 @@ enum LaunchArguments {
         result.daily = args.contains("-daily")
         result.startMatch = args.contains("-startMatch")
         result.leftHanded = args.contains("-leftHanded")
+        result.autoResume = args.contains("-autoResume")
         return result
     }
 

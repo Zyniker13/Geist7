@@ -132,6 +132,10 @@ struct MainView: View {
                 if LaunchArguments.startMatch {
                     showGame = true
                 }
+                if LaunchArguments.autoResume, resumeSnapshot != nil {
+                    BoardDebug.mark("resume tapped (auto)")
+                    showResume = true
+                }
                 if LaunchArguments.daily {
                     showDaily = true
                 }

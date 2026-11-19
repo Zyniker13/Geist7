@@ -57,11 +57,12 @@ struct SettingsView: View {
             Toggle("Left-Handed Layout", isOn: $leftHanded)
                 .font(.subheadline)
                 .foregroundColor(.white)
+                .accessibilityIdentifier("leftHandedToggle")
             Toggle("Haptic Feedback", isOn: $hapticsEnabled)
                 .font(.subheadline)
                 .foregroundColor(.white)
+                .accessibilityIdentifier("hapticsToggle")
         }
-        .accessibilityIdentifier("Accessibility Settings")
     }
 
     private var gameCenterSection: some View {

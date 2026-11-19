@@ -41,6 +41,14 @@ final class LaunchArgumentsUnitTests: XCTestCase {
         XCTAssertEqual(parsed.region, "nineveh")
     }
 
+    func testAccessibilityAndResumeFlags() {
+        let parsed = LaunchArguments.parse(["-leftHanded", "-autoResume"])
+        XCTAssertTrue(parsed.leftHanded)
+        XCTAssertTrue(parsed.autoResume)
+        XCTAssertFalse(LaunchArguments.parse([]).leftHanded)
+        XCTAssertFalse(LaunchArguments.parse([]).autoResume)
+    }
+
     func testEmptyArgumentsAreDefaults() {
         XCTAssertEqual(LaunchArguments.parse([]), LaunchArguments.Parsed())
     }

@@ -27,9 +27,10 @@ final class CloudSyncManager: ObservableObject {
     static let shared = CloudSyncManager()
 
     init(store: any CloudStore = FileCloudStore(
-        directory: FileManager.default.urls(
+        directory: (FileManager.default.urls(
             for: .applicationSupportDirectory, in: .userDomainMask
-        ).first!.appendingPathComponent("rosette-cloud", isDirectory: true)
+        ).first ?? FileManager.default.temporaryDirectory)
+            .appendingPathComponent("rosette-cloud", isDirectory: true)
     )) {
         self.store = store
     }
@@ -39,6 +40,8 @@ final class CloudSyncManager: ObservableObject {
     func push(_ state: CircuitState) async {
         guard let data = try? JSONEncoder().encode(state) else { return }
         try? await store.save(data, forKey: Self.circuitKey)
+        // Wall clock: sync bookkeeping only, never match state.
+        // swiftlint:disable:next banned_api
         lastPushDate = Date()
     }
 

@@ -4,6 +4,7 @@ import RSAI
 import RSCore
 import RSMeta
 import RSAudio
+import RSPlatform
 import RSRender
 import SpriteKit
 import SwiftUI
@@ -234,6 +235,20 @@ struct GameView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
+        // RS-P8.1: one VoiceOver element announces turn, score, and dice.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(topBarAccessibilityLabel)
+    }
+
+    /// The combined top-bar announcement (RS-P8.1).
+    private var topBarAccessibilityLabel: String {
+        let state = viewModel.matchState
+        let turn = state.currentPlayer == .player0 ? "Your turn" : "Opponent's turn"
+        let dice = state.diceValue.map { "Dice \($0)" } ?? "Dice not rolled"
+        let yours = state.borneOff[.player0] ?? 0
+        let theirs = state.borneOff[.player1] ?? 0
+        return "\(turn). \(dice). Cube times \(state.cube.value). "
+            + "You have borne off \(yours) of 7, opponent \(theirs) of 7."
     }
 
     private func playerInfo(player: PlayerID, isCurrent: Bool) -> some View {
@@ -252,17 +267,19 @@ struct GameView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 8) {
-            // Odds panel + activity line
+            // Odds panel + activity line (RS-P8.1: accessibility labels)
             Text(viewModel.oddsText)
                 .font(.caption)
                 .foregroundColor(.gray)
                 .frame(maxWidth: .infinity)
+                .accessibilityLabel("Win rate: \(viewModel.oddsText)")
 
             if !viewModel.lastEventText.isEmpty {
                 Text(viewModel.lastEventText)
                     .font(.caption2)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
+                    .accessibilityLabel(viewModel.lastEventText)
             }
 
             if let errorText = viewModel.errorText {
@@ -465,6 +482,7 @@ enum BoardSceneHost {
         // hosting view, so a nominal iPad-portrait size is enough here.
         let scene = BoardScene(size: CGSize(width: 1024, height: 1366))
         scene.scaleMode = .resizeFill
+        scene.reduceMotionEnabled = MotionPolicy.systemReduceMotion
         scene.theme = RegionTheme(region: RSRegion(contentID: viewModel.regionID))
         scene.matchState = viewModel.matchState
         scene.onSquareTap = { squareIndex in

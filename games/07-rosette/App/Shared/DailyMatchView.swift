@@ -104,6 +104,8 @@ final class DailyMatchModel: ObservableObject {
 
     private let store: DailyResultStore
 
+    // Wall clock: "today's" daily match is a display concern, not match state.
+    // swiftlint:disable:next banned_api
     init(daily: DailyMatch = DailyMatch.make(forDate: Date()), store: DailyResultStore = DailyResultStore()) {
         self.daily = daily
         self.store = store

@@ -386,6 +386,18 @@ public final class GameViewModel: ObservableObject {
                 record(event)
             }
             deriveViewState()
+            // RS-P8.1: VoiceOver announces the roll, legal moves, and win
+            // rate after every roll.
+            if result.events.contains(where: {
+                if case .diceRolled = $0 { return true }
+                return false
+            }) {
+                AccessibilityAnnouncer.post(
+                    AccessibilityAnnouncer.rollAnnouncement(
+                        value: matchState.diceValue ?? 0,
+                        legalMoves: legalMoves.count,
+                        oddsText: oddsText))
+            }
             fireCompletionIfNeeded()
             // S2.4: autosave every applied action while the match runs.
             if autoSave {

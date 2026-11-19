@@ -19,6 +19,8 @@ final class CircuitSession: ObservableObject {
 
     /// One match waiting to be played at the current tavern.
     struct PendingMatch: Identifiable {
+        // View identity only (SwiftUI Identifiable); not match state.
+        // swiftlint:disable:next banned_api
         let id = UUID()
         let tavern: Tavern
         let opponent: Opponent

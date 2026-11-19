@@ -37,6 +37,7 @@
 - #5 rosette (P7): real Game Center account + leaderboard setup (`circuit-purse`, daily wins).
 - #6 rosette (P7): CloudKit container + iCloud capability for real sync.
 - #7 rosette (P7): ODR upload of the solved-table resource to App Store Connect.
+- #8 rosette (P7): macOS UI-test automation mode cannot initialize in this environment; `MacKeyboardUITests` needs it (unit-test substitute ships in `RosetteUnitTests-macOS`).
 - Earlier: macOS screenshot capture in headless CI.
 
 ### Open Questions

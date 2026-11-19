@@ -1,9 +1,9 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P6 (Aesthetics and Audio Pass) — ✅ Complete, G6 gate passed
-- **Next Step:** Begin P7 (Platform Features)
-- **Last Update:** 2026-11-18
+- **Current Phase:** P7 (Platform Features) — ✅ Complete, G7 gate passed
+- **Next Step:** Begin P8 (Polish, Accessibility, and Performance)
+- **Last Update:** 2026-11-19
 
 ## Phase Queue
 | Phase | Status | Last Updated |
@@ -15,7 +15,7 @@
 | P4 AI Opponents | ✅ Complete | 2026-11-18 |
 | P5 Meta and Replayability | ✅ Complete | 2026-11-18 |
 | P6 Aesthetics and Audio Pass | ✅ Complete | 2026-11-18 |
-| P7 Platform Features | ⏳ Pending | — |
+| P7 Platform Features | ✅ Complete | 2026-11-19 |
 | P8 Polish, Accessibility, and Performance | ⏳ Pending | — |
 | P9 Beta and TestFlight / P10 Release Prep | ⏳ Pending | — |
 
@@ -29,7 +29,7 @@
 | G4 | ✅ Passed | `rosette/gate-G4-pass` tag — optimal circuit completion 0.583 (28/48, band 55–70%), naive 0.083 (2/24, band 5–15%), decision latency p95 0.037 s ≤ 0.150 s (ADR-0010/0011, make test/lint green) |
 | G5 | ✅ Passed | `rosette/gate-G5-pass` tag — RSMeta 27/27 (30-date daily determinism, bit-identical replay), content counts re-pinned, HANDOFF refreshed (record backfilled 2026-11-18) |
 | G6 | ✅ Passed | `rosette/gate-G6-pass` tag — `make test` green (7 packages, 209 tests, 0 failures), `make lint` 0 violations, snapshot set vision-verified (3 region boards + menu), HIST6.1 report complete (no unlabelled historical claims); merged to main |
-| G7 | ⏳ Pending | — |
+| G7 | ✅ Passed | `rosette/gate-G7-pass` tag — `make test` green (RSAI 48/48, RSPlatform 17/17, 336 XCTest executions, 0 failures; async match with cube completes and ODR download + offline expectiminimax fallback verified in RSPlatform suites), `make lint` 0 violations, Rosette-macOS build succeeded (GameViewModel refactored onto `MacPieceKey`, 4 new unit tests), iOS slice UI tests passed on 7th retry (2/2); macOS keyboard UI test failed (issue #8, unit substitute); merged to main |
 | G8 | ⏳ Pending | — |
 | G9 | ⏳ Pending | — |
 | G10 | ⏳ Pending | — |
@@ -104,5 +104,6 @@ Checked against `docs/HISTORY.md` and RESEARCH.md §1–§3 sources. Every in-ga
 | `RSAudio` music | — | OK — original composition, no historical claim |
 
 Result: no unlabelled historical claims remain in game text, art, or audio.
+- **2026-11-19** — G7 gate passed (tag `rosette/gate-G7-pass`). G7 check: async match with cube completes and ODR download + offline expectiminimax fallback verified — both covered by RSPlatform suites (`Async match engine (RS-P7.1a)` → "async match with cube completes and exchanges actions"; `Solved table ODR provider (RS-P7.2a)` → "ODR download loads a valid table" + "offline fallback degrades to expectiminimax (nil table)"), all green in the fresh `make test` run (TEST_EXIT=0; RSAI 48/48 in 296.8 s, RSPlatform 17/17, 336 XCTest executions, 0 failures). S7.2 Mac keyboard: piece-key mapping extracted from `GameViewModel` into `RSPlatform.MacPieceKey` (single source of truth), 4 new unit tests in `MacPieceKeyTests` (suite "Mac piece-key navigation (RS-P7.2b)"); `GameViewModel.handleNumberKey` now delegates to `MacPieceKey.moveIndex(forNumberKey:legalMoveCount:)` and Rosette-macOS builds clean (BUILD SUCCEEDED). `make lint` 0 violations (check-imports OK, content-lint OK). iOS slice UI tests: passed on 7th retry (2/2, 23.5 s; earlier 6 runs failed on simulator/testmanagerd infrastructure, not app code). macOS keyboard UI test: still failing (issue #8, shared testmanagerd wedge) — substituted by the unit suite + clean app build per §8.2. Merged to main.
 - **2026-11-18** — P7 S7.2 blocker RESOLVED: the G2 slice test `testAutoPilotMatchCompletesWithAcceptedDouble` now PASSES (14.98 s; the daily test passes alongside, 8.5 s; exit 0). Root causes found by a headless replica of the autoPilot loop (`ScratchSliceAutoPilot`, RSAI, disabled manual harness) and fixed in `GameViewModel.aiTurn`: (1) **R-10 dead-offer bug** — the offer decision sat AFTER `applyAction(.roll)`, where the `!hasRolled` guard made it unreachable, so the cube could never double from an AI turn (this is why every earlier slice run failed the ×2 assertion; the G2-era skip per §8.2 meant it was never exercised); (2) **autoPilot non-convergence** — the heuristic vs a real bot cycles on mutual capture-avoidance at seed 42 (the UI run reached 481 s without completing); autoPilot now plays the wired `opponentBot` on BOTH sides, which converges (OptimalBot mirror: 160 plies, 0.9 s headless); (3) **cube-ownership guard** — the offer block now checks the R-10 owner rule and falls through to the roll on a rejected offer instead of spinning (the harness caught the spin: an accepted double hands the cube to the responder, after which an owner-blind demo rule re-offers forever). (4) The autoPilot demo cube rule offers on the first meaningful lead (`shouldOfferDoubleDemo`, own > other && own ≥ 1): a strength-based trigger fires past 75% win probability where a rational responder declines (harness: offers=1 accepted=0, concession at ×1); the lead rule lands inside the take band (≥25%), so the slice shows a real accepted double (harness at seed 42, OptimalBot mirror: offers=5 accepted=5, cube ×2→×32, complete at 160 plies). (5) Tavern wiring now follows §7 exactly: Finkel opponents get `OptimalBot` (the quick match is always Finkel), variant taverns get `VariantBot`; no tavern fields the plain heuristic (ADR-0016). Still to do for G7: full UI suite, Mac keyboard test, `make test`/`make lint`, screenshots.
 - **2026-11-18** — P7 remaining evidence: full iOS UI suite PASSED 4/4 (exit 0: slice `testAutoPilotMatchCompletesWithAcceptedDouble` 14.98 s with cube ×2, daily `testDailyMatchAutoPilotRecordsResult` 8.5 s, plus the two launch/regression tests); clean `make test` green (TEST_EXIT=0, 133 tests/0 failures); `make lint` 0 violations. Mac keyboard UI test (`MacKeyboardUITests`) is blocked by the environment: the macOS UI-test runner cannot initialize automation mode on this machine ("Timed out while enabling automation mode", exit 65, retried with simulators idle — same failure); filed as maintainer issue #8. Substitute per §8.2: new `RosetteUnitTests-macOS` unit-test target drives `handleNumberKey` (1–7 picks a piece, S7.2's scope) directly against a live `GameViewModel` on macOS — no automation mode needed; the UI test stays in the suite for when the maintainer grants automation access. Two test bugs found and fixed during bring-up (missing `@MainActor`, and reading `legalMoves[0]` after the move emptied the list — capture before applying).

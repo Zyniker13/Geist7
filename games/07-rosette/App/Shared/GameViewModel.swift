@@ -4,6 +4,7 @@ import Combine
 import Foundation
 import RSContent
 import RSCore
+import RSPlatform
 
 // MARK: - LaunchArguments
 
@@ -321,8 +322,8 @@ public final class GameViewModel: ObservableObject {
         guard !isPaused, !matchState.isComplete, !autoPilot else { return false }
         guard matchState.currentPlayer == .player0 else { return false }
         guard !matchState.doubleOffered, matchState.hasRolled, !legalMoves.isEmpty else { return false }
-        guard n >= 1, n <= legalMoves.count else { return false }
-        applyAction(.move(legalMoves[n - 1].piece))
+        guard let index = MacPieceKey.moveIndex(forNumberKey: n, legalMoveCount: legalMoves.count) else { return false }
+        applyAction(.move(legalMoves[index].piece))
         return true
     }
 

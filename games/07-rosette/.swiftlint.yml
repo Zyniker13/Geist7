@@ -14,6 +14,8 @@ disabled_rules:
   - function_parameter_count
   - for_where
   - trailing_comma
+  # SwiftUI's canonical multi-trailing-closure idiom (Button { } label: { }).
+  - multiple_closures_with_trailing_closure
 
 opt_in_rules:
   - empty_count
@@ -22,12 +24,14 @@ opt_in_rules:
   - modifier_order
   - unused_import
 
+# App/ is linted (P8 polish): the determinism ban (banned_api) applies to the
+# Core/Content/AI packages; the App layer may use the wall clock and view
+# identity UUIDs, with scoped disable comments at each such site.
 excluded:
   - .build
   - Packages/.build
   - Packages/*/.build
   - Tools/
-  - App/
 
 custom_rules:
   banned_api:

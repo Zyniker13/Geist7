@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var gameCenter: GameCenterManager
     @EnvironmentObject private var cloud: CloudSyncManager
+    @Environment(\.dismiss) private var dismiss
 
     /// RS-P8.4: the title scales with Dynamic Type instead of a fixed
     /// point size.
@@ -22,23 +23,30 @@ struct SettingsView: View {
     @AppStorage(HapticPreferences.enabledKey) private var hapticsEnabled = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Settings")
-                .font(.system(size: titleSize, design: .serif))
-                .fontWeight(.bold)
-                .foregroundColor(Color(red: 0.788, green: 0.631, blue: 0.231))
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Settings")
+                    .font(.system(size: titleSize, design: .serif))
+                    .fontWeight(.bold)
+                    .foregroundColor(Color(red: 0.788, green: 0.631, blue: 0.231))
 
-            accessibilitySection
-            gameCenterSection
-            cloudSection
-            Spacer()
-            Text("Version \(appVersion)")
-                .font(.caption)
-                .foregroundColor(.gray)
+                accessibilitySection
+                gameCenterSection
+                cloudSection
+                Spacer()
+                Text("Version \(appVersion)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(30)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(red: 0.098, green: 0.086, blue: 0.075))  // dark wood
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
-        .padding(30)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(red: 0.098, green: 0.086, blue: 0.075))  // dark wood
     }
 
     private var accessibilitySection: some View {

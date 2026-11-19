@@ -6,6 +6,7 @@ import XCTest
 @testable import RSPlatform
 
 /// A player that records the feedback it was asked to play.
+@MainActor
 private final class RecordingHapticPlayer: HapticPlaying {
     private(set) var captures = 0
     private(set) var matchEnds = 0
@@ -14,6 +15,7 @@ private final class RecordingHapticPlayer: HapticPlaying {
     func matchEnded() { matchEnds += 1 }
 }
 
+@MainActor
 final class HapticFeedbackTests: XCTestCase {
     private var defaults: UserDefaults!
     private var suiteName: String!

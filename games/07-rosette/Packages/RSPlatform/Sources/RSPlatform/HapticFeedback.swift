@@ -13,7 +13,9 @@ import RSCore
 
 /// Haptic-feedback preferences (RS-P8.4): a persisted on/off switch,
 /// default on. The key is shared with the Settings screen's `@AppStorage`
-/// binding so both layers read one source of truth.
+/// binding so both layers read one source of truth. Main-actor isolated
+/// like the rest of the haptic stack: feedback plays on the UI thread.
+@MainActor
 public final class HapticPreferences {
     /// The UserDefaults key for the enabled flag.
     public static let enabledKey = "haptics.enabled"
@@ -39,6 +41,8 @@ public final class HapticPreferences {
 
 /// The haptic actions the game plays (RS-P8.4). Implementations translate
 /// the abstract moments into platform feedback; tests record instead.
+/// Main-actor isolated: haptic hardware feedback is a UI concern.
+@MainActor
 public protocol HapticPlaying: AnyObject {
     /// A piece was captured: a short, sharp impact.
     func captureOccurred()
@@ -49,6 +53,7 @@ public protocol HapticPlaying: AnyObject {
 #if canImport(UIKit)
     /// UIKit haptic player (RS-P8.4): a medium impact for captures and a
     /// success notification for match end.
+    @MainActor
     public final class UIKitHapticPlayer: HapticPlaying {
         private let captureGenerator = UIImpactFeedbackGenerator(style: .medium)
         private let endGenerator = UINotificationFeedbackGenerator()
@@ -67,6 +72,7 @@ public protocol HapticPlaying: AnyObject {
 
 /// A no-op player for platforms without a haptic hardware contract (macOS)
 /// and for tests.
+@MainActor
 public final class NoopHapticPlayer: HapticPlaying {
     public init() {}
 
@@ -77,6 +83,9 @@ public final class NoopHapticPlayer: HapticPlaying {
 /// Routes match events to haptic feedback (RS-P8.4). The game view
 /// forwards the engine's event stream here, mirroring the audio layer; the
 /// router fires the mapped feedback only while the preference is enabled.
+/// Main-actor isolated: it runs alongside the view that owns the event
+/// stream.
+@MainActor
 public final class HapticsRouter {
     private let preferences: HapticPreferences
     private let player: HapticPlaying

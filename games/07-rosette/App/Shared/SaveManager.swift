@@ -139,6 +139,8 @@ enum SaveManager {
     private static func fileName(for snapshot: SavedMatch) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HHmmss"
+        // Wall clock: save file names are timestamps, not match state.
+        // swiftlint:disable:next banned_api
         let stamp = formatter.string(from: Date())
         return "save_\(stamp)_seed\(snapshot.seed).json"
     }

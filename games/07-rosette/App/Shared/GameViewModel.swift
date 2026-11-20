@@ -10,37 +10,86 @@ import RSPlatform
 
 /// Launch-argument parsing for UI-test scenarios.
 enum LaunchArguments {
+    /// The parsed set. Parsing takes an explicit argument list so unit tests
+    /// can exercise it without mutating ProcessInfo.
+    struct Parsed: Equatable {
+        var seed: UInt64?
+        var aiDelay: Double?
+        var region: String?
+        var daily = false
+        var startMatch = false
+        var leftHanded = false
+        var autoResume = false
+    }
+
     /// "-seed N": override the deterministic match seed (UI tests).
-    static var seed: UInt64? {
-        let args = ProcessInfo.processInfo.arguments
+    static var seed: UInt64? { current.seed }
+
+    /// "-aiDelay N": seconds between autoPilot plies (UI tests). The demo
+    /// default of 0.01 s completes a match in a couple of seconds; tests
+    /// that need the match to stay incomplete across a relaunch slow it
+    /// down. Scoped to autoPilot so normal play is untouched.
+    static var aiDelay: Double? { current.aiDelay }
+
+    /// "-daily": open today's daily match at launch (UI tests).
+    static var daily: Bool { current.daily }
+
+    /// "-region ID": override the board region (P6 snapshot captures).
+    /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
+    static var region: String? { current.region }
+
+    /// "-startMatch": jump straight into a single match from the menu
+    /// (P6 snapshot captures).
+    static var startMatch: Bool { current.startMatch }
+
+    /// "-leftHanded": force the mirrored left-handed layout (RS-P8.4 UI
+    /// tests), regardless of the persisted Settings toggle.
+    static var leftHanded: Bool { current.leftHanded }
+
+    /// "-autoResume": at the menu, immediately push the saved match
+    /// (perf probing: measures the resume path without a UI-test tap).
+    static var autoResume: Bool { current.autoResume }
+
+    private static var current: Parsed {
+        parse(ProcessInfo.processInfo.arguments)
+    }
+
+    static func parse(_ args: [String]) -> Parsed {
+        var result = Parsed()
+        result.seed = uintValue(after: "-seed", in: args)
+        result.aiDelay = doubleValue(after: "-aiDelay", in: args)
+        if
+            let index = args.firstIndex(of: "-region"),
+            index + 1 < args.count
+        {
+            result.region = args[index + 1]
+        }
+        result.daily = args.contains("-daily")
+        result.startMatch = args.contains("-startMatch")
+        result.leftHanded = args.contains("-leftHanded")
+        result.autoResume = args.contains("-autoResume")
+        return result
+    }
+
+    /// The unsigned value following `flag` in `args`, if present and parseable.
+    private static func uintValue(after flag: String, in args: [String]) -> UInt64? {
         guard
-            let index = args.firstIndex(of: "-seed"),
+            let index = args.firstIndex(of: flag),
             index + 1 < args.count,
             let value = UInt64(args[index + 1])
         else { return nil }
         return value
     }
 
-    /// "-daily": open today's daily match at launch (UI tests).
-    static var daily: Bool {
-        ProcessInfo.processInfo.arguments.contains("-daily")
-    }
-
-    /// "-region ID": override the board region (P6 snapshot captures).
-    /// Unknown ids fall back to the Ur theme via RSRegion(contentID:).
-    static var region: String? {
-        let args = ProcessInfo.processInfo.arguments
+    /// The positive value following `flag` in `args`, if present and parseable.
+    private static func doubleValue(after flag: String, in args: [String]) -> Double? {
         guard
-            let index = args.firstIndex(of: "-region"),
-            index + 1 < args.count
+            let index = args.firstIndex(of: flag),
+            index + 1 < args.count,
+            let value = Double(args[index + 1]),
+            value > 0
         else { return nil }
-        return args[index + 1]
-    }
-
-    /// "-startMatch": jump straight into a single match from the menu
-    /// (P6 snapshot captures).
-    static var startMatch: Bool {
-        ProcessInfo.processInfo.arguments.contains("-startMatch")
+        return value
     }
 }
 
@@ -63,6 +112,11 @@ public final class GameViewModel: ObservableObject {
     @Published public private(set) var oddsText: String = "Chance to capture next roll: 0%"
     /// Whether the AI is thinking (for the tavern opponent).
     @Published public private(set) var aiThinking: Bool = false
+    /// Bumped on every applied action; an off-main bot decision compares
+    /// against the generation it was spawned with and is discarded when the
+    /// state moved on (the human acted during the think). Internal so the
+    /// unit tests can drive the landing guard directly.
+    var actionGeneration: UInt64 = 0
     /// Whether the game is paused.
     @Published public var isPaused: Bool = false
     /// The last rule error, for display (nil when the last action succeeded).
@@ -214,6 +268,8 @@ public final class GameViewModel: ObservableObject {
         self.matchState = GameViewModel.emptyMatch
         var state = self.makeMatch(stake: snapshot.stakeValue)
 
+        BoardDebug.mark("vm snapshot init: replay begin (\(snapshot.actions.count) actions)")
+
         // Fold the saved actions through the reducer with fresh streams from
         // the stored seed. A failed step means a corrupt save; stop there.
         for recorded in snapshot.actions {
@@ -227,6 +283,7 @@ public final class GameViewModel: ObservableObject {
                 break
             }
         }
+        BoardDebug.mark("vm snapshot init: replay done")
 
         self.matchState = state
         deriveViewState()
@@ -373,6 +430,7 @@ public final class GameViewModel: ObservableObject {
 
     /// Apply an action through the reducer and re-derive view state.
     func applyAction(_ action: Action) {
+        actionGeneration &+= 1
         do {
             let result = try Reducer.apply(
                 action, to: matchState, rng: &rng, omenRng: &omenRng, diceSource: diceSource)
@@ -386,6 +444,18 @@ public final class GameViewModel: ObservableObject {
                 record(event)
             }
             deriveViewState()
+            // RS-P8.1: VoiceOver announces the roll, legal moves, and win
+            // rate after every roll.
+            if result.events.contains(where: {
+                if case .diceRolled = $0 { return true }
+                return false
+            }) {
+                AccessibilityAnnouncer.post(
+                    AccessibilityAnnouncer.rollAnnouncement(
+                        value: matchState.diceValue ?? 0,
+                        legalMoves: legalMoves.count,
+                        oddsText: oddsText))
+            }
             fireCompletionIfNeeded()
             // S2.4: autosave every applied action while the match runs.
             if autoSave {
@@ -503,10 +573,17 @@ public final class GameViewModel: ObservableObject {
 
     // MARK: - AI (simple heuristic for P2; RS-AI replaces it in P4)
 
-    /// How long the AI waits before acting (fast in autoPilot UI-test runs;
-    /// heuristic-vs-heuristic autoPilot matches run thousands of plies, so
-    /// the demo cadence is 0.01 s to keep a full match inside test budgets).
-    private var aiDelay: TimeInterval { autoPilot ? 0.01 : 0.5 }
+    /// Delay before the AI applies its action. Normal play waits 0.5 s;
+    /// autoPilot demo matches run at 0.35 s/ply (watchable pace that keeps
+    /// the SpriteKit accessibility tree stable enough for XCTest queries).
+    /// "-aiDelay N" overrides — UI tests that need speed can pass a lower
+    /// value explicitly.
+    private var aiDelay: TimeInterval {
+        if autoPilot, let override = LaunchArguments.aiDelay {
+            return override
+        }
+        return autoPilot ? 0.35 : 0.5
+    }
 
     /// Kick the AI loop when a match appears with nothing yet applied.
     /// autoPilot runs must self-start, including the opening roll: no
@@ -613,10 +690,29 @@ public final class GameViewModel: ObservableObject {
             // seed 42 and ran 4,000+ plies); without a bot it keeps the
             // built-in heuristic. Manual play is untouched: aiTurn only runs
             // for the AI side then (see the guard above).
-            if let move = opponentBot?.chooseMove(
-                from: matchState, moves: legalMoves, rng: &aiRng)
-                ?? pickBestAIMove()
-            {
+            if let bot = opponentBot {
+                // RS-P8 (frame-rate floor §7): the expectiminimax search must
+                // not run on the main thread — a depth-3 think freezes the
+                // SpriteKit render loop for up to ~1 s (31 fps measured on
+                // the sim). The bot and the state snapshot are Sendable
+                // values; the decision hops back to the main actor to apply,
+                // and a stale decision (the human acted meanwhile) is
+                // discarded and the turn rescheduled.
+                let state = matchState
+                let moves = legalMoves
+                let generation = actionGeneration
+                let rngSnapshot = aiRng
+                aiThinking = true
+                let weakVM = WeakMainActorBox(self)
+                Task.detached(priority: .userInitiated) {
+                    var rng = rngSnapshot
+                    let move = bot.chooseMove(from: state, moves: moves, rng: &rng)
+                    await weakVM.value?.finishBotMove(
+                        move, advancedRng: rng, generation: generation)
+                }
+                return
+            }
+            if let move = pickBestAIMove() {
                 applyAction(.move(move.piece))
             }
         }
@@ -626,6 +722,29 @@ public final class GameViewModel: ObservableObject {
         // AI action after every applied action; scheduling again here would
         // run parallel chains and break the daily match's single-stream
         // replay order.
+    }
+
+    /// Apply an off-main bot decision back on the main actor (RS-P8): the
+    /// think ran on a background task so the render loop never froze; this
+    /// lands the chosen move, or discards it when the state moved on during
+    /// the think (generation mismatch — the human acted meanwhile). Internal
+    /// so the unit tests can exercise the guard directly.
+    func finishBotMove(_ move: Move?, advancedRng: SeededRNG, generation: UInt64) {
+        aiRng = advancedRng
+        aiThinking = false
+        guard generation == actionGeneration, !isPaused, !matchState.isComplete else {
+            // Superseded: hand the turn back to the scheduler so the chain
+            // keeps flowing from the current state.
+            scheduleAIIfNeeded()
+            return
+        }
+        if let move {
+            applyAction(.move(move.piece))
+        } else {
+            // Bot failure path mirrors the synchronous fallback: schedule
+            // the next action instead of stalling the match.
+            scheduleAIIfNeeded()
+        }
     }
 
     /// Decide whether the AI should offer a double.
@@ -705,5 +824,17 @@ extension MatchState {
     /// Whether the safety-toggle omen is active this turn.
     var pendingOmenIsUnsafeRosettes: Bool {
         pendingOmen?.effect.kind == .unsafeRosettes
+    }
+}
+
+/// A weak, Sendable handle to a MainActor object, for handing a background
+/// bot-decision task its completion hop. The box itself crosses isolation
+/// boundaries; the referenced view model is only ever touched through its
+/// MainActor methods.
+final class WeakMainActorBox<T: AnyObject>: @unchecked Sendable {
+    weak var value: T?
+
+    init(_ value: T?) {
+        self.value = value
     }
 }

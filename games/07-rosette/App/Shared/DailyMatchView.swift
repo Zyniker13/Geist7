@@ -9,6 +9,10 @@ import SwiftUI
 /// player on the same UTC day draws the same dice and faces the same
 /// opponent. Winning reports the win to Game Center (when available).
 struct DailyMatchView: View {
+    /// RS-P8.1: the title scales with Dynamic Type instead of a fixed
+    /// point size.
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 36
+
     @StateObject private var model = DailyMatchModel()
     @State private var showGame = false
     /// autoPilot auto-enters the match once per presentation; returning
@@ -19,7 +23,7 @@ struct DailyMatchView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Daily Match")
-                .font(.system(size: 36, design: .serif))
+                .font(.system(size: titleSize, design: .serif))
                 .fontWeight(.bold)
                 .foregroundColor(Color(red: 0.788, green: 0.631, blue: 0.231))
 
@@ -104,6 +108,8 @@ final class DailyMatchModel: ObservableObject {
 
     private let store: DailyResultStore
 
+    // Wall clock: "today's" daily match is a display concern, not match state.
+    // swiftlint:disable:next banned_api
     init(daily: DailyMatch = DailyMatch.make(forDate: Date()), store: DailyResultStore = DailyResultStore()) {
         self.daily = daily
         self.store = store

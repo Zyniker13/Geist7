@@ -9,7 +9,11 @@
 /// play, a cube offer, and an answer to a pending double. All methods must
 /// be deterministic given the seeded stream (INV-4: recorded actions replay
 /// through the reducer alone, so bots never touch the dice or omen streams).
-public protocol MatchBot {
+///
+/// Sendable so a driver can run a decision off the main thread without
+/// freezing the render loop (RS-P8 frame-rate floor): bots are value types
+/// that own no shared mutable state.
+public protocol MatchBot: Sendable {
     /// Choose a move given the full state (the driver's preferred entry
     /// point; search bots need the state, the dice, and the pending omen).
     /// The driver guarantees a non-empty list; returning nil is a bot

@@ -115,3 +115,30 @@
 - **Summary:** In autoPilot (the app playing itself — demos and UI tests), both sides take their moves from the wired `opponentBot` when one exists, falling back to the built-in heuristic; the autoPilot side answers doubles by always accepting and offers the cube as soon as it has borne off one more piece than the opponent (`shouldOfferDoubleDemo`). Manual play is untouched: `aiTurn` only ever runs for the AI side when the human is driving. Separately, the R-10 offer decision moved BEFORE the roll in `aiTurn` — it had sat after `applyAction(.roll)`, where the `!hasRolled` guard made it unreachable, so the cube could never double from an AI turn at all. The offer block also checks the R-10 cube-ownership rule and falls through to the roll when the engine rejects the offer, instead of spinning.
 - **Rationale:** The heuristic-vs-bot autoPilot is the known seed-42 non-convergence (4,000+ plies, pieces stuck in mutual capture cycles; the UI slice test timed out at 481 s without reaching the results screen). Bot-vs-bot converges: the headless replica of the autoPilot loop (`ScratchSliceAutoPilot`, RSAI) completes seed 42 in 65–208 plies depending on the bot, and with the solved-table `OptimalBot` in 160 plies / 0.9 s of compute. A strength-based cube trigger cannot produce an accepted double: by the time a side leads on borne-off pieces its equity is usually already past 75%, where a rational responder declines and the demo ends on a concession at cube ×1 — the seed-42 harness measured exactly that (offers=1, accepted=0). Offering on the first meaningful lead lands where the responder's take-equity (≥25%) still holds, so the demo actually shows the accepted-double path the slice contract requires.
 - **Consequences:** The autoPilot demo may double repeatedly as the cube changes hands (the seed-42 OptimalBot mirror chains ×2→×32 within the R-10 max-64 rule); this is demo cosmetics, not purse state. Tavern wiring follows §7 exactly: Finkel opponents get `OptimalBot` (the quick match is always Finkel), variant taverns get `VariantBot`; no tavern fields the plain heuristic. Regression coverage: `RosetteSliceUITests.testAutoPilotMatchCompletesWithAcceptedDouble` (completion within the 420 s window plus "Cube ×2" observed) and `testDailyMatchAutoPilotRecordsResult` (the daily path keeps its own opponent and dice stream per ADR-0014).
+
+## ADR-0017: AI Bot Decisions Run Off the Main Actor With a Generation Guard
+
+**Status:** Accepted (2026-11-19)
+
+**Context.** The §7 frame-rate floor (60 fps) failed at 31.6 fps mid-play:
+Instruments Time Profiler showed the expectiminimax decision
+(`OptimalBot.chooseMove`, depth 3) executing on the main thread inside
+`GameViewModel.aiTurn()`, starving the SpriteKit render loop for the whole
+think (hundreds of milliseconds to ~1 s).
+
+**Decision.** `MatchBot` requires `Sendable`. The driver (`GameViewModel`)
+captures a Sendable snapshot — match state, legal moves, action generation,
+and the RNG value — runs `bot.chooseMove` in a detached background task, and
+the result lands on the main actor through
+`finishBotMove(_:advancedRng:generation:)`. Landing checks the generation
+counter (bumped in `applyAction`): a decision computed against a superseded
+state is discarded and the turn rescheduled; the RNG advance and `aiThinking`
+apply atomically at landing. The completion hop holds the view model weakly
+(`WeakMainActorBox`).
+
+**Consequences.** The single-chain deterministic replay of the daily match is
+preserved (only one decision chain is live at a time; the RNG advances once
+per landed decision). Tests construct decisions directly
+(`actionGeneration`/`finishBotMove` are internal for `@testable`).
+`SeededRNG` gains `Sendable` (its value is copied into the snapshot, so
+concurrent reads are safe and no shared mutable state exists).

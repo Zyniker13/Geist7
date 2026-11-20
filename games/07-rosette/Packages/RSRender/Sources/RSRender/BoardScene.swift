@@ -53,6 +53,28 @@ public final class BoardScene: SKScene {
         set { _onSquareTap = newValue }
     }
 
+    /// When true, the dice pop animation is skipped (RS-P8.1 Reduce
+    /// Motion). The app sets this from the system setting; the default is
+    /// off so headless tests are deterministic.
+    public var reduceMotionEnabled = false
+
+    /// Called once, on the first frame cycle after the scene is presented
+    /// (P8 performance instrumentation; nil in production).
+    public var onFirstFrame: (() -> Void)?
+    private var firstFrameMarked = false
+
+    override public func update(_ currentTime: TimeInterval) {
+        super.update(currentTime)
+        if !firstFrameMarked {
+            firstFrameMarked = true
+            onFirstFrame?()
+        }
+    }
+
+    /// The dice value shown on the last render, so the pop animation only
+    /// runs when the value actually changes.
+    private var lastDiceValue: Int?
+
     // MARK: - Drawing
 
     override public init(size: CGSize) {
@@ -85,6 +107,16 @@ public final class BoardScene: SKScene {
 
     /// Layout the board to fit the scene.
     private func layoutBoard() {
+        let debugStart = ProcessInfo.processInfo.arguments.contains("-boardDebug")
+            ? CFAbsoluteTimeGetCurrent() : 0
+        defer {
+            if debugStart > 0 {
+                print(
+                    "[boardDebug] layoutBoard took "
+                        + String(format: "%.1f", (CFAbsoluteTimeGetCurrent() - debugStart) * 1000)
+                        + " ms (size \(size))")
+            }
+        }
         // A degenerate size (the hosting SKView has no bounds yet, or the
         // scene was presented before layout) must not wipe the existing
         // geometry: skip until the size is real.
@@ -239,7 +271,8 @@ public final class BoardScene: SKScene {
             addPieceNode(piece: piece, state: state)
         }
 
-        // Render dice value
+        // Render dice value (RS-P8.1: accessibility label + pop animation
+        // skipped under Reduce Motion).
         if let diceValue = state.diceValue {
             let label = SKLabelNode(text: "⚀ \(diceValue)")
             label.fontSize = 24
@@ -247,7 +280,23 @@ public final class BoardScene: SKScene {
             label.fontColor = theme.gold
             label.zPosition = 4
             label.name = "diceDisplay"
+            label.isAccessibilityElement = true
+            label.accessibilityLabel = "Rolled \(diceValue)"
             self.addChild(label)
+            diceNode = label
+            if lastDiceValue != diceValue, !reduceMotionEnabled {
+                // Keyed so tests can probe it with action(forKey:).
+                label.run(
+                    .sequence([
+                        .scale(to: 1.15, duration: 0.08),
+                        .scale(to: 1.0, duration: 0.08),
+                    ]),
+                    withKey: "dicePop")
+            }
+            lastDiceValue = diceValue
+        } else {
+            diceNode = nil
+            lastDiceValue = nil
         }
 
         // Highlight rosettes
@@ -287,17 +336,18 @@ public final class BoardScene: SKScene {
             }
         }
 
-        // Style piece (RS-P6.1: theme colors).
+        // Style piece (RS-P6.1: theme colors; RS-P8.1: shape distinguishes
+        // the players for color-blind players).
         let radius: CGFloat = 18
         let isPlayer0 = piece.owner == .player0
-        targetNode.path = CGPath(
-            ellipseIn: CGRect(x: -radius, y: -radius, width: radius * 2, height: radius * 2),
-            transform: nil)
+        targetNode.path = PieceShape.forOwner(piece.owner).cgPath(radius: radius)
         targetNode.fillColor = isPlayer0 ? theme.lapis : theme.squareShell
         targetNode.strokeColor = theme.gold
         targetNode.lineWidth = 2
         targetNode.zPosition = 2
         targetNode.name = "piece_\(piece.owner.rawValue)_\(piece.id)"
+        targetNode.isAccessibilityElement = true
+        targetNode.accessibilityLabel = pieceAccessibilityLabel(for: piece)
 
         // Re-parent on every render: layoutBoard() clears the scene graph,
         // so a cached piece node must be re-added even if it already has a
@@ -360,6 +410,20 @@ public final class BoardScene: SKScene {
             node.removeFromParent()
         }
         legalMoveHighlight = []
+    }
+
+    // MARK: - Accessibility (RS-P8.1)
+
+    /// The VoiceOver label for a piece: owner, and where it sits.
+    public func pieceAccessibilityLabel(for piece: Piece) -> String {
+        let owner = piece.owner == .player0 ? "Your piece" : "Opponent's piece"
+        if piece.isBorneOff {
+            return "\(owner), borne off"
+        }
+        if piece.position < 0 {
+            return "\(owner), waiting"
+        }
+        return "\(owner), square \(piece.position)"
     }
 
     // MARK: - Input Handling (touch on iOS, mouse on macOS)

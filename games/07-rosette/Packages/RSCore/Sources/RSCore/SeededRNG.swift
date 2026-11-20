@@ -5,7 +5,7 @@ import Foundation
 /// Replaces the system RNG in all
 /// Core, Content, and AI modules so that every game is reproducible from
 /// a single seed.
-public struct SeededRNG {
+public struct SeededRNG: Sendable {
     private var state: UInt64
 
     /// Initialise with the given 64-bit seed.

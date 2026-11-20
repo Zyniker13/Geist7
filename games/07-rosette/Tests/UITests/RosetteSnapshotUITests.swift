@@ -33,6 +33,20 @@ final class RosetteSnapshotUITests: XCTestCase {
         }
     }
 
+    /// Fresh-board "match start" shot: no autoPilot, no fast-forward, so the
+    /// board renders at the opening roll and waits for the player.
+    @MainActor
+    func testCaptureMatchStartShot() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-startMatch", "-seed", "7"]
+        app.launch()
+        Thread.sleep(forTimeInterval: 3)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "match-start"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     @MainActor
     func testCaptureDailyShot() {
         let app = XCUIApplication()

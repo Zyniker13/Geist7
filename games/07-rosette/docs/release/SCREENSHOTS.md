@@ -18,23 +18,48 @@ sizes are normalized by the maintainer at upload (issue #11).
 
 ## Capture mechanism
 
-`Tests/Snapshots/Snapshots.swift` (placeholder in the repo) drives the app
-with launch arguments to reach each state deterministically (fixed seed),
-takes `XCUIScreen.main.screenshot()`, attaches each with lifetime
-`.keepAlways`, and the PNGs are exported from the `.xcresult` with
-`xcresulttool export attachments`. Captures run on:
+`Tests/UITests/RosetteSnapshotUITests.swift` drives the app with launch
+arguments to reach each state deterministically (fixed seed), takes
+`XCUIScreen.main.screenshot()`, attaches each with lifetime `.keepAlways`,
+and the PNGs are exported from the `.xcresult` with
+`xcresulttool export attachments`. In-match captures avoid AX queries
+entirely (issue #10: SpriteKit AX snapshots starve): the match plays itself
+via `-autoPilot`, and `-snapshotPly 40` fast-forwards ~20 plies so the burst
+lands mid-game. Captures run on:
 
 - `zGeist7_bot-iPad-Pro-13` (iPad Pro 13-inch, iPadOS 27.x)
 - `zGeist7_bot-iPhone-17` (iPhone 17, iOS 27.x)
 
 Both devices are created by this bot (`simctl create`); sim-lock wraps every
-run. Captured PNGs land in `docs/release/screenshots/` with the device and
-shot number in the filename.
+run. The burst yields 18 mid-game frames; the final six-shot set per device
+is selected from them (match start, mid-match states, circuit, daily).
+
+## Captured sets (2026-11-20)
+
+Both devices captured the same 21 frames (18-burst `match-01..18` +
+`match-start` + `daily` + `circuit`); every frame unique by MD5 within its
+set. Verification: circuit and daily frames visually confirmed; match
+frames content-probe-verified (~78% non-background pixels each) — the
+vision service timed out repeatedly, so a full per-frame visual review of
+the burst was not possible; the raw video's first frame was visually
+confirmed mid-game. The committed six-shot set per device
+(`docs/release/screenshots/`) picks `match-start` plus three spread burst
+frames (`05`, `11`, `16` — early/mid/late); the maintainer can substitute
+any burst frame at upload (issue #11) from the recorded inventory.
+
+Committed per device: `01-match-start`, `02-match-early` (= match-05),
+`03-match-mid` (= match-11), `04-match-late` (= match-16), `05-circuit`,
+`06-daily`.
 
 ## Status
 
 - [x] Plan written
-- [ ] Snapshots test implemented
-- [ ] iPad set captured
-- [ ] iPhone set captured
-- [ ] PNGs committed and reviewed (human-eye check per conventions)
+- [x] Snapshots test implemented (`RosetteSnapshotUITests`: match burst,
+      match start, daily, circuit)
+- [x] iPad set captured (2026-11-20; 21 unique frames; circuit + daily
+      visually confirmed; match frames verified unique by hash and by
+      content probe — vision service was down for the full review)
+- [x] iPhone set captured (2026-11-20; 21 unique frames, same verification)
+- [x] Six-shot set per device committed to `docs/release/screenshots/`
+- [ ] Maintainer normalizes sizes, re-picks frames if wanted, uploads
+      (issue #11)

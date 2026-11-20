@@ -1,8 +1,8 @@
 # Rosette — Phase & Gate Status
 
 ## Current State
-- **Current Phase:** P10 Release Prep (P9 complete; G9 signed off as substituted — tag `rosette/gate-G9-pass`)
-- **Next Step:** Verify/select the 43 captured iPad PNGs, record the preview video, capture the iPhone set, then G10 sign-off and tag `rosette/gate-G10-pass` (tag already created for G9)
+- **Current Phase:** **COMPLETE — all phases P0–P10 and gates G0–G10 signed off** (G10 signed off 2026-11-20 as GLM-SELF: age-rating questionnaire draft accurate (simulated gambling → 12+, `docs/release/AGE_RATING.md`); final CI green on `583b34a` (main, run completed 2026-11-20 ~14:4x UTC). Tag: `rosette/gate-G10-pass`. Release submission itself (App Store Connect, TestFlight, upload) is maintainer-owned: issues #5–#7, #11.)
+- **Next Step:** None for this game — 06 Mattang is next in the program queue.
 - **Last Update:** 2026-11-20
 
 ## Phase Queue
@@ -33,9 +33,11 @@
 | G7 | ✅ Passed | `rosette/gate-G7-pass` tag — `make test` green (RSAI 48/48, RSPlatform 17/17, 336 XCTest executions, 0 failures; async match with cube completes and ODR download + offline expectiminimax fallback verified in RSPlatform suites), `make lint` 0 violations, Rosette-macOS build succeeded (GameViewModel refactored onto `MacPieceKey`, 4 new unit tests), iOS slice UI tests passed on 7th retry (2/2); macOS keyboard UI test failed (issue #8, unit substitute); merged to main |
 | G8 | ✅ Passed | `rosette/gate-G8-pass` tag — full UI suite 11/11 (AX/perf/slice/launch), `make test` green, `make lint` clean, 60 fps mid-AI-think verified, a11y suite (RSRender 20 + RSPlatform announcer/motion) green, `AsyncBotDecisionUnitTests` restored and green; in-match AX starvation filed as issue #10 |
 | G9 | ✅ Passed (substituted) | TestFlight upload blocked (owner-only, issue #11); crash-free substitute: 2,000-match soak exit 0, suites green (unit 29/29, UI 11/11), no simulator crash reports this phase (one historical P7-era test-runner crash, fixed — see `docs/BETA.md`); CI green on the P9 merge `f698a78` |
-| G10 | ⏳ Pending | — |
+| G10 | ✅ Complete | 2026-11-20 |
 
 ## Log
+
+- **2026-11-20** — **G10 signed off (GLM-SELF) — Rosette complete.** Checks: age-rating questionnaire draft accurate in `docs/release/AGE_RATING.md` (simulated gambling = Yes, in-game currency only, no real-money wagering or cash-out → 12+; actual App Store Connect entry is maintainer-owned via issue #11); final CI green on `main` `583b34a` (merge commit containing all P10 release prep: six-shot screenshot sets per device committed under `docs/release/screenshots/`, 21-frame verified capture inventory, preview-video plan with raw-capture SHA-256 in `docs/release/PREVIEW_VIDEO.md`, completed capture status in `SCREENSHOTS.md`). Tag `rosette/gate-G10-pass` pushed. Rosette is the first Set Two game completed through P10; open maintainer items #4–#11 cover real-device evidence, store submission, and advisor/instrumentation steps.
 - **2026-11-16** — P0 S0.1: Created repository layout (project.yml, Makefile, .swiftlint.yml, .swift-format, Config/Bundle.xcconfig, 7 Package.swift manifests, placeholder sources, App Info.plists, RosetteApp.swift ×2, ContentView.swift).
 - **2026-11-16** — P0 S0.2: Implemented deterministic core — SeededRNG (SplitMix64, `&*` wrapping multiply) and Fixed (Int64+scale fixed-point) with 9 tests. Added Replay (JSON serialization) and DebugOverlay.
 - **2026-11-16** — P0 S0.3: Wrote tooling — check-imports.sh (banned API scanner), content-lint/run.sh (placeholder), .github/workflows/rosette.yml (CI).

@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette — **P10 nearly done** (2026-11-20). G9 signed off (substituted) and **tagged** `rosette/gate-G9-pass`. P10: `docs/release/` drafts committed; snapshot staging knobs `-circuit` + `-snapshotPly N` implemented and committed (`151616d`); capture sets re-taken and verified — **iPad 21/21 and iPhone 21/21 PNGs, all unique by MD5** (18 match frames + match-start + daily + circuit); circuit and daily frames vision-confirmed, match frames verified via pixel-content probe (~78% non-background; vision service repeatedly timing out); raw preview video re-recorded on the iPad sim after the first attempt captured only the cold-boot launch phase. Remaining: select final six-shot set per device (visual review when vision service recovers), merge `rosette/phase/P10-release` to `main`, final CI green, G10 sign-off + tag.
-- **Next step:** Merge branch → verify CI on `main` → G10 sign-off (`docs/BETA.md` age-rating substitute + final CI green) → tag `rosette/gate-G10-pass` → update both STATUS files → **06 Mattang**.
+- **Game in progress:** 07 Rosette — **COMPLETE (2026-11-20).** All phases P0–P10 and gates G0–G10 signed off; tag `rosette/gate-G10-pass` pushed (final CI green on `583b34a`). Release submission is maintainer-owned: open issues #4–#11 (real-device evidence, store upload, TestFlight, Game Center, CloudKit, ODR). Six-shot screenshot sets per device committed; preview video raw captured (19.46 s, SHA in `docs/release/PREVIEW_VIDEO.md`).
+- **Next step:** **06 Mattang** — P0 setup (environment re-check not needed; go straight to scaffold: `games/06-mattang/`, MT* packages, `mattang.yml`, SOURCING.md with no-teaching-navigation statement, cultural manifest with pending states, glossary all-pending lint).
 
 ## Environment Check
 
@@ -68,6 +68,8 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - (none)
 
 ## Log
+
+- **2026-11-20** — 07 Rosette **complete**: G10 signed off (GLM-SELF; age-rating draft accurate, final CI green on `583b34a`), tag `rosette/gate-G10-pass` pushed. Program moves to 06 Mattang (P0).
 
 - 2026-11-15: Roadmap set written; no code yet.
 - 2026-11-16: Added `AGENTS.md`, `LICENSE` (all rights reserved), `SECURITY.md`, `.gitignore`, the Environment Check, and the issue labels; the program is ready to start.

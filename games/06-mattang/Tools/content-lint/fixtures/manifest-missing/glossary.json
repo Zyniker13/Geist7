@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang-fixture",
+  "entries": [
+    {
+      "key": "gl_fixture_term",
+      "term": "fixtureterm",
+      "gloss": "a glossary term with no manifest entry (SRC0.2 fixture)",
+      "status": "pending",
+      "source": "fixture"
+    }
+  ]
+}

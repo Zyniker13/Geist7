@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "language": "Marshallese (Majel)",
+  "entries": [
+    {
+      "key": "gl_booj",
+      "term": "booj",
+      "gloss": "knot; the place where swells meet",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_okar",
+      "term": "okar",
+      "gloss": "root; a line of nodes",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_dilep",
+      "term": "dilep",
+      "gloss": "backbone; the wave path between islands",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_kaelep",
+      "term": "kaelep",
+      "gloss": "western swell",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_mattang",
+      "term": "mattang",
+      "gloss": "small teaching chart for one or two swell directions",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_meddo",
+      "term": "meddo",
+      "gloss": "regional chart covering swells of an island group",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_rebbelib",
+      "term": "rebbelib",
+      "gloss": "large chart covering the whole Marshall chain",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_wapepe",
+      "term": "wapepe",
+      "gloss": "Marshallese chart type with straight palm-rib sticks",
+      "status": "pending",
+      "source": "Genz et al. 2009"
+    },
+    {
+      "key": "gl_rimeto",
+      "term": "ri-meto",
+      "gloss": "person of the ocean; a navigator title conferred by an iroij (never used for tiers or ranks in this game)",
+      "status": "pending",
+      "source": "Genz et al. 2009; Genz 2011"
+    }
+  ]
+}

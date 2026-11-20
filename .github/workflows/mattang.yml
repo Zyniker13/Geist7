@@ -1,0 +1,63 @@
+#!/bin/bash
+# CI workflow for Mattang — GitHub Actions
+#
+# Runs on the latest macOS runner, builds for iOS Simulator and macOS,
+# runs tests, and runs lint.
+
+name: Mattang
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: games/06-mattang
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install dependencies
+        run: |
+          brew install xcodegen swiftlint swift-format
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build iOS
+        run: |
+          xcodebuild build -scheme Mattang-iOS \
+            -destination "generic/platform=iOS" \
+            -configuration Debug \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Build macOS
+        run: |
+          xcodebuild build -scheme Mattang-macOS \
+            -destination "platform=macOS" \
+            -configuration Debug \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          for pkg in Packages/*/; do
+            echo "Testing ${pkg}"
+            swift test --package-path "${pkg}" --parallel --enable-code-coverage 2>&1 | tail -5
+          done
+
+      - name: Run lint
+        run: |
+          swiftlint lint --strict 2>&1 | tee lint-swiftlint.log
+          swift-format lint --configuration .swift-format --recursive Packages/ App/ Tools/ Tests/ 2>&1
+          bash Tools/check-imports.sh 2>&1
+          bash Tools/content-lint/run.sh 2>&1

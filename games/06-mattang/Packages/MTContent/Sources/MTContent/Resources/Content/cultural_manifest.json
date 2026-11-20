@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "sourcing_tier": "FULL",
+  "review_required": true,
+  "assets": [
+    {
+      "id": "gl_booj",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a knot; the place where swells meet",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_okar",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a root; a line of nodes",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_dilep",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a backbone; the wave path between islands",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_kaelep",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for the western swell",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_mattang",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for the small teaching chart for one or two swell directions (the game's namesake)",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_meddo",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a regional chart covering swells of an island group",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_rebbelib",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a large chart covering the whole Marshall chain",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_wapepe",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese term for a chart type with straight palm-rib sticks",
+      "source_refs": ["src_genz2009"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_rimeto",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Marshallese navigator title; person of the ocean. Never used for game tiers or ranks",
+      "source_refs": ["src_genz2009", "src_genz2011"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "text_swell_neutral_names",
+      "kind": "text",
+      "tradition": "marshallese_stick_charts",
+      "description": "Neutral swell display names ('East swell', 'North swell') used in all release strings until Marshallese terms are approved by the advisor",
+      "source_refs": ["src_roadmap_s115"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    }
+  ]
+}

@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette — **COMPLETE (2026-11-20).** All phases P0–P10 and gates G0–G10 signed off; tag `rosette/gate-G10-pass` pushed (final CI green on `583b34a`). Release submission is maintainer-owned: open issues #4–#11 (real-device evidence, store upload, TestFlight, Game Center, CloudKit, ODR). Six-shot screenshot sets per device committed; preview video raw captured (19.46 s, SHA in `docs/release/PREVIEW_VIDEO.md`).
-- **Next step:** **06 Mattang** — P0 setup (environment re-check not needed; go straight to scaffold: `games/06-mattang/`, MT* packages, `mattang.yml`, SOURCING.md with no-teaching-navigation statement, cultural manifest with pending states, glossary all-pending lint).
+- **Game in progress:** **06 Mattang — P0 setup** on branch `mattang/phase/P0-setup`. Done so far: full scaffold (7 MT* packages + app targets + tools), MTCore green (38/38 SPM tests; Fixed/SeededRNG/Hex/InteractionTable/Replay), content-lint verified (real + failing fixture), docs written (RULES, SOURCING, HISTORY, DECISIONS, STATUS, ARCHITECTURE, OPEN_QUESTIONS, KNOWN_ISSUES, TODO_MAP, HANDOFF, THIRD_PARTY, COVERAGE), CI workflow `mattang.yml` added, placeholder app launches on iPad (screenshot evidence: title + debug overlay `fps 60 / tick 0 / seed 42 / hash 0x4CC4…`) and macOS (window verified via CGWindowList; screencapture unavailable on this headless box — same limitation as Rosette issue #4).
+- **Next step:** finish P0 — `make test-mac`/iOS tests + `make lint` green, commit + push, CI green, file `mattang: cultural advisor review` issue (SRC0.1 §8 brief), G0 sign-off + tag `mattang/gate-G0-pass`, merge to `main`, start P1.
 
 ## Environment Check
 
@@ -35,8 +35,8 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 07 | Rosette | P10 in progress | G9 (substituted) | #4, #7–#11 |
-| 2 | 06 | Mattang | Not Started | — | — |
+| 1 | 07 | Rosette | Complete (P10/G10) | G10 | #4, #7–#11 |
+| 2 | 06 | Mattang | P0 in progress | — | — |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
 | 5 | 01 | Ebru | Not Started | — | — |
@@ -68,6 +68,8 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - (none)
 
 ## Log
+
+- **2026-11-20** — 06 Mattang P0 in progress on `mattang/phase/P0-setup`: scaffold complete (7 packages, app targets, tools, lint configs); MTCore 38/38 tests green (tests caught two real Fixed multiply/divide sign bugs, fixed with magnitude-based 128-bit math); content + cultural manifest + content-lint verified with failing fixture; docs (RULES/SOURCING/HISTORY/DECISIONS + skeletons) written; `mattang.yml` CI added; placeholder app launches on iPad (simulator screenshot with debug overlay, fps 60) and macOS (CGWindowList evidence; screencapture limitation per Rosette issue #4). Remaining for G0: full test suite green, lint green, push + CI, advisor issue, tag.
 
 - **2026-11-20** — 07 Rosette **complete**: G10 signed off (GLM-SELF; age-rating draft accurate, final CI green on `583b34a`), tag `rosette/gate-G10-pass` pushed. Program moves to 06 Mattang (P0).
 

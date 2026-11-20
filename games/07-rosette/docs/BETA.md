@@ -56,6 +56,12 @@ There is no crash-reporting SDK (by design, telemetry-free). G9's "crash-free â‰
 
 - `Tools/sim` soak: 2,000 headless matches, exit 0, no exceptions (log and hash in `STATUS.md` P9 evidence).
 - Full test suites green (unit 29/29 via the direct runner; UI 11/11 on the iOS simulator).
-- No crash reports in the simulator `DiagnosticReports` for any session this phase.
+- No crash reports in the simulator `DiagnosticReports` for any session this
+  phase. One historical report (2026-11-18) exists: a unit-test-runner crash
+  (`RosetteUnitTests-macOS`, `MacKeyboardUnitTests.testNumberKeyAppliesLegalMove`)
+  from an unguarded `legalMoves[0]` subscript in the test itself, fixed by the
+  empty-moves guard now in the tree; the full bundle has run green since
+  (29/29 on 2026-11-20) with no further reports. No shipping-app crash has
+  occurred in any phase.
 
 The true crash-free rate comes from TestFlight usage and is the maintainer's to read (issue #11).

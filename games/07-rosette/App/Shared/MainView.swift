@@ -139,6 +139,9 @@ struct MainView: View {
                 if LaunchArguments.daily {
                     showDaily = true
                 }
+                if LaunchArguments.circuit {
+                    showCircuit = true
+                }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()

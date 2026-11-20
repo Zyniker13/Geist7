@@ -21,6 +21,8 @@ enum LaunchArguments {
         var startMatch = false
         var leftHanded = false
         var autoResume = false
+        var circuit = false
+        var snapshotPly: Int?
     }
 
     /// "-seed N": override the deterministic match seed (UI tests).
@@ -51,6 +53,19 @@ enum LaunchArguments {
     /// (perf probing: measures the resume path without a UI-test tap).
     static var autoResume: Bool { current.autoResume }
 
+    /// "-circuit": at the menu, immediately push the tavern-circuit screen
+    /// (release-screenshot staging; replaces a UI-test tap that AX starves
+    /// under, per issue #10).
+    static var circuit: Bool { current.circuit }
+
+    /// "-snapshotPly N": fast-forward the launched match N recorded actions
+    /// synchronously at launch, then idle (deterministic mid-game board
+    /// staging for release screenshots). Pairs with "-aiDelay 30", which
+    /// parks the next AI ply well outside the capture window. Needs
+    /// "-autoPilot": with manual play the fast-forward stops at the first
+    /// human turn (aiTurn never rolls for player 0).
+    static var snapshotPly: Int? { current.snapshotPly }
+
     private static var current: Parsed {
         parse(ProcessInfo.processInfo.arguments)
     }
@@ -69,6 +84,8 @@ enum LaunchArguments {
         result.startMatch = args.contains("-startMatch")
         result.leftHanded = args.contains("-leftHanded")
         result.autoResume = args.contains("-autoResume")
+        result.circuit = args.contains("-circuit")
+        result.snapshotPly = intValue(after: "-snapshotPly", in: args)
         return result
     }
 
@@ -89,6 +106,18 @@ enum LaunchArguments {
             index + 1 < args.count,
             let value = Double(args[index + 1]),
             value > 0
+        else { return nil }
+        return value
+    }
+
+    /// The non-negative integer value following `flag` in `args`, if present
+    /// and parseable ("-snapshotPly 45").
+    private static func intValue(after flag: String, in args: [String]) -> Int? {
+        guard
+            let index = args.firstIndex(of: flag),
+            index + 1 < args.count,
+            let value = Int(args[index + 1]),
+            value >= 0
         else { return nil }
         return value
     }
@@ -198,6 +227,11 @@ public final class GameViewModel: ObservableObject {
     /// The daily match's day number when this is the daily match (RS-P7.1);
     /// nil for single and circuit matches.
     private let dailyDay: Int?
+    /// The "-snapshotPly" target when the match was launched for screenshot
+    /// staging (fast-forward then idle); nil in normal play and when
+    /// restoring a snapshot. Non-nil also suppresses autosave so capture
+    /// runs never touch the player's resume slot.
+    private let snapshotPly: Int?
 
     // MARK: - Lifecycle
 
@@ -240,13 +274,18 @@ public final class GameViewModel: ObservableObject {
         self.omenId = omenId
         self.useAI = useAI
         self.seed = seed
-        self.autoSave = autoSave
         self.autoPilot = autoPilot
         self.regionID = LaunchArguments.region ?? region
         self.opponentBot = opponentBot
         self.diceSource = diceSource
         self.statsStore = stats
         self.dailyDay = dailyDay
+        // "-snapshotPly" stages a mid-game board for screenshots; it must
+        // not write an autosave (the fast-forwarded board would replace the
+        // player's real resume slot).
+        let plyTarget = LaunchArguments.snapshotPly
+        self.snapshotPly = plyTarget
+        self.autoSave = autoSave && plyTarget == nil
         self.aiRng = SeededRNG(seed: seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: seed)
         self.omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
@@ -255,6 +294,11 @@ public final class GameViewModel: ObservableObject {
         deriveViewState()
         self.completionFired = matchState.isComplete
         self.statsFolded = matchState.isComplete
+        // Run the synchronous fast-forward after the baseline state is
+        // derived: the first rendered frame already shows the staged board.
+        if let plyTarget {
+            fastForward(plies: plyTarget)
+        }
     }
 
     /// Restore a saved match by deterministic replay of its action history.
@@ -284,6 +328,7 @@ public final class GameViewModel: ObservableObject {
         self.diceSource = nil
         self.statsStore = stats
         self.dailyDay = nil
+        self.snapshotPly = nil
         self.aiRng = SeededRNG(seed: snapshot.seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: snapshot.seed)
         self.omenRng = SeededRNG(seed: snapshot.seed &+ 0x9E37_79B9_7F4A_7C15)
@@ -642,9 +687,38 @@ public final class GameViewModel: ObservableObject {
         scheduleAIIfNeeded()
     }
 
+    /// True while the synchronous "-snapshotPly" fast-forward is running:
+    /// actions apply normally, but scheduleAIIfNeeded stays inert so the
+    /// in-line loop cannot pile up async chains behind it.
+    private var fastForwarding = false
+
+    /// Apply up to `target` recorded actions synchronously (no animations,
+    /// no scheduling) so "-snapshotPly N" stages a deterministic mid-game
+    /// board before the first frame renders. Uses the same aiTurn decision
+    /// path as live play (autoPilot accepts doubles); a turn that produces
+    /// no recorded action ends the loop instead of spinning. Internal for
+    /// the LaunchArgumentsUnitTests determinism coverage.
+    func fastForward(plies target: Int) {
+        fastForwarding = true
+        defer { fastForwarding = false }
+        let cap = target * 4 + 64
+        var iteration = 0
+        while recordedActions.count < target, iteration < cap {
+            iteration += 1
+            if matchState.isComplete { break }
+            let before = recordedActions.count
+            if matchState.doubleOffered {
+                applyAction(.acceptDouble)
+            } else {
+                aiTurn()
+            }
+            if recordedActions.count == before { break }
+        }
+    }
+
     /// Schedule the next AI action when an AI-controlled side must act.
     private func scheduleAIIfNeeded() {
-        guard !matchState.isComplete, !isPaused else { return }
+        guard !fastForwarding, !matchState.isComplete, !isPaused else { return }
 
         // A pending double must be answered by the opponent of the offerer.
         if matchState.doubleOffered {

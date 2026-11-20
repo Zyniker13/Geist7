@@ -52,4 +52,39 @@ final class LaunchArgumentsUnitTests: XCTestCase {
     func testEmptyArgumentsAreDefaults() {
         XCTAssertEqual(LaunchArguments.parse([]), LaunchArguments.Parsed())
     }
+
+    // RS-P10: screenshot-staging knobs.
+
+    func testSnapshotPlyParses() {
+        XCTAssertEqual(LaunchArguments.parse(["-snapshotPly", "45"]).snapshotPly, 45)
+        XCTAssertEqual(LaunchArguments.parse(["-snapshotPly", "0"]).snapshotPly, 0)
+        XCTAssertNil(LaunchArguments.parse([]).snapshotPly)
+    }
+
+    func testSnapshotPlyRejectsMalformedAndNegative() {
+        XCTAssertNil(LaunchArguments.parse(["-snapshotPly", "abc"]).snapshotPly)
+        XCTAssertNil(LaunchArguments.parse(["-snapshotPly", "-5"]).snapshotPly)
+        XCTAssertNil(LaunchArguments.parse(["-snapshotPly", "4.5"]).snapshotPly)
+        XCTAssertNil(LaunchArguments.parse(["-snapshotPly"]).snapshotPly)
+    }
+
+    func testCircuitFlagParses() {
+        XCTAssertTrue(LaunchArguments.parse(["-circuit"]).circuit)
+        XCTAssertFalse(LaunchArguments.parse([]).circuit)
+    }
+
+    /// "-snapshotPly" fast-forward must be deterministic: two matches built
+    /// from the same seed and fast-forwarded the same amount reach identical
+    /// match states (the whole point of the staging knob is a reproducible
+    /// screenshot composition).
+    @MainActor
+    func testFastForwardIsDeterministicAcrossSeededMatches() {
+        let first = GameViewModel(useAI: true, seed: 7, autoPilot: true)
+        first.fastForward(plies: 40)
+        let second = GameViewModel(useAI: true, seed: 7, autoPilot: true)
+        second.fastForward(plies: 40)
+
+        XCTAssertEqual(first.matchState, second.matchState)
+        XCTAssertFalse(first.matchState.isComplete, "40 staged actions must leave seed 7 mid-match")
+    }
 }

@@ -1,0 +1,220 @@
+name: Mattang
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+    macOS: "26.0"
+  xcodeGen:
+    generateCleanLayer: true
+
+settings:
+  base:
+    GEIST_BUNDLE_ID: com.example.mattang
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+packages:
+  MTCore:
+    path: Packages/MTCore
+  MTContent:
+    path: Packages/MTContent
+  MTAI:
+    path: Packages/MTAI
+  MTRender:
+    path: Packages/MTRender
+  MTAudio:
+    path: Packages/MTAudio
+  MTPlatform:
+    path: Packages/MTPlatform
+  MTMeta:
+    path: Packages/MTMeta
+
+targets:
+  Mattang-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/iOS
+      - path: App/Shared
+    dependencies:
+      - package: MTCore
+      - package: MTContent
+      - package: MTAI
+      - package: MTRender
+      - package: MTAudio
+      - package: MTPlatform
+      - package: MTMeta
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/iOS/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  Mattang-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/macOS
+      - path: App/Shared
+    dependencies:
+      - package: MTCore
+      - package: MTContent
+      - package: MTAI
+      - package: MTRender
+      - package: MTAudio
+      - package: MTPlatform
+      - package: MTMeta
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/macOS/Info.plist
+
+  MTCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTCore/Sources/MTCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTContent:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTContent/Sources/MTContent
+    dependencies:
+      - package: MTCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTAI:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTAI/Sources/MTAI
+    dependencies:
+      - package: MTCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTRender:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTRender/Sources/MTRender
+    dependencies:
+      - package: MTCore
+      - package: MTContent
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTAudio:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTAudio/Sources/MTAudio
+    dependencies:
+      - package: MTCore
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTPlatform:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTPlatform/Sources/MTPlatform
+    dependencies:
+      - package: MTCore
+      - package: MTMeta
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MTMeta:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Packages/MTMeta/Sources/MTMeta
+    dependencies:
+      - package: MTCore
+      - package: MTContent
+      - package: MTAI
+    settings:
+      base:
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+  MattangUITests-iOS:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/UITests
+    dependencies:
+      - target: Mattang-iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  MattangUITests-macOS:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/UITests
+    dependencies:
+      - target: Mattang-macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  MattangUnitTests-macOS:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/UnitTests
+    dependencies:
+      - target: Mattang-macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Mattang-iOS:
+    build:
+      targets:
+        Mattang-iOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MattangUITests-iOS
+  Mattang-macOS:
+    build:
+      targets:
+        Mattang-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MattangUnitTests-macOS
+        - MattangUITests-macOS

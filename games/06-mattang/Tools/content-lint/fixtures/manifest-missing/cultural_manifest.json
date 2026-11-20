@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang-fixture",
+  "sourcing_tier": "FULL",
+  "review_required": true,
+  "assets": [
+    {
+      "id": "gl_fixture_other",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Unrelated entry",
+      "source_refs": ["src_fixture"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    }
+  ]
+}

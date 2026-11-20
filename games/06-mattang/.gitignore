@@ -1,0 +1,11 @@
+.DS_Store
+*.xcodeproj
+.build/
+Packages/*/.build/
+Tools/*/.build/
+build/
+DerivedData/
+*.log
+xcuserdata/
+*.xcuserstate
+*.xcresult

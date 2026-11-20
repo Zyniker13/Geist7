@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** 07 Rosette — **G8 PASSED** (2026-11-20, tag `rosette/gate-G8-pass`): async bot landing (60 fps floor met, `docs/PERF.md`), S8.1 a11y (shapes, announcer, Reduce Motion), S8.2 lint (App/ re-included, 0 violations), S8.3 perf (think-time p95 0.474 s, perf UI tests: cold start 1.9 s, resume OK, memory, sustained 60 fps), S8.4 accommodations (haptics, left-handed, Dynamic Type, color-vision sims). Full UI suite 11/11 after converting the two in-match tests to completion smoke tests (XCTest+SpriteKit AX starvation, maintainer issue #10). `make test` green, `make lint` clean, merged to main.
-- **Next step:** P9 (Beta/TestFlight) — owner-only steps get §8.2 substitutes + maintainer issues (TestFlight upload, beta testers); local: archive build, beta metadata draft, launch-argument testplan. Then G9, P10 release prep, and G10 before moving to 06 Mattang.
+- **Game in progress:** 07 Rosette — **P9 in progress** (2026-11-20): iOS archive built unsigned (`CODE_SIGNING_ALLOWED=NO`, placeholder bundle ID; issue #11 for TestFlight upload); beta metadata + age-rating draft in `docs/BETA.md`; 2,000-match soak green (1006/994, exit 0); stats integration wired (StatsRecorder → MetaStore, Settings export via ShareLink, DailyResultStore.allResults()) with two real fixes from the bring-up (wrong expected epoch constant in the export-timestamp test; `recordStatsIfEnabled` idempotence — new `statsFolded` guard, since the one-shot lived only in `fireCompletionIfNeeded`). Full `RosetteUnitTests-macOS` bundle green: **29/29** via the direct-`xctest` bypass (issue #10 stall bypassed, not root-caused).
+- **Next step:** `make test`/`make lint` on the P9 tree, commit+push, then G9 gate sign-off (crash-free substitute recorded in `docs/BETA.md`) → tag `rosette/gate-G9-pass` → P10 release prep → G10 → then 06 Mattang.
 
 ## Environment Check
 

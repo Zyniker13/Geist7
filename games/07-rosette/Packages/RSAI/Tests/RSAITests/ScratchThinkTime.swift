@@ -9,7 +9,7 @@ private func note(_ s: String) {
 }
 
 /// Records the wall-clock cost of every AI decision (move or cube call).
-private struct TimingBot: MatchBot {
+private struct TimingBot: MatchBot, @unchecked Sendable {
     let inner: any MatchBot
     let record: (Double) -> Void
 

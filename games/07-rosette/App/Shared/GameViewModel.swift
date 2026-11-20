@@ -112,6 +112,11 @@ public final class GameViewModel: ObservableObject {
     @Published public private(set) var oddsText: String = "Chance to capture next roll: 0%"
     /// Whether the AI is thinking (for the tavern opponent).
     @Published public private(set) var aiThinking: Bool = false
+    /// Bumped on every applied action; an off-main bot decision compares
+    /// against the generation it was spawned with and is discarded when the
+    /// state moved on (the human acted during the think). Internal so the
+    /// unit tests can drive the landing guard directly.
+    var actionGeneration: UInt64 = 0
     /// Whether the game is paused.
     @Published public var isPaused: Bool = false
     /// The last rule error, for display (nil when the last action succeeded).
@@ -425,6 +430,7 @@ public final class GameViewModel: ObservableObject {
 
     /// Apply an action through the reducer and re-derive view state.
     func applyAction(_ action: Action) {
+        actionGeneration &+= 1
         do {
             let result = try Reducer.apply(
                 action, to: matchState, rng: &rng, omenRng: &omenRng, diceSource: diceSource)
@@ -568,14 +574,15 @@ public final class GameViewModel: ObservableObject {
     // MARK: - AI (simple heuristic for P2; RS-AI replaces it in P4)
 
     /// Delay before the AI applies its action. Normal play waits 0.5 s;
-    /// autoPilot demo matches run as fast as possible (0.01 s) unless
-    /// "-aiDelay N" slows them down — UI tests use that override to keep a
-    /// match incomplete across a relaunch.
+    /// autoPilot demo matches run at 0.35 s/ply (watchable pace that keeps
+    /// the SpriteKit accessibility tree stable enough for XCTest queries).
+    /// "-aiDelay N" overrides — UI tests that need speed can pass a lower
+    /// value explicitly.
     private var aiDelay: TimeInterval {
         if autoPilot, let override = LaunchArguments.aiDelay {
             return override
         }
-        return autoPilot ? 0.01 : 0.5
+        return autoPilot ? 0.35 : 0.5
     }
 
     /// Kick the AI loop when a match appears with nothing yet applied.
@@ -683,10 +690,29 @@ public final class GameViewModel: ObservableObject {
             // seed 42 and ran 4,000+ plies); without a bot it keeps the
             // built-in heuristic. Manual play is untouched: aiTurn only runs
             // for the AI side then (see the guard above).
-            if let move = opponentBot?.chooseMove(
-                from: matchState, moves: legalMoves, rng: &aiRng)
-                ?? pickBestAIMove()
-            {
+            if let bot = opponentBot {
+                // RS-P8 (frame-rate floor §7): the expectiminimax search must
+                // not run on the main thread — a depth-3 think freezes the
+                // SpriteKit render loop for up to ~1 s (31 fps measured on
+                // the sim). The bot and the state snapshot are Sendable
+                // values; the decision hops back to the main actor to apply,
+                // and a stale decision (the human acted meanwhile) is
+                // discarded and the turn rescheduled.
+                let state = matchState
+                let moves = legalMoves
+                let generation = actionGeneration
+                let rngSnapshot = aiRng
+                aiThinking = true
+                let weakVM = WeakMainActorBox(self)
+                Task.detached(priority: .userInitiated) {
+                    var rng = rngSnapshot
+                    let move = bot.chooseMove(from: state, moves: moves, rng: &rng)
+                    await weakVM.value?.finishBotMove(
+                        move, advancedRng: rng, generation: generation)
+                }
+                return
+            }
+            if let move = pickBestAIMove() {
                 applyAction(.move(move.piece))
             }
         }
@@ -696,6 +722,29 @@ public final class GameViewModel: ObservableObject {
         // AI action after every applied action; scheduling again here would
         // run parallel chains and break the daily match's single-stream
         // replay order.
+    }
+
+    /// Apply an off-main bot decision back on the main actor (RS-P8): the
+    /// think ran on a background task so the render loop never froze; this
+    /// lands the chosen move, or discards it when the state moved on during
+    /// the think (generation mismatch — the human acted meanwhile). Internal
+    /// so the unit tests can exercise the guard directly.
+    func finishBotMove(_ move: Move?, advancedRng: SeededRNG, generation: UInt64) {
+        aiRng = advancedRng
+        aiThinking = false
+        guard generation == actionGeneration, !isPaused, !matchState.isComplete else {
+            // Superseded: hand the turn back to the scheduler so the chain
+            // keeps flowing from the current state.
+            scheduleAIIfNeeded()
+            return
+        }
+        if let move {
+            applyAction(.move(move.piece))
+        } else {
+            // Bot failure path mirrors the synchronous fallback: schedule
+            // the next action instead of stalling the match.
+            scheduleAIIfNeeded()
+        }
     }
 
     /// Decide whether the AI should offer a double.
@@ -775,5 +824,17 @@ extension MatchState {
     /// Whether the safety-toggle omen is active this turn.
     var pendingOmenIsUnsafeRosettes: Bool {
         pendingOmen?.effect.kind == .unsafeRosettes
+    }
+}
+
+/// A weak, Sendable handle to a MainActor object, for handing a background
+/// bot-decision task its completion hop. The box itself crosses isolation
+/// boundaries; the referenced view model is only ever touched through its
+/// MainActor methods.
+final class WeakMainActorBox<T: AnyObject>: @unchecked Sendable {
+    weak var value: T?
+
+    init(_ value: T?) {
+        self.value = value
     }
 }

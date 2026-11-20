@@ -106,11 +106,13 @@ final class RosettePerfUITests: XCTestCase {
     #if os(iOS)
         /// A full autoPilot match with the FPS overlay on; samples the resident
         /// memory metric mid-match and leaves screenshots with the SKView FPS
-        /// readout for the frame-rate evidence.
+        /// readout for the frame-rate evidence. `-aiDelay 5` keeps the match
+        /// running through the whole sampling window (0.5 s would finish it,
+        /// and the earlier runs sampled the results screen instead of play).
         func testMatchMemoryDuringPlay() throws {
             let app = XCUIApplication()
             app.launchArguments = [
-                "-autoPilot", "-showFPS", "-seed", "42", "-aiDelay", "0.5",
+                "-autoPilot", "-showFPS", "-seed", "42", "-aiDelay", "5",
                 "-startMatch",
             ]
             app.launch()
@@ -126,7 +128,8 @@ final class RosettePerfUITests: XCTestCase {
             }
 
             // Frame-rate evidence: the SKView overlay (showsFPS) renders live fps
-            // in the board corner; capture it mid-match.
+            // in the board corner; capture it mid-match — the match is still
+            // running at this point because of the 5 s ply delay.
             let shots = 0..<3
             for i in shots {
                 let shot = XCTAttachment(screenshot: app.screenshot())

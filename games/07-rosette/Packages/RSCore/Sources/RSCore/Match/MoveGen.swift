@@ -6,6 +6,11 @@ public struct Move: Sendable, Equatable, Hashable {
     public let piece: PieceID
     /// The destination path index, or -1 to bear off.
     public let destination: Int
+
+    public init(piece: PieceID, destination: Int) {
+        self.piece = piece
+        self.destination = destination
+    }
 }
 
 // MARK: - MoveGenerating

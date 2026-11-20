@@ -4,7 +4,7 @@ import XCTest
 
 /// A bot with fixed cube answers, for driving the cube flow deterministically.
 /// Moves: always the first legal move.
-final class ScriptedBot: MatchBot {
+final class ScriptedBot: MatchBot, @unchecked Sendable {
     let offersDouble: Bool
     let takesDouble: Bool
 

@@ -17,31 +17,42 @@ private final class RecordingHapticPlayer: HapticPlaying {
 
 @MainActor
 final class HapticFeedbackTests: XCTestCase {
-    private var defaults: UserDefaults!
-    private var suiteName: String!
+    private var suiteName: String?
+    private var defaults: UserDefaults?
 
-    override func setUp() {
-        super.setUp()
-        suiteName = "test-haptics-\(UUID().uuidString)"
-        defaults = UserDefaults(suiteName: suiteName)
+    /// A fresh isolated defaults suite per test (unique name, removed in
+    /// tearDown) — no force unwraps, no cross-test persistence.
+    private func makeIsolatedDefaults() throws -> UserDefaults {
+        let name = "test-haptics-\(ProcessInfo.processInfo.globallyUniqueString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        suiteName = name
+        self.defaults = defaults
+        return defaults
     }
 
     override func tearDown() {
-        defaults.removePersistentDomain(forName: suiteName)
+        if let suiteName {
+            UserDefaults().removePersistentDomain(forName: suiteName)
+        }
+        suiteName = nil
+        defaults = nil
         super.tearDown()
     }
 
-    func testEnabledDefaultsToOn() {
+    func testEnabledDefaultsToOn() throws {
+        let defaults = try makeIsolatedDefaults()
         XCTAssertTrue(HapticPreferences(defaults: defaults).isEnabled)
     }
 
-    func testDisabledPersists() {
+    func testDisabledPersists() throws {
+        let defaults = try makeIsolatedDefaults()
         let preferences = HapticPreferences(defaults: defaults)
         preferences.isEnabled = false
         XCTAssertFalse(HapticPreferences(defaults: defaults).isEnabled)
     }
 
-    func testRouterPlaysCaptureAndMatchEndWhenEnabled() {
+    func testRouterPlaysCaptureAndMatchEndWhenEnabled() throws {
+        let defaults = try makeIsolatedDefaults()
         let player = RecordingHapticPlayer()
         let router = HapticsRouter(
             preferences: HapticPreferences(defaults: defaults),
@@ -59,7 +70,8 @@ final class HapticFeedbackTests: XCTestCase {
         XCTAssertEqual(player.matchEnds, 1, "exactly one match-end notification")
     }
 
-    func testRouterIsSilentWhenDisabled() {
+    func testRouterIsSilentWhenDisabled() throws {
+        let defaults = try makeIsolatedDefaults()
         let player = RecordingHapticPlayer()
         let preferences = HapticPreferences(defaults: defaults)
         preferences.isEnabled = false
@@ -74,7 +86,8 @@ final class HapticFeedbackTests: XCTestCase {
         XCTAssertEqual(player.matchEnds, 0, "no haptics while disabled")
     }
 
-    func testRouterIgnoresUnmappedEvents() {
+    func testRouterIgnoresUnmappedEvents() throws {
+        let defaults = try makeIsolatedDefaults()
         let player = RecordingHapticPlayer()
         let router = HapticsRouter(
             preferences: HapticPreferences(defaults: defaults),

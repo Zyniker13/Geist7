@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** **06 Mattang — P0 setup** on branch `mattang/phase/P0-setup`. Done so far: full scaffold (7 MT* packages + app targets + tools), MTCore green (38/38 SPM tests; Fixed/SeededRNG/Hex/InteractionTable/Replay), content-lint verified (real + failing fixture), docs written (RULES, SOURCING, HISTORY, DECISIONS, STATUS, ARCHITECTURE, OPEN_QUESTIONS, KNOWN_ISSUES, TODO_MAP, HANDOFF, THIRD_PARTY, COVERAGE), CI workflow `mattang.yml` added, placeholder app launches on iPad (screenshot evidence: title + debug overlay `fps 60 / tick 0 / seed 42 / hash 0x4CC4…`) and macOS (window verified via CGWindowList; screencapture unavailable on this headless box — same limitation as Rosette issue #4).
-- **Next step:** finish P0 — `make test-mac`/iOS tests + `make lint` green, commit + push, CI green, file `mattang: cultural advisor review` issue (SRC0.1 §8 brief), G0 sign-off + tag `mattang/gate-G0-pass`, merge to `main`, start P1.
+- **Game in progress:** **06 Mattang — P0 complete, G0 signed off** (2026-11-20). Full scaffold (7 MT* packages + app targets + tools), MTCore green (38/38 SPM tests), macOS unit 7/7, iOS `make test` green (2 UI tests, 0 failures, TEST SUCCEEDED), lint suite clean at --strict (SwiftLint 0/40, swift-format clean, check-imports OK, content-lint OK), advisor issue #12 filed. Mac UI tests SUBSTITUTED (automation-mode timeout — rosette issue #8 precedent); macOS screenshots substituted with CGWindowList (rosette issue #4 precedent).
+- **Next step:** merge `mattang/phase/P0-setup` to `main` once branch CI is green, tag `mattang/gate-G0-pass`, then start Mattang P1 (Rules Engine Prototype: Tracer, turns, INV-1..5).
 
 ## Environment Check
 
@@ -36,7 +36,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 07 | Rosette | Complete (P10/G10) | G10 | #4, #7–#11 |
-| 2 | 06 | Mattang | P0 in progress | — | — |
+| 2 | 06 | Mattang | P0 complete / G0 pass | `mattang/gate-G0-pass` | issue #12 (advisor review) |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
 | 5 | 01 | Ebru | Not Started | — | — |
@@ -68,6 +68,8 @@ Fallback only, when `gh` is not authenticated (`ROADMAP.md`, "Issues for the Mai
 - (none)
 
 ## Log
+
+- **2026-11-20** — 06 Mattang **G0 signed off**: iOS `make test` green under sim-lock (2 UI tests, 0 failures — after `starts(withText:)` → NSPredicate fix); macOS unit 7/7; lint clean at --strict; advisor issue #12 filed (label `needs-maintainer`). Evidence in `games/06-mattang/docs/STATUS.md`. Tag `mattang/gate-G0-pass` + merge to `main` after branch CI green. Mac UI tests recorded SUBSTITUTED (automation-mode timeout, rosette issue #8 precedent).
 
 - **2026-11-20** — 06 Mattang P0 in progress on `mattang/phase/P0-setup`: scaffold complete (7 packages, app targets, tools, lint configs); MTCore 38/38 tests green (tests caught two real Fixed multiply/divide sign bugs, fixed with magnitude-based 128-bit math); content + cultural manifest + content-lint verified with failing fixture; docs (RULES/SOURCING/HISTORY/DECISIONS + skeletons) written; `mattang.yml` CI added; placeholder app launches on iPad (simulator screenshot with debug overlay, fps 60) and macOS (CGWindowList evidence; screencapture limitation per Rosette issue #4). Remaining for G0: full test suite green, lint green, push + CI, advisor issue, tag.
 

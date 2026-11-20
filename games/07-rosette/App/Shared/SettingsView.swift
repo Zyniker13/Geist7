@@ -22,6 +22,9 @@ struct SettingsView: View {
     /// RS-P8.4: the haptic-feedback toggle (captures, match end).
     @AppStorage(HapticPreferences.enabledKey) private var hapticsEnabled = true
 
+    /// P9: the prepared stats-export file, written when the sheet appears.
+    @State private var exportURL: URL?
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
@@ -33,6 +36,7 @@ struct SettingsView: View {
                 accessibilitySection
                 gameCenterSection
                 cloudSection
+                statsExportSection
                 Spacer()
                 Text("Version \(appVersion)")
                     .font(.caption)
@@ -46,7 +50,31 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .task {
+                // Prepare the export file for this presentation so the share
+                // link always offers the current statistics.
+                exportURL = try? StatsExporter.writeJSON(
+                    StatsExporter.liveDocument(generatedAt: Self.exportTimestamp()),
+                    // App layer may use the wall clock (scoped per
+                    // .swiftlint.yml banned_api policy).
+                    // swiftlint:disable:next banned_api
+                    now: Date())
+            }
         }
+    }
+
+    /// The export timestamp in ISO-8601 (UTC). The App layer may use the
+    /// wall clock (scoped per .swiftlint.yml banned_api policy).
+    static func exportTimestamp() -> String {
+        // swiftlint:disable:next banned_api
+        return exportTimestamp(now: Date())
+    }
+
+    /// Formats the given instant as ISO-8601 (UTC).
+    static func exportTimestamp(now: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.string(from: now)
     }
 
     private var accessibilitySection: some View {
@@ -102,6 +130,29 @@ struct SettingsView: View {
 
     private var cloudText: String {
         "Local save (this build stores your circuit on this device)"
+    }
+
+    /// P9: the stats export section — a share link over a JSON file the app
+    /// wrote to a temporary location. Nothing is uploaded by the app; the
+    /// player chooses where the file goes.
+    private var statsExportSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Stats Export")
+                .font(.headline)
+                .foregroundColor(.white)
+            if let exportURL {
+                ShareLink(item: exportURL) {
+                    Label("Export Stats File", systemImage: "square.and.arrow.up")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                }
+                .accessibilityIdentifier("statsExportButton")
+            }
+            Text("Your statistics, exported as a JSON file. Nothing is uploaded; you choose where to send it.")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .accessibilityIdentifier("Stats Export")
     }
 
     private var appVersion: String {

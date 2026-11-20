@@ -4,6 +4,7 @@ import Combine
 import Foundation
 import RSContent
 import RSCore
+import RSMeta
 import RSPlatform
 
 // MARK: - LaunchArguments
@@ -144,6 +145,10 @@ public final class GameViewModel: ObservableObject {
     /// True when the match is already complete at construction (a restored
     /// finished match must not re-fire settlement).
     private var completionFired = false
+    /// True once this view model's match has been folded into the stats
+    /// store (P9). Idempotence lives here so every completion path — the
+    /// end-of-match hook and any replayed notification — folds at most once.
+    private var statsFolded = false
     /// Whether a double offer is pending.
     public var doublePending: Bool { matchState.doubleOffered }
 
@@ -184,6 +189,16 @@ public final class GameViewModel: ObservableObject {
     /// never persisted.
     private let diceSource: DiceSource?
 
+    /// Folds finished matches into the persistent stats store (P9). Nil
+    /// disables recording (unit tests pass nil; the app passes the shared
+    /// store from `StatsStore`).
+    private let statsStore: MetaStore?
+    /// Per-match event counters, folded into the stats record on completion.
+    private var statsRecorder = StatsRecorder()
+    /// The daily match's day number when this is the daily match (RS-P7.1);
+    /// nil for single and circuit matches.
+    private let dailyDay: Int?
+
     // MARK: - Lifecycle
 
     /// Start a new match under a content ruleset.
@@ -211,7 +226,9 @@ public final class GameViewModel: ObservableObject {
         autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot"),
         region: String = "sumer",
         opponentBot: (any MatchBot)? = nil,
-        diceSource: DiceSource? = nil
+        diceSource: DiceSource? = nil,
+        stats: MetaStore? = nil,
+        dailyDay: Int? = nil
     ) {
         let defaults = GameViewModel.contentDefaults()
         self.ruleset = ruleset ?? defaults.ruleset
@@ -228,6 +245,8 @@ public final class GameViewModel: ObservableObject {
         self.regionID = LaunchArguments.region ?? region
         self.opponentBot = opponentBot
         self.diceSource = diceSource
+        self.statsStore = stats
+        self.dailyDay = dailyDay
         self.aiRng = SeededRNG(seed: seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: seed)
         self.omenRng = SeededRNG(seed: seed &+ 0x9E37_79B9_7F4A_7C15)
@@ -235,6 +254,7 @@ public final class GameViewModel: ObservableObject {
         self.matchState = self.makeMatch(stake: stakeValue)
         deriveViewState()
         self.completionFired = matchState.isComplete
+        self.statsFolded = matchState.isComplete
     }
 
     /// Restore a saved match by deterministic replay of its action history.
@@ -243,7 +263,8 @@ public final class GameViewModel: ObservableObject {
     init(
         snapshot: SavedMatch,
         autoSave: Bool = true,
-        autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot")
+        autoPilot: Bool = ProcessInfo.processInfo.arguments.contains("-autoPilot"),
+        stats: MetaStore? = nil
     ) {
         let defaults = GameViewModel.contentDefaults()
         self.ruleset = defaults.ruleset
@@ -261,6 +282,8 @@ public final class GameViewModel: ObservableObject {
         // A restored snapshot is a quick match: no fixed dice, heuristic AI.
         self.opponentBot = nil
         self.diceSource = nil
+        self.statsStore = stats
+        self.dailyDay = nil
         self.aiRng = SeededRNG(seed: snapshot.seed &+ 0x2545_F491_4F6C_DD1D)
         self.rng = SeededRNG(seed: snapshot.seed)
         self.omenRng = SeededRNG(seed: snapshot.seed &+ 0x9E37_79B9_7F4A_7C15)
@@ -288,6 +311,7 @@ public final class GameViewModel: ObservableObject {
         self.matchState = state
         deriveViewState()
         self.completionFired = matchState.isComplete
+        self.statsFolded = matchState.isComplete
     }
 
     /// Map a recorded action back to its engine action.
@@ -412,6 +436,8 @@ public final class GameViewModel: ObservableObject {
     public func restart() {
         matchState = makeMatch(stake: stakeValue)
         recordedActions = []
+        statsRecorder.reset()
+        statsFolded = false
         legalMoves = []
         canEnter = false
         oddsText = "Chance to capture next roll: 0%"
@@ -442,6 +468,7 @@ public final class GameViewModel: ObservableObject {
             errorText = nil
             for event in result.events {
                 record(event)
+                statsRecorder.observe(event)
             }
             deriveViewState()
             // RS-P8.1: VoiceOver announces the roll, legal moves, and win
@@ -476,7 +503,29 @@ public final class GameViewModel: ObservableObject {
     private func fireCompletionIfNeeded() {
         guard !completionFired, matchState.isComplete, let outcome = matchState.outcome else { return }
         completionFired = true
+        recordStatsIfEnabled(outcome: outcome)
         onMatchComplete?(outcome)
+    }
+
+    /// Fold the finished match into the stats store (P9).
+    ///
+    /// Demo runs (autoPilot: the UI-test and Tools/sim drivers) never record,
+    /// so automated sessions cannot skew the player's statistics.
+    ///
+    /// A resumed match's counters cover only play after the resume: the
+    /// deterministic snapshot replay does not emit engine events.
+    func recordStatsIfEnabled(outcome: Outcome) {
+        guard !autoPilot, let statsStore, !statsFolded else { return }
+        statsFolded = true
+        var stats = statsStore.loadStats()
+        stats.record(
+            statsRecorder.result(outcome: outcome, dailyDay: dailyDay),
+            omenKind: { omenId in
+                omens0.first(where: { $0.id == omenId })?.effect.kind.rawValue
+            })
+        // Stats are best-effort: a failed write must never disrupt the
+        // end-of-match celebration, so a save failure is ignored here.
+        try? statsStore.saveStats(stats)
     }
 
     /// Map an engine action to its recorded (Codable) form.

@@ -51,7 +51,8 @@ struct GameView: View {
                 // heuristic can cycle on mutual capture-avoidance (seed-42
                 // regression). The quick match is always Finkel, so it gets
                 // OptimalBot (RS-P7 open item).
-                opponentBot: useAI ? OptimalBot() : nil
+                opponentBot: useAI ? OptimalBot() : nil,
+                stats: StatsStore.shared
             ))
         self.onMatchComplete = onMatchComplete
         self.onLeaveResults = nil
@@ -87,7 +88,8 @@ struct GameView: View {
             // (seed-42 regression), so no tavern fields it.
             opponentBot: useAI
                 ? (ruleset == RuleSet.finkel ? OptimalBot() : VariantBot()) as any MatchBot
-                : nil
+                : nil,
+            stats: StatsStore.shared
         )
         vm.onMatchComplete = onMatchComplete
         _viewModel = StateObject(wrappedValue: vm)
@@ -101,7 +103,7 @@ struct GameView: View {
         snapshot: SavedMatch,
         onMatchComplete: @escaping (Outcome) -> Void
     ) {
-        let vm = GameViewModel(snapshot: snapshot)
+        let vm = GameViewModel(snapshot: snapshot, stats: StatsStore.shared)
         vm.onMatchComplete = onMatchComplete
         _viewModel = StateObject(wrappedValue: vm)
         self.onMatchComplete = onMatchComplete
@@ -127,7 +129,9 @@ struct GameView: View {
             seed: daily.seed,
             autoSave: false,
             opponentBot: DailyMatch.opponent(forDay: daily.day),
-            diceSource: DiceSource(values: daily.diceSequence)
+            diceSource: DiceSource(values: daily.diceSequence),
+            stats: StatsStore.shared,
+            dailyDay: daily.day
         )
         vm.onMatchComplete = onMatchComplete
         _viewModel = StateObject(wrappedValue: vm)

@@ -2,6 +2,7 @@
 
 import RSContent
 import RSCore
+import RSMeta
 import SwiftUI
 
 // MARK: - CircuitSession
@@ -44,6 +45,9 @@ final class CircuitSession: ObservableObject {
     private let omenDefs: [OmenDef]
     private let fortunesByRuleset: [String: [FortuneSquare]]
     private let startPurseValue: Int
+    /// The on-device stats store (P9): circuit completions are recorded into
+    /// the lifetime statistics. Nil disables recording (unit tests).
+    private let statsStore: MetaStore?
 
     private struct Loaded {
         var rulesetByID: [String: RuleSet] = [:]
@@ -81,7 +85,8 @@ final class CircuitSession: ObservableObject {
         }
     }
 
-    init() {
+    init(stats: MetaStore? = StatsStore.shared) {
+        self.statsStore = stats
         let loaded = Self.loadContent(loader)
         self.rulesetByID = loaded.rulesetByID
         self.diceByID = loaded.diceByID
@@ -194,10 +199,21 @@ final class CircuitSession: ObservableObject {
             : "Lost \(abs(outcome.score(for: .player0))) at \(match.tavern.name)"
         pendingMatch = nil
         persistCircuit()
+        recordCircuitCompletionIfNeeded()
         // The purse doubles as the circuit's Game Center score (RS-P7.1).
         if let gameCenter {
             Task { await gameCenter.reportCircuitPurse(circuit.purse.balance) }
         }
+    }
+
+    /// A full circuit run just ended in victory: fold it into the lifetime
+    /// statistics (RS-P5.1, P9).
+    private func recordCircuitCompletionIfNeeded() {
+        guard circuit.isComplete, let statsStore else { return }
+        var stats = statsStore.loadStats()
+        stats.recordCircuitCompletion(purse: circuit.purse.balance)
+        // Stats are best-effort; a failed write never blocks the run.
+        try? statsStore.saveStats(stats)
     }
 
     /// Forfeit the pending match: recorded as a loss at the stake.

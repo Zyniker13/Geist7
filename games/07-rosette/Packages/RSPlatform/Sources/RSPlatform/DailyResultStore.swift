@@ -25,6 +25,12 @@ public struct DailyResultStore {
         all[day]
     }
 
+    /// All retained results, oldest day first (the stats export reads this).
+    public func allResults() -> [(day: Int, result: Result)] {
+        all.map { (day: $0.key, result: $0.value) }
+            .sorted { $0.day < $1.day }
+    }
+
     /// Record `day`'s result.
     public func record(day: Int, result: Result) {
         var all = all

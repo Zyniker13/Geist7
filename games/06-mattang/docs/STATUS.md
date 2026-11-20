@@ -3,7 +3,7 @@
 ## Current State
 
 - **Phase:** P0 complete → G0 signed off. Starting P1 (Rules Engine Prototype) next.
-- **Branch:** `mattang/phase/P0-setup` (merged to `main` after branch CI green).
+- **Branch:** merged to `main` (61830b9) after local `make test` + `make lint` green. Tag `mattang/gate-G0-pass` pushed once main CI is green. (Game CI workflows trigger on `main` pushes only — the issues-only token cannot open PRs, so branch CI runs as main CI post-merge, matching the Rosette precedent.)
 - **Blocked on:** nothing.
 
 ## Phase Queue

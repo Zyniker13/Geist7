@@ -47,12 +47,17 @@ jobs:
             COMPILER_INDEX_STORE_ENABLE=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
       - name: Run tests
         run: |
           set -euo pipefail
           for pkg in Packages/*/; do
             echo "Testing ${pkg}"
-            swift test --package-path "${pkg}" --parallel --enable-code-coverage 2>&1 | tail -5
+            swift test --package-path "${pkg}" --parallel --enable-code-coverage
           done
 
       - name: Run lint

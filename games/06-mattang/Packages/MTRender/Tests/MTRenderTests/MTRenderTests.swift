@@ -142,6 +142,61 @@ final class MTRenderTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(checked, 17, "the fixture offers placements to check")
     }
 
+    // MARK: G2 randomized preview property
+
+    /// A random chart drawn from `rng`: radius 3–6, one to three swells,
+    /// the two home atolls on opposite edges, and a random symmetry.
+    /// Mirrors the sim's chart templates so the geometry is always
+    /// launchable (R-17) and well-formed.
+    private func randomChart(_ rng: inout SeededRNG) -> Chart {
+        let radius = 3 + rng.nextInt(below: 4) // 3...6
+        let atolls = [
+            Atoll(player: .p1, cells: [Hex(-radius, 1), Hex(-radius, 2), Hex(-radius + 1, 2)]),
+            Atoll(player: .p2, cells: [Hex(radius, -1), Hex(radius, -2), Hex(radius - 1, -2)]),
+        ]
+        var swells = [Swell.major(id: "east_dom", entrySide: 0, direction: 3)]
+        let minorCount = rng.nextInt(below: 3) // 0...2
+        for i in 0..<minorCount {
+            swells.append(Swell.minor(
+                id: "sw_\(i)", entrySide: rng.nextInt(below: 6),
+                direction: rng.nextInt(below: 6)))
+        }
+        let symmetry: ChartSymmetry = [ChartSymmetry.none, .mirror, .rotate180][rng.nextInt(below: 3)]
+        return Chart(
+            id: "rand-\(radius)-\(swells.count)", radius: radius, swells: swells,
+            preIslands: [], atolls: atolls, symmetry: symmetry)
+    }
+
+    /// G2 check 2: the preview field (the ghost the scene draws) must
+    /// equal the field the reducer produces when the same placement is
+    /// committed, for 500 random placements across random charts.
+    func testPreviewMatchesCommittedAcrossFiveHundredRandomPlacements() throws {
+        var rng = SeededRNG(seed: 0x5EED_2026)
+        var checked = 0
+        var attempts = 0
+        while checked < 500 {
+            attempts += 1
+            if attempts > 5000 {
+                XCTFail("could not draw 500 legal placements in 5000 chart attempts")
+                break
+            }
+            let chart = randomChart(&rng)
+            guard chart.validate().isEmpty else { continue }
+            let state = Reducer.initial(chart: chart)
+            let candidates = state.placeableCandidates()
+            guard !candidates.isEmpty else { continue }
+            let cell = candidates[rng.nextInt(below: candidates.count)]
+            guard Reducer.reason(.placeIsland(cell), in: state) == nil else { continue }
+            let model = SeaSceneModel(chart: chart, state: state, ghostIsland: cell)
+            let committed = try Reducer.apply(.placeIsland(cell), to: state).state
+            XCTAssertEqual(
+                model.field, committed.field,
+                "ghost field at \(cell) on chart \(chart.id) differs from the committed field")
+            checked += 1
+        }
+        XCTAssertEqual(checked, 500, "500 randomized placements verified")
+    }
+
     func testOverlayFlagsSuppressTheirLayers() {
         let (chart, state) = tracedState()
         let geometryAll = SeaSceneGeometry(

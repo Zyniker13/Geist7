@@ -7,6 +7,9 @@ import SwiftUI
 struct DebugOverlay: View {
     let seed: UInt64
     let tick: Int
+    /// A precomputed hash line (the match screen passes the live
+    /// state hash); nil keeps the seed+tick hash of the P0 overlay.
+    var hashTextOverride: String? = nil
 
     @ObservedObject private var meter = FPSMeter()
     @State private var hashText = ""
@@ -16,7 +19,7 @@ struct DebugOverlay: View {
             Text("fps \(meter.fps)")
             Text("tick \(tick)")
             Text("seed \(seed)")
-            Text("hash \(hashText)")
+            Text("hash \(hashTextOverride ?? hashText)")
         }
         .font(.caption2.monospaced())
         .padding(6)
@@ -26,6 +29,7 @@ struct DebugOverlay: View {
         }
         .task {
             meter.start()
+            guard hashTextOverride == nil else { return }
             let state = DebugState(seed: seed, tick: tick)
             let hash = try? StateHashing.stableHash(state)
             hashText = hash.map { String(format: "0x%016llX", $0) } ?? "unavailable"

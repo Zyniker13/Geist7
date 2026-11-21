@@ -13,6 +13,7 @@ enum LaunchArguments {
         var scenario: String?
         var snapshotPly: Int?
         var debugOverlay = false
+        var aiDelay: Double?
     }
 
     static var current: Parsed {
@@ -40,6 +41,8 @@ enum LaunchArguments {
                 result.snapshotPly = nextValue().flatMap(Int.init)
             case "-debugOverlay":
                 result.debugOverlay = true
+            case "-aiDelay":
+                result.aiDelay = nextValue().flatMap(Double.init)
             default:
                 break
             }

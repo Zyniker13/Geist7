@@ -1,5 +1,10 @@
 {
   "schema_version": 1,
   "game": "06-mattang",
-  "swells": []
+  "swells": [
+    { "id": "east_dom", "entrySide": 0, "direction": 3, "weight": 2, "glossary": "pending_advisor" },
+    { "id": "north_dom", "entrySide": 4, "direction": 1, "weight": 2, "glossary": "pending_advisor" },
+    { "id": "west_min", "entrySide": 3, "direction": 0, "weight": 1, "glossary": "pending_advisor" },
+    { "id": "south_min", "entrySide": 1, "direction": 4, "weight": 1, "glossary": "pending_advisor" }
+  ]
 }

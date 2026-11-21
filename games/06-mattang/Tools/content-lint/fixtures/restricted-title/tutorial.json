@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "lessons": [
+    {
+      "id": "lsn_fixture_rank",
+      "title": "Iroij Path Master",
+      "summary": "Reach the highest rank to win.",
+      "steps": []
+    }
+  ]
+}

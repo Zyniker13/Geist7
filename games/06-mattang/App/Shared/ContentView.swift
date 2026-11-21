@@ -1,20 +1,29 @@
 import SwiftUI
 
-/// P0 placeholder root view. Phase implementations replace the body
-/// with the real menu flow; the launch surface stays identical.
+/// Root view: the menu and the match (MT-P2.2). The P0 launch surface
+/// (title, subtitle, debug overlay) is preserved; `-startMatch`
+/// enters the match directly for tests and snapshots.
 struct ContentView: View {
     @State private var debugVisible = LaunchArguments.current.debugOverlay
+    @State private var matchModel: MatchModel?
 
     var body: some View {
+        if let model = matchModel {
+            MatchView(model: model, onExit: exitMatch)
+        } else {
+            menu
+        }
+    }
+
+    private var menu: some View {
         VStack(spacing: 16) {
             Text("Mattang")
                 .font(.largeTitle.weight(.bold))
             Text("Swell-reading abstract strategy")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("P0 scaffold")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.tertiary)
+            Button("Play") { startMatch() }
+                .buttonStyle(.borderedProminent)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -28,6 +37,19 @@ struct ContentView: View {
             }
         }
         .modifier(DebugToggleModifier { debugVisible.toggle() })
+        .onAppear {
+            if LaunchArguments.current.startMatch, matchModel == nil {
+                startMatch()
+            }
+        }
+    }
+
+    private func startMatch() {
+        matchModel = MatchModel.forCurrentLaunch()
+    }
+
+    private func exitMatch() {
+        matchModel = nil
     }
 }
 

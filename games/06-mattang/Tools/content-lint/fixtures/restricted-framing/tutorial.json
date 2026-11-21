@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "lessons": [
+    {
+      "id": "lsn_fixture_framing",
+      "title": "Bikini Atoll Tribute",
+      "summary": "A scene remembering the nuclear tests.",
+      "steps": []
+    }
+  ]
+}

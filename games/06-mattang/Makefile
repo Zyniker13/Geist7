@@ -48,7 +48,13 @@ test-pkgs:
 
 test-mac: generate
 	$(XCODEBUILD) -project Mattang.xcodeproj -scheme Mattang-macOS \
-	  -destination "$(DEST)" -configuration Debug test
+	-destination "$(DEST)" -configuration Debug test
+
+# SRC2.1: run the UI tests in Release so the debug-only corner mark is
+# compiled out; the release-only test asserts it is absent.
+test-release: generate
+	$(XCODEBUILD) -project Mattang.xcodeproj -scheme Mattang-iOS \
+	-destination "$(SIMDEST)" -configuration Release test
 
 lint: swiftlint swiftformat check-imports content-lint
 
@@ -63,6 +69,10 @@ check-imports:
 
 content-lint:
 	Tools/content-lint/run.sh
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/manifest-missing --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/restricted-title --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/teaching-claim --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/restricted-framing --expect-fail
 
 sim:
 	@N=$(if $(N),$(N),200); echo "Running $$N seeded random-legal games..."; \

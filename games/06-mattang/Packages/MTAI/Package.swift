@@ -11,6 +11,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "MTAI", dependencies: ["MTCore"]),
-        .testTarget(name: "MTAITests", dependencies: ["MTAI"]),
+        .testTarget(name: "MTAITests", dependencies: ["MTAI", "MTCore"]),
     ]
 )

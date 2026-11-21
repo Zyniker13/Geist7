@@ -15,6 +15,13 @@ public struct SeededRNG: Sendable {
         self.state = seed
     }
 
+    /// Restores a stream at an exact position (the match model hands
+    /// the AI worker the caller's rng state and applies the advanced
+    /// state when the decision lands; INV-1 reproducibility).
+    public init(state: UInt64) {
+        self.state = state
+    }
+
     public mutating func nextUInt64() -> UInt64 {
         state = state &+ Self.gamma
         var z = state

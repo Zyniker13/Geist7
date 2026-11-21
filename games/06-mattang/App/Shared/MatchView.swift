@@ -154,6 +154,8 @@ struct MatchView: View {
                     model.togglePause()
                 }
                 .disabled(model.isOver)
+                Button("Undo") { model.undo() }
+                    .disabled(!model.canUndo)
             }
             .buttonStyle(.borderedProminent)
             .font(.subheadline)

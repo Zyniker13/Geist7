@@ -6,6 +6,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var debugVisible = LaunchArguments.current.debugOverlay
     @State private var matchModel: MatchModel?
+    @State private var showAbout = false
 
     var body: some View {
         if let model = matchModel {
@@ -24,6 +25,11 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Button("Play") { startMatch() }
                 .buttonStyle(.borderedProminent)
+            Button("About the Tradition") { showAbout = true }
+                .buttonStyle(.bordered)
+        }
+        .sheet(isPresented: $showAbout) {
+            AboutView { showAbout = false }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

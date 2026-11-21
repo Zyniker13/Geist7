@@ -20,6 +20,14 @@ final class MatchModel: ObservableObject {
     /// The side the local Sailor drives (the human is player 1).
     static let aiSide = PlayerID.p2
 
+    /// MT-P3.3: local pass-and-play — both sides are human, so no AI
+    /// think is scheduled and either side may act on its turn.
+    let passAndPlay: Bool
+    /// MT-P3.3: casual undo — the stack of (state, rng position, plies)
+    /// before each committed action this session. Disabled once the
+    /// match is over (an undone landing would desync the win).
+    private var undoStack: [(state: GameState, rngState: UInt64, plies: Int)] = []
+
     @Published private(set) var state: GameState
     @Published private(set) var plies = 0
     @Published private(set) var aiThinking = false
@@ -53,7 +61,7 @@ final class MatchModel: ObservableObject {
     /// `-snapshotPly`); nil plays on.
     let snapshotPly: Int?
 
-    private var rng = SeededRNG(seed: 0)
+    var rng = SeededRNG(seed: 0)
     private var aiTask: Task<Void, Never>?
     private let defaults: UserDefaults
 
@@ -69,24 +77,27 @@ final class MatchModel: ObservableObject {
     /// A fresh match against Sailor.
     convenience init(
         seed: UInt64, aiDelay: TimeInterval, autoPilot: Bool,
-        snapshotPly: Int?, explicitAIDelay: Bool = false
+        snapshotPly: Int?, explicitAIDelay: Bool = false,
+        passAndPlay: Bool = false
     ) {
         self.init(
             seed: seed, aiDelay: aiDelay, autoPilot: autoPilot,
             snapshotPly: snapshotPly, explicitAIDelay: explicitAIDelay,
-            saved: nil)
+            saved: nil, passAndPlay: passAndPlay)
     }
 
     /// Internal: build from an optional saved record (resume).
     private init(
         seed: UInt64, aiDelay: TimeInterval, autoPilot: Bool,
-        snapshotPly: Int?, explicitAIDelay: Bool, saved: SavedMatch?
+        snapshotPly: Int?, explicitAIDelay: Bool, saved: SavedMatch?,
+        passAndPlay: Bool = false
     ) {
         self.seed = seed
         self.aiDelay = aiDelay
         self.autoPilot = autoPilot
         self.explicitAIDelay = explicitAIDelay
         self.snapshotPly = snapshotPly
+        self.passAndPlay = passAndPlay
         self.defaults = .standard
         if let saved, saved.seed == seed {
             state = saved.state
@@ -118,7 +129,7 @@ final class MatchModel: ObservableObject {
             return MatchModel(
                 seed: args.seed ?? 0, aiDelay: aiDelay,
                 autoPilot: args.autoPilot, snapshotPly: args.snapshotPly,
-                explicitAIDelay: explicit)
+                explicitAIDelay: explicit, passAndPlay: args.passAndPlay)
         }
         if let data = defaults.data(forKey: saveKey),
             let saved = try? JSONDecoder().decode(SavedMatch.self, from: data)
@@ -173,22 +184,36 @@ final class MatchModel: ObservableObject {
 
     var statusLine: String {
         if state.status.isOver {
+            if passAndPlay {
+                switch state.status.winner {
+                case .p1: return "West wins"
+                case .p2: return "East wins"
+                case nil: return "Game over"
+                }
+            }
             switch state.status.winner {
             case .p1: return "You win"
             case .p2: return "Sailor wins"
             case nil: return "Game over"
             }
         }
+        if passAndPlay {
+            return state.toMove == .p1 ? "West to move" : "East to move"
+        }
         return state.toMove == .p1 ? "Your move" : "Sailor is thinking…"
     }
 
     // MARK: Player input
 
+    /// The side the local player drives: p1 always; either side in
+    /// pass-and-play.
+    var localSide: PlayerID { passAndPlay ? state.toMove : .p1 }
+
     /// A tap on a board cell: extends the sail path, selects a canoe,
     /// or arms the placement preview. Does nothing when it is not the
-    /// human's turn or the game is over or frozen.
+    /// local player's turn or the game is over or frozen.
     func tap(_ cell: Hex) {
-        guard !isOver, !frozen, !isPaused, state.toMove == .p1 else { return }
+        guard !isOver, !frozen, !isPaused, state.toMove == localSide else { return }
         if let ghost = ghostIsland {
             if ghost == cell, canPlace {
                 commit(.placeIsland(ghost))
@@ -209,7 +234,7 @@ final class MatchModel: ObservableObject {
             pendingPath.append(cell)
             return
         }
-        if let tapped = state.canoe(at: cell), tapped.player == .p1 {
+        if let tapped = state.canoe(at: cell), tapped.player == localSide {
             self.selected = tapped
             pendingPath = []
         }
@@ -240,10 +265,34 @@ final class MatchModel: ObservableObject {
         state = Reducer.initial(chart: state.chart)
         rng = SeededRNG(seed: seed)
         plies = 0
+        undoStack = []
         cancelSelection()
         persist()
-        scheduleAIIfNeeded()
+        if !passAndPlay {
+            scheduleAIIfNeeded()
+        }
     }
+
+    /// MT-P3.3: casual undo — restore the state, rng position, and ply
+    /// count from before the last committed action this session. Not
+    /// available once the match is over (the record of a finished game
+    /// stays) or when the stack is empty. The undo belongs to the side
+    /// whose action it reverses, so in pass-and-play the turn returns
+    /// to that side naturally through the saved state.
+    func undo() {
+        guard !isOver, let previous = undoStack.popLast() else { return }
+        aiTask?.cancel()
+        thinkGeneration += 1
+        aiThinking = false
+        state = previous.state
+        rng = SeededRNG(state: previous.rngState)
+        plies = previous.plies
+        cancelSelection()
+        persist()
+    }
+
+    /// Whether an undo is currently available.
+    var canUndo: Bool { !isOver && !undoStack.isEmpty }
 
     /// S2.2 pause: freezes the match. The pending AI move is
     /// cancelled, so pausing on Sailor's turn holds it until resume.
@@ -264,12 +313,21 @@ final class MatchModel: ObservableObject {
 
     private func commit(_ action: Action) {
         do {
+            // Casual undo (MT-P3.3): keep the pre-action record. The
+            // rng position is part of it so an undone and replayed
+            // action streams identically (INV-1).
+            undoStack.append((state, rng.state, plies))
             let result = try Reducer.apply(action, to: state)
             state = result.state
             plies += 1
             cancelSelection()
             persist()
-            scheduleAIIfNeeded()
+            if !passAndPlay {
+                scheduleAIIfNeeded()
+            } else {
+                thinkGeneration += 1  // no AI in pass-and-play; drop any strays
+                aiThinking = false
+            }
         } catch {
             // Every action the UI commits was validated first; this is
             // an assertion failure in disguise.

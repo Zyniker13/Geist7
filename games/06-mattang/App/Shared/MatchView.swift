@@ -6,9 +6,9 @@
 // the results overlay. The debug corner mark (SRC2.1) appears on
 // this screen in DEBUG builds only.
 
+import MTContent
 import MTCore
 import MTRender
-import MTContent
 import SwiftUI
 
 struct MatchView: View {
@@ -36,6 +36,9 @@ struct MatchView: View {
                 }
                 if model.isOver {
                     resultsOverlay
+                }
+                if model.isPaused {
+                    pauseOverlay
                 }
                 if model.debugVisible {
                     VStack {
@@ -74,24 +77,24 @@ struct MatchView: View {
         }
         .background(SeaPalette.scheme(false).deepSea.ignoresSafeArea())
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Menu") { onExit() }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Menu") { onExit() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    viewMenu
+                }
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                viewMenu
-            }
-        }
         #else
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button("Menu") { onExit() }
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    Button("Menu") { onExit() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    viewMenu
+                }
             }
-            ToolbarItem(placement: .primaryAction) {
-                viewMenu
-            }
-        }
         #endif
     }
 
@@ -147,6 +150,10 @@ struct MatchView: View {
                     .disabled(!model.canPass)
                 Button("Cancel") { model.cancelSelection() }
                     .disabled(model.selected == nil && model.ghostIsland == nil)
+                Button(model.isPaused ? "Resume" : "Pause") {
+                    model.togglePause()
+                }
+                .disabled(model.isOver)
             }
             .buttonStyle(.borderedProminent)
             .font(.subheadline)
@@ -176,6 +183,19 @@ struct MatchView: View {
         }
         .padding(24)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// S2.2 pause: a small overlay so the frozen state is visible; the
+    /// board stays readable underneath for studying the swell field.
+    private var pauseOverlay: some View {
+        VStack(spacing: 10) {
+            Text("Paused")
+                .font(.title2.weight(.semibold))
+            Button("Resume") { model.togglePause() }
+        }
+        .padding(20)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .allowsHitTesting(true)
     }
 }
 

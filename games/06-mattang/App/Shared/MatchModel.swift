@@ -10,9 +10,9 @@
 // fresh. Snapshots freeze at `-snapshotPly N` for deterministic
 // captures.
 
-import MTCore
-import MTContent
 import MTAI
+import MTContent
+import MTCore
 import SwiftUI
 
 @MainActor
@@ -23,6 +23,9 @@ final class MatchModel: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var plies = 0
     @Published private(set) var aiThinking = false
+    /// Pause freezes the match (S2.2): the pending AI move is
+    /// cancelled and player input is ignored until resumed.
+    @Published private(set) var isPaused = false
     /// The canoe whose sail path is being composed, if any.
     @Published private(set) var selected: CanoeID?
     /// The sail path composed so far (cells the canoe would enter).
@@ -173,7 +176,7 @@ final class MatchModel: ObservableObject {
     /// or arms the placement preview. Does nothing when it is not the
     /// human's turn or the game is over or frozen.
     func tap(_ cell: Hex) {
-        guard !isOver, !frozen, state.toMove == .p1 else { return }
+        guard !isOver, !frozen, !isPaused, state.toMove == .p1 else { return }
         if let ghost = ghostIsland {
             if ghost == cell, canPlace {
                 commit(.placeIsland(ghost))
@@ -220,12 +223,27 @@ final class MatchModel: ObservableObject {
     func restart() {
         aiTask?.cancel()
         aiThinking = false
+        isPaused = false
         state = Reducer.initial(chart: state.chart)
         rng = SeededRNG(seed: seed)
         plies = 0
         cancelSelection()
         persist()
         scheduleAIIfNeeded()
+    }
+
+    /// S2.2 pause: freezes the match. The pending AI move is
+    /// cancelled, so pausing on Sailor's turn holds it until resume.
+    func togglePause() {
+        guard !isOver else { return }
+        if isPaused {
+            isPaused = false
+            scheduleAIIfNeeded()
+        } else {
+            isPaused = true
+            aiTask?.cancel()
+            aiThinking = false
+        }
     }
 
     // MARK: Engine
@@ -246,7 +264,7 @@ final class MatchModel: ObservableObject {
     }
 
     private func performAI() {
-        guard !isOver, !frozen else {
+        guard !isOver, !frozen, !isPaused else {
             aiThinking = false
             return
         }
@@ -264,7 +282,7 @@ final class MatchModel: ObservableObject {
     /// Runs the AI whenever it should move: on the AI side's turn, or
     /// on either side under auto-pilot (tests and snapshots).
     private func scheduleAIIfNeeded() {
-        guard !isOver, !frozen else { return }
+        guard !isOver, !frozen, !isPaused else { return }
         let aiTurn = state.toMove == Self.aiSide
         guard aiTurn || autoPilot else { return }
         aiTask?.cancel()
@@ -291,6 +309,10 @@ final class MatchModel: ObservableObject {
             defaults.removeObject(forKey: Self.saveKey)
         }
     }
+
+    /// S2.4: pause is transient — a resumed session comes back playing,
+    /// never frozen behind a forgotten pause flag.
+    var persistableState: Bool { !isPaused }
 }
 
 /// The persisted match record (seed + full state + rng position), so

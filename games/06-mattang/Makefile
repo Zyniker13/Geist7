@@ -48,7 +48,13 @@ test-pkgs:
 
 test-mac: generate
 	$(XCODEBUILD) -project Mattang.xcodeproj -scheme Mattang-macOS \
-	  -destination "$(DEST)" -configuration Debug test
+	-destination "$(DEST)" -configuration Debug test
+
+# SRC2.1: run the UI tests in Release so the debug-only corner mark is
+# compiled out; the release-only test asserts it is absent.
+test-release: generate
+	$(XCODEBUILD) -project Mattang.xcodeproj -scheme Mattang-iOS \
+	-destination "$(SIMDEST)" -configuration Release test
 
 lint: swiftlint swiftformat check-imports content-lint
 

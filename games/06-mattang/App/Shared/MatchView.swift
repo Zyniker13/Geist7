@@ -49,22 +49,58 @@ struct MatchView: View {
                     }
                     .padding(8)
                 }
+                // SRC2.1: every swell name and the canoe art are still
+                // pending advisor review, so DEBUG builds carry a corner
+                // mark on the match screen. Release builds compile it
+                // out (debugVisible is #if DEBUG), so players never see
+                // it. The debug/release UI tests pin both sides.
+                if model.debugVisible {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Text("Pending advisor review")
+                                .font(.caption2.monospaced())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(.yellow.opacity(0.85), in: Capsule())
+                                .foregroundStyle(.black)
+                        }
+                        Spacer()
+                    }
+                    .padding(8)
+                    .allowsHitTesting(false)
+                }
             }
         }
         .background(SeaPalette.scheme(false).deepSea.ignoresSafeArea())
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Menu") { onExit() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Menu("View") {
-                    Toggle("Rays", isOn: $model.showRays)
-                    Toggle("Node rings", isOn: $model.showNodes)
-                    Toggle("Marshallese names", isOn: $model.marshalleseNames)
-                    Button("Restart match") { model.restart() }
-                }
+                viewMenu
             }
+        }
+        #else
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button("Menu") { onExit() }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                viewMenu
+            }
+        }
+        #endif
+    }
+
+    private var viewMenu: some View {
+        Menu("View") {
+            Toggle("Rays", isOn: $model.showRays)
+            Toggle("Node rings", isOn: $model.showNodes)
+            Toggle("Marshallese names", isOn: $model.marshalleseNames)
+            Button("Restart match") { model.restart() }
         }
     }
 

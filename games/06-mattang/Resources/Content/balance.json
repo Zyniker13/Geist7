@@ -1,0 +1,12 @@
+{
+  "islandPool": 10,
+  "canoesPerPlayer": 4,
+  "sailRange": 3,
+  "refractionEnabled": true,
+  "maxReflections": 3,
+  "canoesToWin": 3,
+  "becalmedStrength": 0,
+  "towRange": 1,
+  "maxPathCells": 27,
+  "repetitionLimit": 3
+}

@@ -7,8 +7,8 @@
 // of the selected canoe. The Metal wave field of MT-P6.1 replaces
 // nothing here yet — P2 keeps the vector scene (ADR-0016).
 
-import SwiftUI
 import MTCore
+import SwiftUI
 
 public struct SeaSceneView: View {
     public let model: SeaSceneModel
@@ -77,9 +77,10 @@ public struct SeaSceneView: View {
         for cell in geometry.nodeRings {
             let center = geometry.layout.point(for: cell)
             let radius = geometry.layout.hexSize * 0.30
-            let ring = Path(ellipseIn: CGRect(
-                x: center.x - radius, y: center.y - radius,
-                width: 2 * radius, height: 2 * radius))
+            let ring = Path(
+                ellipseIn: CGRect(
+                    x: center.x - radius, y: center.y - radius,
+                    width: 2 * radius, height: 2 * radius))
             context.stroke(ring, with: .color(palette.cowrie), lineWidth: 1.6)
         }
     }
@@ -129,8 +130,9 @@ public struct SeaSceneView: View {
             path, with: .color(palette.cowrie),
             style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
         for point in points {
-            let dot = Path(ellipseIn: CGRect(
-                x: point.x - 3, y: point.y - 3, width: 6, height: 6))
+            let dot = Path(
+                ellipseIn: CGRect(
+                    x: point.x - 3, y: point.y - 3, width: 6, height: 6))
             context.fill(dot, with: .color(palette.cowrie))
         }
     }
@@ -139,9 +141,10 @@ public struct SeaSceneView: View {
         for marker in geometry.canoes {
             let center = geometry.layout.point(for: marker.cell)
             let radius = geometry.layout.hexSize * 0.34
-            let body = Path(ellipseIn: CGRect(
-                x: center.x - radius, y: center.y - radius,
-                width: 2 * radius, height: 2 * radius))
+            let body = Path(
+                ellipseIn: CGRect(
+                    x: center.x - radius, y: center.y - radius,
+                    width: 2 * radius, height: 2 * radius))
             // p1 coconut-rib, p2 cowrie; both outlined in the other's
             // tone so the two sides stay readable (P8 revisits for
             // color-blind patterns).

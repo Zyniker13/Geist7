@@ -4,9 +4,10 @@
 // list: adjacent strong cells cost 1, node-to-node steps cost 0, and
 // entering a rival atoll cell (the landing step, R-10) counts 1.
 
-import XCTest
-@testable import MTAI
 import MTCore
+import XCTest
+
+@testable import MTAI
 
 final class PathDistanceTests: XCTestCase {
     func testStraightCorridorCostsOneStepPerCell() {

@@ -174,9 +174,10 @@ public enum SliceGame {
     private static let decoder = JSONDecoder()
 
     private static func resource(_ name: String) throws -> Data {
-        guard let url = Bundle.module.url(
-            forResource: (name as NSString).deletingPathExtension,
-            withExtension: (name as NSString).pathExtension)
+        guard
+            let url = Bundle.module.url(
+                forResource: (name as NSString).deletingPathExtension,
+                withExtension: (name as NSString).pathExtension)
         else { throw SliceGameError.missingResource(name) }
         do {
             return try Data(contentsOf: url)

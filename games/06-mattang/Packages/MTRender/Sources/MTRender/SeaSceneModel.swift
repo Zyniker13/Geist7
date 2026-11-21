@@ -90,7 +90,8 @@ public struct SeaSceneGeometry: Sendable {
         self.rayPolylines = polylines
         self.raySwells = swells
 
-        self.nodeRings = model.showNodes
+        self.nodeRings =
+            model.showNodes
             ? model.field.nodes.sorted(by: Hex.rowMajor) : []
         self.islandCells = model.state.islands.sorted(by: Hex.rowMajor)
         self.atollCells = model.chart.atollCells.sorted(by: Hex.rowMajor)

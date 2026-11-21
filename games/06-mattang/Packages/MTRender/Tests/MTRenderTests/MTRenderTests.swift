@@ -6,9 +6,10 @@
 // field the reducer produces when the same placement is committed,
 // for every placement candidate of a real traced game.
 
-import XCTest
-@testable import MTRender
 import MTCore
+import XCTest
+
+@testable import MTRender
 
 final class MTRenderTests: XCTestCase {
     func testPackageCompiles() {
@@ -149,19 +150,21 @@ final class MTRenderTests: XCTestCase {
     /// Mirrors the sim's chart templates so the geometry is always
     /// launchable (R-17) and well-formed.
     private func randomChart(_ rng: inout SeededRNG) -> Chart {
-        let radius = 3 + rng.nextInt(below: 4) // 3...6
+        let radius = 3 + rng.nextInt(below: 4)  // 3...6
         let atolls = [
             Atoll(player: .p1, cells: [Hex(-radius, 1), Hex(-radius, 2), Hex(-radius + 1, 2)]),
             Atoll(player: .p2, cells: [Hex(radius, -1), Hex(radius, -2), Hex(radius - 1, -2)]),
         ]
         var swells = [Swell.major(id: "east_dom", entrySide: 0, direction: 3)]
-        let minorCount = rng.nextInt(below: 3) // 0...2
+        let minorCount = rng.nextInt(below: 3)  // 0...2
         for i in 0..<minorCount {
-            swells.append(Swell.minor(
-                id: "sw_\(i)", entrySide: rng.nextInt(below: 6),
-                direction: rng.nextInt(below: 6)))
+            swells.append(
+                Swell.minor(
+                    id: "sw_\(i)", entrySide: rng.nextInt(below: 6),
+                    direction: rng.nextInt(below: 6)))
         }
-        let symmetry: ChartSymmetry = [ChartSymmetry.none, .mirror, .rotate180][rng.nextInt(below: 3)]
+        let symmetry: ChartSymmetry = [ChartSymmetry.none, .mirror, .rotate180][
+            rng.nextInt(below: 3)]
         return Chart(
             id: "rand-\(radius)-\(swells.count)", radius: radius, swells: swells,
             preIslands: [], atolls: atolls, symmetry: symmetry)

@@ -102,7 +102,7 @@ final class SliceGameTests: XCTestCase {
     func testBuildChartUnknownSwellThrows() throws {
         var def = try SliceGameTests.sliceDef()
         def.swells = ["east_dom", "ghost"]
-        XCTAssertThrowsErrorEqual(
+        assertThrowsErrorEqual(
             try SliceGame.buildChart(from: def, swellDefs: SliceGameTests.swellDefs()),
             .unknownSwell("two_swells_basic", "ghost"))
     }
@@ -112,7 +112,7 @@ final class SliceGameTests: XCTestCase {
     func testBuildChartMalformedAtollThrows() throws {
         var def = try SliceGameTests.sliceDef()
         def.p2Atoll = [[3, 0], [3, -1]]
-        XCTAssertThrowsErrorEqual(
+        assertThrowsErrorEqual(
             try SliceGame.buildChart(from: def, swellDefs: SliceGameTests.swellDefs()),
             .malformedAtoll("two_swells_basic"))
     }
@@ -121,7 +121,7 @@ final class SliceGameTests: XCTestCase {
     func testBuildChartUnknownSymmetryThrows() throws {
         var def = try SliceGameTests.sliceDef()
         def.symmetry = "rotate90"
-        XCTAssertThrowsErrorEqual(
+        assertThrowsErrorEqual(
             try SliceGame.buildChart(from: def, swellDefs: SliceGameTests.swellDefs()),
             .malformedJSON("two_swells_basic", "unknown symmetry rotate90"))
     }
@@ -135,7 +135,7 @@ final class SliceGameTests: XCTestCase {
         XCTAssertThrowsError(
             try SliceGame.buildChart(from: def, swellDefs: SliceGameTests.swellDefs())
         ) { error in
-            guard case let .invalidChart(message) = error as? SliceGameError else {
+            guard case .invalidChart(let message) = error as? SliceGameError else {
                 XCTFail("wrong error: \(error)")
                 return
             }
@@ -147,7 +147,7 @@ final class SliceGameTests: XCTestCase {
     func testBuildChartMalformedCellThrows() throws {
         var def = try SliceGameTests.sliceDef()
         def.preIslands = [[0]]
-        XCTAssertThrowsErrorEqual(
+        assertThrowsErrorEqual(
             try SliceGame.buildChart(from: def, swellDefs: SliceGameTests.swellDefs()),
             .malformedJSON("two_swells_basic", "cell needs [q, r]"))
     }
@@ -198,7 +198,7 @@ final class SliceGameTests: XCTestCase {
 
 /// Asserts the closure throws exactly `expected` (SliceGameError is
 /// Equatable, so the case and payload must both match).
-private func XCTAssertThrowsErrorEqual(
+private func assertThrowsErrorEqual(
     _ expression: @autoclosure () throws -> some Any,
     _ expected: SliceGameError,
     file: StaticString = #filePath, line: UInt = #line

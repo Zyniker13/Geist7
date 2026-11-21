@@ -39,8 +39,9 @@ public enum PathDistance {
             for next in cell.neighbors() {
                 guard ocean.contains(next), !state.islands.contains(next) else { continue }
                 if state.chart.atollCells.contains(next), !targets.contains(next) { continue }
-                guard field.strength(at: next) > Balance.becalmedStrength
-                    || targets.contains(next)
+                guard
+                    field.strength(at: next) > Balance.becalmedStrength
+                        || targets.contains(next)
                 else { continue }
                 let stepCost = field.isNode(cell) && field.isNode(next) ? 0 : 1
                 let newCost = cost + stepCost

@@ -3,9 +3,10 @@
 // side = landed×100 + Σ best-3 (30 − distance) − 8·becalmed, with home
 // canoes contributing 30 − (1 + best launch cell's distance).
 
-import XCTest
-@testable import MTAI
 import MTCore
+import XCTest
+
+@testable import MTAI
 
 final class EvaluatorTests: XCTestCase {
     /// p1 canoes on the corridor at distances 5, 4, 3, 2; p2 all home

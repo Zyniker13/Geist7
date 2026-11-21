@@ -8,6 +8,7 @@
 // ones.
 
 import MTCore
+
 @testable import MTAI
 
 enum Fixtures {

@@ -1,9 +1,10 @@
 // SailorTests.swift — the 1-ply tier: landing preference, seeded
 // tie-break, and full self-play through the real reducer.
 
-import XCTest
-@testable import MTAI
 import MTCore
+import XCTest
+
+@testable import MTAI
 
 final class SailorTests: XCTestCase {
     func testSailorTakesTheLanding() {

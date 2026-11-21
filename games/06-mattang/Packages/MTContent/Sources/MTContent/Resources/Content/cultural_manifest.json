@@ -95,6 +95,46 @@
       "credit": ""
     },
     {
+      "id": "gl_east_swell",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Neutral placeholder display name for the dominant eastern swell; the Marshallese term is to be supplied by the advisor",
+      "source_refs": ["src_roadmap_s115"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_nw_swell",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Neutral placeholder display name for the dominant northwestern swell; the Marshallese term is to be supplied by the advisor",
+      "source_refs": ["src_roadmap_s115"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_west_swell",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Neutral placeholder display name for the minor western swell; the Marshallese term is to be supplied by the advisor",
+      "source_refs": ["src_roadmap_s115"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
+      "id": "gl_se_swell",
+      "kind": "name",
+      "tradition": "marshallese_stick_charts",
+      "description": "Neutral placeholder display name for the minor southeastern swell; the Marshallese term is to be supplied by the advisor",
+      "source_refs": ["src_roadmap_s115"],
+      "status": "pending",
+      "advisor_notes": "",
+      "credit": ""
+    },
+    {
       "id": "text_swell_neutral_names",
       "kind": "text",
       "tradition": "marshallese_stick_charts",

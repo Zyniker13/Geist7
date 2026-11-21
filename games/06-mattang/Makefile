@@ -63,6 +63,10 @@ check-imports:
 
 content-lint:
 	Tools/content-lint/run.sh
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/manifest-missing --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/restricted-title --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/teaching-claim --expect-fail
+	Tools/content-lint/run.sh Tools/content-lint/fixtures/restricted-framing --expect-fail
 
 sim:
 	@N=$(if $(N),$(N),200); echo "Running $$N seeded random-legal games..."; \

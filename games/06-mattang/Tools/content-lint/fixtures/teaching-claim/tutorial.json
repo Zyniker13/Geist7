@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "lessons": [
+    {
+      "id": "lsn_fixture_teach",
+      "title": "Reading the Sea",
+      "summary": "This mode teaches you to navigate by swells.",
+      "steps": []
+    }
+  ]
+}

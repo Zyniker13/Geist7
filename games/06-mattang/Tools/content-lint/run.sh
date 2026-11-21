@@ -14,6 +14,13 @@
 #      cultural_manifest.json entry; every manifest entry has a valid kind
 #      and status.
 #   4. Charts reference only known swell ids (when both files are populated).
+#   5. Restricted-element deny-list (SRC2.2, roadmap §14 + RESEARCH sensitivities):
+#      chiefly/religious titles (iroij, ri-meto, ruprup jokur) must not appear in
+#      any game-facing label; navigation-teaching claims, "primitive" framing,
+#      and nuclear-testing references must not appear anywhere in content.
+#      Documentary fields (glossary term/gloss/source, manifest
+#      description/advisor_notes/credit, and id/key references) are exempt from
+#      the title scan so the content can document the exclusion itself.
 #
 # Usage:
 #   run.sh                        lint the real content; exit 1 on violation
@@ -197,6 +204,91 @@ if len(covered) != len(glossary_keys) and glossary_keys:
     # Orphans are allowed (manifest can cover art/audio ahead of content),
     # but at P0 every manifest entry must trace to a real asset; keep the
     # check one-sided: content must be covered, extra entries are fine.
+
+# ----------------------------------------------------------------------
+# SRC2.2 restricted-element deny-list (roadmap §14 + RESEARCH avoid list
+# + docs/SOURCING.md §3). Three scans over every string in every table:
+#
+#   TITLES   — chiefly/religious titles (iroij, ri-meto, ruprup jokur)
+#              must never appear in a game-facing label (names, ranks,
+#              tiers, achievements, display text). Fields that document
+#              culture (term/gloss/source, descriptions, advisor notes)
+#              are exempt so the content can state the exclusion itself;
+#              the glossary entry for ri-meto exists precisely to record
+#              that it is excluded from game labels.
+#   TEACHING — navigation-teaching claims ("teaches/learn to navigate…")
+#              must not appear in game-facing text. Documentary fields
+#              are exempt: a chart gloss may factually say "teaching
+#              chart" (that is what the object is), but no text may
+#              claim the GAME teaches navigation.
+#   FRAMING  — "primitive" framing and nuclear-testing references
+#              (Bikini, Enewetak, fallout) are banned everywhere,
+#              documentary fields included.
+TITLES = [
+    ("iroij", "chiefly title"),
+    ("ri-meto", "conferred navigator title"),
+    ("rimeto", "conferred navigator title"),
+    ("ruprup jokur", "title-conferral rite"),
+]
+TEACHING_CLAIM = re.compile(
+    r"(teach\w+|learn\w*|instruct\w*)\b[^.!?]{0,60}?\b(navigat\w+|wayfind\w+)"
+)
+FRAMING = [
+    (re.compile(r"\bprimitive\b"), "'primitive' framing"),
+    (re.compile(r"bikini|enewetak|fallout|mushroom\s+cloud|nuclear\s+test"),
+     "nuclear-testing reference"),
+]
+DOCUMENTARY_FIELDS = {
+    "id", "ids", "key", "keys", "ref", "refs", "source", "sources",
+    "source_refs", "term", "gloss", "description", "advisor_notes",
+    "credit", "note", "notes", "status", "kind", "tradition", "game",
+    "language", "schema_version",
+}
+
+def leaf_field(path):
+    leaf = path.rsplit(".", 1)[-1]
+    return leaf.split("[")[0]
+
+def scan_denylist(name, doc):
+    if doc is None:
+        return
+    def visit(node, path):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                visit(value, f"{path}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                visit(value, f"{path}[{index}]")
+        elif isinstance(node, str):
+            lowered = node.lower()
+            documentary = leaf_field(path) in DOCUMENTARY_FIELDS
+            if not documentary:
+                for needle, why in TITLES:
+                    if needle in lowered:
+                        errors.append(
+                            f"{name}{path}: restricted title {needle!r} "
+                            f"({why}) in a game-facing field"
+                        )
+                if TEACHING_CLAIM.search(lowered):
+                    errors.append(
+                        f"{name}{path}: navigation-teaching claim in a "
+                        f"game-facing field: {node[:60]!r}"
+                    )
+            for pattern, why in FRAMING:
+                if pattern.search(lowered):
+                    errors.append(f"{name}{path}: restricted {why}: {node[:60]!r}")
+    visit(doc, "")
+
+for doc_name, doc in (
+    ("cultural_manifest.json", manifest_doc),
+    ("glossary.json", glossary_doc),
+    ("charts.json", charts_doc),
+    ("swells.json", swells_doc),
+    ("puzzles.json", puzzles_doc),
+    ("voyages.json", voyages_doc),
+    ("tutorial.json", tutorial_doc),
+):
+    scan_denylist(doc_name, doc)
 
 # Cross-reference: charts reference known swells (when both are populated).
 if chart_ids and swell_ids:

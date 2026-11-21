@@ -11,21 +11,49 @@ struct DebugOverlay: View {
     /// state hash); nil keeps the seed+tick hash of the P0 overlay.
     var hashTextOverride: String? = nil
 
-    @ObservedObject private var meter = FPSMeter()
+    // @StateObject, not @ObservedObject: the overlay re-renders on
+    // every ply (tick/hash text changes), and an @ObservedObject
+    // initialized inline is recreated each time — the meter's display
+    // link died before its one-second window ever rolled.
+    @StateObject private var meter = FPSMeter()
     @State private var hashText = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("fps \(meter.fps)")
-            Text("tick \(tick)")
-            Text("seed \(seed)")
-            Text("hash \(hashTextOverride ?? hashText)")
-        }
-        .font(.caption2.monospaced())
-        .padding(6)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-            meter.rollWindow()
+        // The one-second cadence comes from TimelineView, not a
+        // Combine timer: an `.onReceive(Timer.publish(every: 1))`
+        // subscription is rebuilt on every parent re-render, and the
+        // match screen re-renders several times a second under
+        // auto-pilot — the interval never matured, so the fps read
+        // froze at 0 there (the menu, which never re-renders, read
+        // 60). TimelineView's own schedule is immune to re-renders;
+        // each tick rolls the meter's window and re-reads every line.
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            VStack(alignment: .leading, spacing: 2) {
+                Text("fps \(meter.currentFPS())")
+                Text("tick \(tick)")
+                Text("seed \(seed)")
+                Text("hash \(hashTextOverride ?? hashText)")
+                // The pulse keeps the render loop committing frames
+                // while the debug overlay is visible, so the fps meter
+                // reports the loop's actual sustained rate instead of
+                // reading near zero on a scene that is intentionally
+                // static between plies (ADR-0016; the P6 Metal wave
+                // field animates for real). Debug builds only — release
+                // compiles the whole overlay out.
+                TimelineView(.animation) { pulse in
+                    Circle()
+                        .fill(
+                            Color.green.opacity(
+                                0.18 + 0.18
+                                    * sin(
+                                        pulse.date.timeIntervalSinceReferenceDate
+                                            * 4)))
+                }
+                .frame(width: 6, height: 6)
+            }
+            .font(.caption2.monospaced())
+            .padding(6)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
         }
         .task {
             meter.start()

@@ -2,11 +2,12 @@ import Combine
 import SwiftUI
 
 /// Frame-rate source for the debug overlay (S0.7). Counts real display
-/// frames via the platform display link; a one-second window is read on
-/// the main run loop and published.
+/// frames via the platform display link; the overlay's one-second
+/// TimelineView tick rolls the window and reads the count in one call.
+/// The meter publishes nothing: rolling a @Published value during view
+/// updates would re-publish and re-render in a loop (the blank-screen
+/// spin this file once caused).
 final class FPSMeter: ObservableObject, @unchecked Sendable {
-    @Published var fps = 0
-
     private let lock = NSLock()
     private var frames = 0
 
@@ -58,14 +59,15 @@ final class FPSMeter: ObservableObject, @unchecked Sendable {
         lock.unlock()
     }
 
-    /// Read the accumulated window and restart it. Called once a second
-    /// from the main run loop.
-    func rollWindow() {
+    /// Roll the one-second window and return the counted frames. Safe
+    /// to call from the overlay's TimelineView content: it touches no
+    /// published state, so the read cannot re-trigger the render.
+    func currentFPS() -> Int {
         lock.lock()
         let counted = frames
         frames = 0
         lock.unlock()
-        fps = counted
+        return counted
     }
 
     #if os(iOS)

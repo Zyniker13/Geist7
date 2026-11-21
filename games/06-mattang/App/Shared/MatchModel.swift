@@ -41,10 +41,14 @@ final class MatchModel: ObservableObject {
 
     let seed: UInt64
     /// Pause before each AI move (launch argument `-aiDelay`; tests
-    /// set 0).
+    /// set 0). Under auto-pilot the pace is min(aiDelay, 0.05) unless
+    /// the caller passed an explicit delay, which is respected as-is.
     let aiDelay: TimeInterval
     /// Auto-pilot drives both sides (launch argument `-autoPilot`).
     let autoPilot: Bool
+    /// Whether the launch arguments carried an explicit `-aiDelay`
+    /// (those are respected as-is under auto-pilot).
+    let explicitAIDelay: Bool
     /// Freeze the match after this many plies (launch argument
     /// `-snapshotPly`); nil plays on.
     let snapshotPly: Int?
@@ -63,20 +67,25 @@ final class MatchModel: ObservableObject {
     }
 
     /// A fresh match against Sailor.
-    convenience init(seed: UInt64, aiDelay: TimeInterval, autoPilot: Bool, snapshotPly: Int?) {
+    convenience init(
+        seed: UInt64, aiDelay: TimeInterval, autoPilot: Bool,
+        snapshotPly: Int?, explicitAIDelay: Bool = false
+    ) {
         self.init(
             seed: seed, aiDelay: aiDelay, autoPilot: autoPilot,
-            snapshotPly: snapshotPly, saved: nil)
+            snapshotPly: snapshotPly, explicitAIDelay: explicitAIDelay,
+            saved: nil)
     }
 
     /// Internal: build from an optional saved record (resume).
     private init(
         seed: UInt64, aiDelay: TimeInterval, autoPilot: Bool,
-        snapshotPly: Int?, saved: SavedMatch?
+        snapshotPly: Int?, explicitAIDelay: Bool, saved: SavedMatch?
     ) {
         self.seed = seed
         self.aiDelay = aiDelay
         self.autoPilot = autoPilot
+        self.explicitAIDelay = explicitAIDelay
         self.snapshotPly = snapshotPly
         self.defaults = .standard
         if let saved, saved.seed == seed {
@@ -104,21 +113,24 @@ final class MatchModel: ObservableObject {
     static func forCurrentLaunch(defaults: UserDefaults = .standard) -> MatchModel {
         let args = LaunchArguments.current
         let aiDelay = args.aiDelay ?? 1.2
+        let explicit = args.aiDelay != nil
         if args.startMatch {
             return MatchModel(
                 seed: args.seed ?? 0, aiDelay: aiDelay,
-                autoPilot: args.autoPilot, snapshotPly: args.snapshotPly)
+                autoPilot: args.autoPilot, snapshotPly: args.snapshotPly,
+                explicitAIDelay: explicit)
         }
         if let data = defaults.data(forKey: saveKey),
             let saved = try? JSONDecoder().decode(SavedMatch.self, from: data)
         {
             return MatchModel(
                 seed: saved.seed, aiDelay: aiDelay, autoPilot: args.autoPilot,
-                snapshotPly: args.snapshotPly, saved: saved)
+                snapshotPly: args.snapshotPly, explicitAIDelay: explicit,
+                saved: saved)
         }
         return MatchModel(
             seed: 0, aiDelay: aiDelay, autoPilot: args.autoPilot,
-            snapshotPly: args.snapshotPly)
+            snapshotPly: args.snapshotPly, explicitAIDelay: explicit)
     }
 
     deinit {
@@ -224,6 +236,7 @@ final class MatchModel: ObservableObject {
         aiTask?.cancel()
         aiThinking = false
         isPaused = false
+        thinkGeneration += 1  // any in-flight think is now stale
         state = Reducer.initial(chart: state.chart)
         rng = SeededRNG(seed: seed)
         plies = 0
@@ -242,6 +255,7 @@ final class MatchModel: ObservableObject {
         } else {
             isPaused = true
             aiTask?.cancel()
+            thinkGeneration += 1  // a landing during pause must discard
             aiThinking = false
         }
     }
@@ -263,6 +277,17 @@ final class MatchModel: ObservableObject {
         }
     }
 
+    /// The generation of the pending AI think. State can move on
+    /// (pause, resume, restart, a committed human action) while the
+    /// detached worker runs; a decision stamped with anything but the
+    /// current generation is discarded.
+    @Published private(set) var thinkGeneration = 0
+
+    /// Runs the AI think off the main actor (Rosette's P8 fix): the
+    /// main actor only snapshots the inputs and lands the decision.
+    /// The worker clones the caller's rng state and returns the
+    /// advanced state (INV-1: the stream position is part of the
+    /// record), so reproducibility survives the hop.
     private func performAI() {
         guard !isOver, !frozen, !isPaused else {
             aiThinking = false
@@ -274,8 +299,28 @@ final class MatchModel: ObservableObject {
             aiThinking = false
             return
         }
-        let action = Sailor().chooseAction(in: state, rng: &rng)
-        aiThinking = false
+        let snapshot = state
+        let rngState = rng.state
+        let generation = thinkGeneration
+        aiTask = Task.detached { [weak self] in
+            var workerRNG = SeededRNG(state: rngState)
+            let action = Sailor().chooseAction(in: snapshot, rng: &workerRNG)
+            let advanced = workerRNG.state
+            guard let self, !Task.isCancelled else { return }
+            await self.landAI(
+                action: action, advancedRNGState: advanced,
+                generation: generation)
+        }
+    }
+
+    /// The main-actor landing path for a finished AI think.
+    @MainActor
+    private func landAI(action: Action, advancedRNGState: UInt64, generation: Int) {
+        defer { aiThinking = false }
+        guard generation == thinkGeneration, !isPaused else {
+            return  // superseded or paused: discard the decision
+        }
+        rng = SeededRNG(state: advancedRNGState)
         commit(action)
     }
 
@@ -286,9 +331,16 @@ final class MatchModel: ObservableObject {
         let aiTurn = state.toMove == Self.aiSide
         guard aiTurn || autoPilot else { return }
         aiTask?.cancel()
-        // Auto-pilot keeps the pace testable: snapshot captures wait
-        // on -snapshotPly, live runs use the same short delay.
-        let delay = autoPilot ? min(aiDelay, 0.05) : aiDelay
+        thinkGeneration += 1
+        // An explicit -aiDelay is respected under auto-pilot too: the
+        // auto-pilot default keeps the pace testable (snapshot
+        // captures wait on -snapshotPly), but a caller that passes a
+        // delay gets that delay on every side's turn — the recording
+        // flows run at real play pace through it. MatchModel exposes
+        // whether the launch arguments carried -aiDelay.
+        let delay =
+            explicitAIDelay
+            ? aiDelay : (autoPilot ? min(aiDelay, 0.05) : aiDelay)
         aiThinking = aiTurn
         aiTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(delay))

@@ -119,3 +119,27 @@ final class MattangUITests: XCTestCase {
         )
     }
 }
+
+/// Drives the S2.5 recording flow: a full auto-pilot match at the
+/// live pace, ending on the results screen. The `simctl io
+/// recordVideo` capture around this run becomes
+/// `docs/media/slice.mp4`. No element queries run during the match
+/// (the scene's AX tree is not safe to poll mid-render); the flow is
+/// timed sleeps around the one safe interaction point. `-startMatch`
+/// guarantees a fresh seed-7 match regardless of any saved record.
+final class SliceRecordingUITests: XCTestCase {
+    func testSliceRecordingFlow() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-startMatch", "-seed", "7", "-autoPilot", "-debugOverlay",
+        ]
+        app.launch()
+
+        // Confirm the match screen is up (a safe pre-match query), then
+        // hold while the auto-pilot match plays out (~50 s on seed 7)
+        // and lands on the results overlay for the recording tail.
+        let place = app.buttons["Place"]
+        XCTAssertTrue(place.waitForExistence(timeout: 10), "match controls visible")
+        sleep(56)
+    }
+}

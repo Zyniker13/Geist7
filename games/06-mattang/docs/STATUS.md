@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Phase:** P1 (Rules Engine Prototype) — implementation complete; G1 evidence chain complete and signed off below. Merge to `main` + tag `mattang/gate-G1-pass` follow CI green.
-- **Branch:** `mattang/phase/P1-rules-engine` (unmerged). Lint is clean (0 warnings; force-unwrap rule satisfied with preconditioned accessors, Rosette precedent). MTCore 110/110 tests passed (110 = 109 + the R-4 gap test); all seven packages plus the iOS UI bundle green under `make test`.
+- **Phase:** P1 (Rules Engine Prototype) — complete; G1 signed off and **tagged** (`mattang/gate-G1-pass`, on the P1 merge to `main` after CI green, 2026-11-21). Program paused at the maintainer's instruction (Mac migration); P2 (Core Loop Vertical Slice) is next on resume.
+- **Branch:** `mattang/phase/P1-rules-engine` (merged into `main`; tag `mattang/gate-G1-pass` at merge `a2fbece`). Lint is clean (0 warnings; force-unwrap rule satisfied with preconditioned accessors, Rosette precedent). MTCore 110/110 tests passed (110 = 109 + the R-4 gap test); all seven packages plus the iOS UI bundle green under `make test`.
 - **Blocked on:** nothing.
 
 ## Phase Queue
@@ -206,6 +206,8 @@ MTCore line coverage is 91.35%; the field-update mean is 0.039 ms (release) agai
 all seven packages plus the iOS UI bundle; `make lint` is clean. Merge to `main` and tag
 `mattang/gate-G1-pass` follow CI green (`.github/workflows/mattang.yml` triggers on `main`
 pushes only).
+
+Tag `mattang/gate-G1-pass` applied at the merge commit after CI green, 2026-11-21.
 
 — GLM-SELF, 2026-11-21
 

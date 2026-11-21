@@ -5,7 +5,7 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 ## Current
 
 - **Game in progress:** **06 Mattang — P1 complete, G1 signed off** (2026-11-21). Evidence in `games/06-mattang/docs/STATUS.md`: `make test` green under sim-lock (MTCore 110/110 — 109 + the R-4 gap test — plus all seven packages and iOS UI 2/2), `make lint` clean, INV-1..5 clean over 5,000 seeds in three byte-identical runs including the literal `make sim N=5000` (total_hash 14265686464808967450), coverage 91.35%, field update 0.039 ms release against the 0.5 ms budget.
-- **Next step:** merge `mattang/phase/P1-rules-engine` to `main`, verify CI green, tag `mattang/gate-G1-pass` — **then STOP** at the maintainer's instruction (2026-11-21): he is migrating to a new Mac, so do not start P2 until he says resume. Rosette is Complete (P10/G10); maintainer items: #4, #7–#12.
+- **Next step:** **G1 tagged** (`mattang/gate-G1-pass`, on the P1 merge `a2fbece` after CI green). Program **paused** at the maintainer's instruction (2026-11-21): he is migrating to a new Mac — do not start P2 until he says resume; next on resume is 06 Mattang P2 (Core Loop Vertical Slice). Rosette is Complete (P10/G10); maintainer items: #4, #7–#12.
 
 ## Environment Check
 
@@ -36,7 +36,7 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 07 | Rosette | Complete (P10/G10) | G10 | #4, #7–#11 |
-| 2 | 06 | Mattang | P1 complete, G1 pass (2026-11-21) | `mattang/gate-G1-pass` (tag after merge + CI) | issue #12 (advisor review) |
+| 2 | 06 | Mattang | P1 complete, G1 pass (2026-11-21) | `mattang/gate-G1-pass` | issue #12 (advisor review) |
 | 3 | 04 | Dry Garden | Not Started | — | — |
 | 4 | 24 | Patang | Not Started | — | — |
 | 5 | 01 | Ebru | Not Started | — | — |

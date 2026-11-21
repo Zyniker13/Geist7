@@ -68,10 +68,15 @@ placeholder names until advisor review.
 9. **Mystery of the two swells.** The chart's swell set is fixed; no
    chart variety or swell-cycling rule surfaces yet. → **P3 content**:
    G3 charts carry varied swell sets (MT-P3.1).
-10. **No performance telemetry on-device.** The field-update budget is
-    measured headlessly (G1); the scene's frame pacing has no live
-    counter beyond the debug overlay. → **P8 perf pass** (§7 budgets
-    measured from real captures per the perf skill).
+10. **No on-device performance telemetry beyond the overlay.** The G2
+    probe found and fixed three render-loop defects (main-actor AI
+    think, meter recreation, timer rebuild — see `docs/STATUS.md` G2
+    evidence); the sustained-60 fps check now passes at real play
+    pace, but the max-pace auto-pilot stress (no explicit `-aiDelay`)
+    still dips to ~11 fps on the simulator, and P6's animated Metal
+    field (ADR-0016) must re-verify the budget. → **P8 perf pass**
+    (§7 budgets measured from real captures per the perf skill; P6
+    re-measures with the wave field).
 
 ## Not weaknesses (verified in the slice)
 

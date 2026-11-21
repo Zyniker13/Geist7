@@ -33,20 +33,20 @@ public enum SliceGameError: Error, Equatable {
 }
 
 /// A swell definition decoded from swells.json (§5 SwellDef).
-struct SwellDef: Decodable {
-    var id: String
-    var entrySide: Int
-    var direction: Int
-    var weight: Int
+public struct SwellDef: Decodable, Sendable {
+    public var id: String
+    public var entrySide: Int
+    public var direction: Int
+    public var weight: Int
     /// The glossary key naming this swell; `"pending_advisor"` marks a
     /// term still awaiting the advisor and decodes to no name.
-    var name: String?
+    public var name: String?
 
     enum CodingKeys: String, CodingKey {
         case id, entrySide, direction, weight, glossary
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
         entrySide = try container.decode(Int.self, forKey: .entrySide)
@@ -58,21 +58,21 @@ struct SwellDef: Decodable {
 }
 
 /// A chart definition decoded from charts.json (§5 ChartDef).
-struct ChartDef: Decodable {
-    var id: String
-    var radius: Int
-    var swells: [String]
-    var preIslands: [[Int]]
-    var p1Atoll: [[Int]]
-    var p2Atoll: [[Int]]
-    var symmetry: String
-    var cultural: Bool
+public struct ChartDef: Decodable, Sendable {
+    public var id: String
+    public var radius: Int
+    public var swells: [String]
+    public var preIslands: [[Int]]
+    public var p1Atoll: [[Int]]
+    public var p2Atoll: [[Int]]
+    public var symmetry: String
+    public var cultural: Bool
 }
 
-struct ChartsFile: Decodable {
-    var schemaVersion: Int
-    var game: String
-    var charts: [ChartDef]
+public struct ChartsFile: Decodable {
+    public var schemaVersion: Int
+    public var game: String
+    public var charts: [ChartDef]
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
@@ -80,10 +80,10 @@ struct ChartsFile: Decodable {
     }
 }
 
-struct SwellsFile: Decodable {
-    var schemaVersion: Int
-    var game: String
-    var swells: [SwellDef]
+public struct SwellsFile: Decodable {
+    public var schemaVersion: Int
+    public var game: String
+    public var swells: [SwellDef]
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"

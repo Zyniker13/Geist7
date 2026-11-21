@@ -1,5 +1,137 @@
 {
   "schema_version": 1,
   "game": "06-mattang",
-  "lessons": []
+  "lessons": [
+    {
+      "id": "l1_one_swell",
+      "chart": "single_swell",
+      "title": "One swell",
+      "steps": [
+        {
+          "kind": "highlight_nodes",
+          "text": "This chart carries one swell. It enters from the west and runs east across the whole ocean: every cell it crosses has strength, shown as a crest line."
+        },
+        {
+          "kind": "highlight_nodes",
+          "text": "No cell crosses another swell yet, so there are no nodes to sail by — a canoe needs crossings to travel on."
+        },
+        {
+          "kind": "complete",
+          "text": "One swell alone is water without roads. Add an island, and the swell bends."
+        }
+      ]
+    },
+    {
+      "id": "l2_one_island",
+      "chart": "single_swell",
+      "title": "One island",
+      "steps": [
+        {
+          "kind": "place_island",
+          "cell": [
+            0,
+            -3
+          ],
+          "text": "Place an island in the swell's path. Rays strike its windward face and bounce back; rays beside it bend toward it."
+        },
+        {
+          "kind": "highlight_nodes",
+          "text": "Where bent rays cross their own swell's neighbours, the crest lines crowd — this is a channel you can sail."
+        },
+        {
+          "kind": "complete",
+          "text": "One island, one swell: the shape of the first teaching charts."
+        }
+      ]
+    },
+    {
+      "id": "l3_launch",
+      "chart": "single_swell",
+      "title": "Launching",
+      "steps": [
+        {
+          "kind": "place_island",
+          "cell": [
+            -1,
+            0
+          ],
+          "text": "One more island, close to home, bends the swell toward your atoll and opens a launch lane."
+        },
+        {
+          "kind": "launch",
+          "launchCell": [
+            -4,
+            3
+          ],
+          "text": "Launch a canoe onto any strength cell beside your home atoll. Launching does not spend the canoe's sail."
+        },
+        {
+          "kind": "complete",
+          "text": "Your canoe is at sea. Next: how it rides."
+        }
+      ]
+    },
+    {
+      "id": "l4_first_sail",
+      "chart": "single_swell",
+      "title": "The first sail",
+      "steps": [
+        {
+          "kind": "launch",
+          "launchCell": [
+            -4,
+            3
+          ],
+          "text": "A canoe waits beside home. Sail east along the swell."
+        },
+        {
+          "kind": "sail",
+          "path": [
+            [
+              -3,
+              3
+            ]
+          ],
+          "text": "Each step on a swell costs one range. Steps between nodes cost none — the chain carries you."
+        },
+        {
+          "kind": "sail",
+          "path": [
+            [
+              -3,
+              4
+            ]
+          ],
+          "text": "Entering a node ends your ride unless the next cell is also a node: then the chain carries the canoe for free."
+        },
+        {
+          "kind": "complete",
+          "text": "Ride the swells, stop on the nodes. That is the whole art."
+        }
+      ]
+    },
+    {
+      "id": "l5_two_swells",
+      "chart": "two_swells_basic",
+      "title": "Two swells",
+      "steps": [
+        {
+          "kind": "highlight_nodes",
+          "text": "The full chart: two dominant swells and two minor ones. Crossings light up everywhere — nodes are where two or more swells cross."
+        },
+        {
+          "kind": "place_island",
+          "cell": [
+            0,
+            0
+          ],
+          "text": "One island reshapes the whole sea: every ray that touches it bends or bounces, and the node field moves."
+        },
+        {
+          "kind": "complete",
+          "text": "You know the field, the island, the launch, and the ride. The voyages begin."
+        }
+      ]
+    }
+  ]
 }

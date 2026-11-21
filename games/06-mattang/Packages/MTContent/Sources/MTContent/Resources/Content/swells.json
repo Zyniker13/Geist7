@@ -2,9 +2,68 @@
   "schema_version": 1,
   "game": "06-mattang",
   "swells": [
-    { "id": "east_dom", "entrySide": 0, "direction": 3, "weight": 2, "glossary": "pending_advisor" },
-    { "id": "north_dom", "entrySide": 4, "direction": 1, "weight": 2, "glossary": "pending_advisor" },
-    { "id": "west_min", "entrySide": 3, "direction": 0, "weight": 1, "glossary": "pending_advisor" },
-    { "id": "south_min", "entrySide": 1, "direction": 4, "weight": 1, "glossary": "pending_advisor" }
+    {
+      "id": "east_dom",
+      "entrySide": 0,
+      "direction": 3,
+      "weight": 2,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "north_dom",
+      "entrySide": 4,
+      "direction": 1,
+      "weight": 2,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "west_min",
+      "entrySide": 3,
+      "direction": 0,
+      "weight": 1,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "south_min",
+      "entrySide": 1,
+      "direction": 4,
+      "weight": 1,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "west_only",
+      "entrySide": 3,
+      "direction": 0,
+      "weight": 2,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "lm_dom_a",
+      "entrySide": 0,
+      "direction": 3,
+      "weight": 2,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "lm_dom_b",
+      "entrySide": 3,
+      "direction": 0,
+      "weight": 2,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "lm_min_c",
+      "entrySide": 2,
+      "direction": 1,
+      "weight": 1,
+      "glossary": "pending_advisor"
+    },
+    {
+      "id": "lm_min_d",
+      "entrySide": 5,
+      "direction": 4,
+      "weight": 1,
+      "glossary": "pending_advisor"
+    }
   ]
 }

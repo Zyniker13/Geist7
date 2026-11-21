@@ -1,5 +1,16 @@
 {
   "schema_version": 1,
   "game": "06-mattang",
-  "charts": []
+  "charts": [
+    {
+      "id": "two_swells_basic",
+      "radius": 7,
+      "swells": ["east_dom", "north_dom", "west_min", "south_min"],
+      "preIslands": [],
+      "p1Atoll": [[-7, 3], [-7, 4], [-6, 3]],
+      "p2Atoll": [[7, -3], [7, -4], [6, -3]],
+      "symmetry": "none",
+      "cultural": false
+    }
+  ]
 }

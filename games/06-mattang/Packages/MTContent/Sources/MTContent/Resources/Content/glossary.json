@@ -65,6 +65,34 @@
       "gloss": "person of the ocean; a navigator title conferred by an iroij (never used for tiers or ranks in this game)",
       "status": "pending",
       "source": "Genz et al. 2009; Genz 2011"
+    },
+    {
+      "key": "gl_east_swell",
+      "term": "East swell",
+      "gloss": "neutral placeholder name for the dominant eastern swell; Marshallese term to be supplied by the advisor",
+      "status": "pending",
+      "source": "placeholder pending advisor review"
+    },
+    {
+      "key": "gl_nw_swell",
+      "term": "Northwest swell",
+      "gloss": "neutral placeholder name for the dominant northwestern swell; Marshallese term to be supplied by the advisor",
+      "status": "pending",
+      "source": "placeholder pending advisor review"
+    },
+    {
+      "key": "gl_west_swell",
+      "term": "West swell",
+      "gloss": "neutral placeholder name for the minor western swell; Marshallese term to be supplied by the advisor",
+      "status": "pending",
+      "source": "placeholder pending advisor review"
+    },
+    {
+      "key": "gl_se_swell",
+      "term": "Southeast swell",
+      "gloss": "neutral placeholder name for the minor southeastern swell; Marshallese term to be supplied by the advisor",
+      "status": "pending",
+      "source": "placeholder pending advisor review"
     }
   ]
 }

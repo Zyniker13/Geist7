@@ -8,6 +8,8 @@ let package = Package(
     ],
     targets: [
         .target(name: "MTCore"),
-        .testTarget(name: "MTCoreTests", dependencies: ["MTCore"]),
+        .testTarget(
+            name: "MTCoreTests", dependencies: ["MTCore"],
+            resources: [.copy("Fixtures")]),
     ]
 )

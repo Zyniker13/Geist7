@@ -73,3 +73,62 @@ A.7 sharpens G2 with "a scripted UI test of the 'one island, one swell' lesson s
 ## ADR-0017: lagoon_mirror is authored tie-free with paired full-sweep swells
 
 The §A.3 `lagoon_mirror` sample row declares `rotate180` symmetry over the slice swell set (east/north dominant, west/south minor). Weights 2 and 1 are not half-turn symmetric (a rotate180 image of the swell pattern would pair a dominant swell with a minor one), so under ADR-0014's precedence reading (INV-6 governs what ships; sample rows are illustrative) the row is a shape to fill in, not a byte-exact spec. Shipped form: radius 7 with the sample's atoll cells, a rotate180-paired swell set — two full-sweep dominants on opposite sides entering in directions that cross at the centre, paired with two full-sweep minors likewise paired — and a single preIsland `[0, 0]`, mirroring the P1 INV-6 test chart's construction so the tie-free property the INV-6 test relies on holds. `crossroads` and `single_swell` complete the four-chart G3 set (none/mirror symmetries respectively) with the same tie-free discipline; a static tie check on shipped charts is added to chart validation so future content fails loudly rather than silently violating INV-6. Reason: A.4's per-chart acceptance runs on real games, which need valid charts; INV-6 is a shipped invariant, the sample row is not. Consequence: `two_swells_basic` (none), `lagoon_mirror` (rotate180), `crossroads` (none), and `single_swell` (mirror) make the G3 count with every chart passing `Chart.validate`, the new tie check, and the INV-6 property test at their declared symmetry.
+
+## ADR-0020: The deep tiers cap their search breadth (root 24, interior 12)
+
+Without breadth caps the A.5 search on the slice chart expands the
+full action list (~150 placements) at every interior node of the deep
+tiers, costing minutes per ply in DEBUG — the §7 budgets (1.0 s / 2.0 s
+per ply) are unreachable and the G4 soak cannot run. The deep tiers
+(depth ≥ 4, the `deep` flag) therefore search the ordered prefix: the
+root keeps the best 24 actions (only from depth 3 of iterative
+deepening on, so the first iteration still sweeps the whole list) and
+interior nodes keep the best 12 from depth ≥ 2 on. The prefix is the
+TT-best / history-ordered head, so the searched tree is a
+deterministic strict subset of the full tree — INV-1/INV-4 replay
+identity is unaffected. The shallow tiers are never capped. The
+shipped game never disables the caps; `AlphaBeta.setCaps` exists only
+for the sim's strength studies (`MTAI_NOCAPS=1`), which measured the
+uncapped depth-4 Navigator at ~516 s per game on the east probe chart
+— the caps are what makes the tier ladder runnable, not a strength
+compromise the soak papers over (the uncapped control lost the same
+game the capped one lost).
+
+## ADR-0021: The search sees R-23 through the real visited map
+
+`Search.apply` used to wipe the visited map so Reducer skipped the
+per-apply R-23 hash bookkeeping, on the stated theory that "the AI
+sees a third repetition as terminal by score" — but nothing scored
+it, so repetitions were invisible to the AI and it steered into
+tie-break losses that the R-11 tie-break hands to the second seat on
+the symmetric charts (the soak's "P2 won every mixed game" pattern;
+the uncapped control reproduced it, so it was never a caps effect).
+Now `Search.apply` applies actions with the real visited map: Reducer
+ends a branch at the third occurrence exactly like a real game, the
+negamax scores it via terminalValue (a tie-break win/loss ±100 000),
+and the AI avoids repetition-driven losses. Cost: one extra Zobrist
+hash per searched node — measured acceptable after the fix (the east
+probe soak runs ~1 s/ply at depth 2). Regression:
+`testSearchAvoidsThirdRepetitionLoss`.
+
+## ADR-0022: The root's scored list is best-first (value-sorted)
+
+`RootSearch.run` returned its list in search order (the previous
+iteration's ordering with untouched actions carrying stale values), so
+`chooseAction` — which plays the head — actually played the *previous*
+iteration's best: a depth-2 tier played its depth-1 best, and the
+noise band compared against the first action's value instead of the
+maximum. The root now sorts its final list by value
+(`final.sorted { $0.value > $1.value }`); `rootScores` exposes the
+list to the tests. Regression: `testRootScoresAreValueSorted`.
+
+## ADR-0023: The soak opens every game with a seeded placement prologue
+
+Zero-band tiers ignore the RNG (their action is a pure function of the
+position), so an unprologued soak replays the same two games for every
+seed and the ≥75% band is vacuous. Each soak game now plays
+`--prologue` (default 2) seeded island placements — alternating seats
+as R-7 demands, uniform over the legal placements — before the AI
+game proper; prologue plies are not counted toward max-plies (the
+budgets bound AI think time, not setup). Every seed then opens on a
+distinct position and the band measures real play.

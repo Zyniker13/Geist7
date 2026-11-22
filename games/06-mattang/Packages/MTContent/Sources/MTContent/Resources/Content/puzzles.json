@@ -1,5 +1,902 @@
 {
   "schema_version": 1,
   "game": "06-mattang",
-  "puzzles": []
+  "puzzles": [
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -5
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p001",
+      "islands": [
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -3
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p002",
+      "islands": [
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -2
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p003",
+      "islands": [
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -2
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p004",
+      "islands": [
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -5
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p005",
+      "islands": [
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -3
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p006",
+      "islands": [
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -2
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p007",
+      "islands": [
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -2
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p008",
+      "islands": [
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -6,
+          6
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -5
+        ]
+      ],
+      "chart": "two_swells_basic",
+      "goal": "land_in",
+      "id": "mt_p009",
+      "islands": [
+        [
+          -4,
+          -3
+        ],
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -1,
+          4
+        ],
+        [
+          -6,
+          6
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -2,
+          -3
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p010",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -1,
+          -3
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p011",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -4,
+          -1
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p012",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -4,
+          0
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p013",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -2,
+          -3
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p014",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          -2,
+          2
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          -1,
+          -3
+        ]
+      ],
+      "chart": "single_swell",
+      "goal": "land_in",
+      "id": "mt_p015",
+      "islands": [
+        [
+          4,
+          -4
+        ],
+        [
+          0,
+          -3
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          -2,
+          2
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          6,
+          -4
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p016",
+      "islands": [
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          4,
+          -2
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p017",
+      "islands": [
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          4,
+          -1
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p018",
+      "islands": [
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          6,
+          -1
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p019",
+      "islands": [
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          6,
+          -4
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p020",
+      "islands": [
+        [
+          4,
+          -6
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          4,
+          -2
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p021",
+      "islands": [
+        [
+          4,
+          -6
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          4,
+          -1
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p022",
+      "islands": [
+        [
+          4,
+          -6
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          6,
+          -1
+        ]
+      ],
+      "chart": "crossroads",
+      "goal": "land_in",
+      "id": "mt_p023",
+      "islands": [
+        [
+          4,
+          -6
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -5
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p024",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -3
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p025",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -2
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p026",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -2
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p027",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          7,
+          -5
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p028",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -6,
+          1
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          -2,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -3
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p029",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -6,
+          1
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          -2,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    },
+    {
+      "canoes": [
+        [
+          "p1",
+          5,
+          -2
+        ]
+      ],
+      "chart": "lagoon_mirror",
+      "goal": "land_in",
+      "id": "mt_p030",
+      "islands": [
+        [
+          -1,
+          -5
+        ],
+        [
+          -1,
+          -3
+        ],
+        [
+          -6,
+          1
+        ],
+        [
+          -3,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          -2,
+          6
+        ]
+      ],
+      "plies": 1,
+      "toMove": "p1"
+    }
+  ]
 }

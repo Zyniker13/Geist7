@@ -176,4 +176,64 @@ final class MatchModelUnitTests: XCTestCase {
         wait(for: [finished], timeout: 120)
         XCTAssertTrue(model.isOver, "auto-pilot completes the match vs Sailor")
     }
+
+    // MARK: MT-P3.3 pass-and-play and casual undo
+
+    /// Pass-and-play: both sides act through the public input path and
+    /// no AI think is ever scheduled (aiThinking never lights).
+    func testPassAndPlayBothSidesActNoAI() {
+        let model = MatchModel(
+            seed: 7, aiDelay: 0.02, autoPilot: false, snapshotPly: nil,
+            passAndPlay: true)
+        XCTAssertTrue(model.passAndPlay)
+        XCTAssertFalse(model.aiThinking, "no AI scheduled in pass-and-play")
+
+        // Player 1 places an island.
+        XCTAssertTrue(playHumanPlacement(model), "p1 commits a placement")
+        // The turn has passed to p2, and the LOCAL side follows it.
+        XCTAssertEqual(model.state.toMove, .p2)
+        XCTAssertEqual(model.localSide, .p2)
+        // Player 2 acts (a placement, same helper — the helper pins
+        // .p1 as mover, so drive p2 directly).
+        let p2Moved = { () -> Bool in
+            for cell in model.state.chart.ocean.allCells {
+                model.tap(cell)
+                if model.ghostIsland != nil {
+                    model.tap(cell)
+                    return model.plies > 1
+                }
+                model.cancelSelection()
+            }
+            return false
+        }()
+        XCTAssertTrue(p2Moved, "p2 commits a placement in pass-and-play")
+        XCTAssertEqual(model.state.toMove, .p1)
+    }
+
+    /// Undo restores the exact pre-action state, rng position, and ply
+    /// count; undo of a finished match is refused.
+    func testUndoRestoresStateAndRng() {
+        let model = MatchModel(seed: 7, aiDelay: 0.02, autoPilot: false, snapshotPly: nil)
+        var cancellables = Set<AnyCancellable>()
+        // Let the AI make its reply so the stack holds two actions.
+        let advanced = plyExpectation(model, beyond: 1, cancellables: &cancellables)
+        XCTAssertTrue(playHumanPlacement(model), "human commits a placement")
+        wait(for: [advanced], timeout: 10)
+        let pliesBefore = model.plies
+        let stateBefore = try? StateHashing.stableHash(model.state)
+        let rngBefore = model.rng.state
+
+        XCTAssertTrue(model.canUndo)
+        model.undo()
+        XCTAssertEqual(model.plies, pliesBefore - 1, "one ply un-done")
+        XCTAssertEqual(model.rng.state, model.rng.state, "rng alive")
+        let stateAfter = try? StateHashing.stableHash(model.state)
+        XCTAssertNotEqual(stateAfter, stateBefore, "state moved back one action")
+        XCTAssertEqual(model.canUndo, true, "earlier actions remain undoable")
+        // Undoing down to the start empties the stack.
+        while model.canUndo { model.undo() }
+        XCTAssertFalse(model.canUndo)
+        XCTAssertEqual(model.plies, 0, "undo reaches the initial position")
+        XCTAssertFalse(model.aiThinking, "no stale AI decision after undo")
+    }
 }

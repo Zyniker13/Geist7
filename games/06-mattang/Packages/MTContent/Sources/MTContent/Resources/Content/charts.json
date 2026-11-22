@@ -5,11 +5,185 @@
     {
       "id": "two_swells_basic",
       "radius": 7,
-      "swells": ["east_dom", "north_dom", "west_min", "south_min"],
+      "swells": [
+        "east_dom",
+        "north_dom",
+        "west_min",
+        "south_min"
+      ],
       "preIslands": [],
-      "p1Atoll": [[-7, 3], [-7, 4], [-6, 3]],
-      "p2Atoll": [[7, -3], [7, -4], [6, -3]],
+      "p1Atoll": [
+        [
+          -7,
+          3
+        ],
+        [
+          -7,
+          4
+        ],
+        [
+          -6,
+          3
+        ]
+      ],
+      "p2Atoll": [
+        [
+          7,
+          -3
+        ],
+        [
+          7,
+          -4
+        ],
+        [
+          6,
+          -3
+        ]
+      ],
       "symmetry": "none",
+      "cultural": false
+    },
+    {
+      "id": "single_swell",
+      "radius": 5,
+      "swells": [
+        "west_only"
+      ],
+      "preIslands": [
+        [
+          -1,
+          3
+        ],
+        [
+          2,
+          -3
+        ]
+      ],
+      "p1Atoll": [
+        [
+          -4,
+          1
+        ],
+        [
+          -4,
+          2
+        ],
+        [
+          -3,
+          1
+        ]
+      ],
+      "p2Atoll": [
+        [
+          -3,
+          -1
+        ],
+        [
+          -2,
+          -2
+        ],
+        [
+          -2,
+          -1
+        ]
+      ],
+      "symmetry": "mirror",
+      "cultural": false
+    },
+    {
+      "id": "crossroads",
+      "radius": 6,
+      "swells": [
+        "east_dom",
+        "north_dom",
+        "west_min",
+        "south_min"
+      ],
+      "preIslands": [
+        [
+          2,
+          -3
+        ],
+        [
+          -2,
+          3
+        ]
+      ],
+      "p1Atoll": [
+        [
+          -6,
+          2
+        ],
+        [
+          -6,
+          3
+        ],
+        [
+          -5,
+          2
+        ]
+      ],
+      "p2Atoll": [
+        [
+          6,
+          -2
+        ],
+        [
+          6,
+          -3
+        ],
+        [
+          5,
+          -2
+        ]
+      ],
+      "symmetry": "none",
+      "cultural": false
+    },
+    {
+      "id": "lagoon_mirror",
+      "radius": 7,
+      "swells": [
+        "lm_dom_a",
+        "lm_dom_b",
+        "lm_min_c",
+        "lm_min_d"
+      ],
+      "preIslands": [
+        [
+          0,
+          0
+        ]
+      ],
+      "p1Atoll": [
+        [
+          -7,
+          3
+        ],
+        [
+          -7,
+          4
+        ],
+        [
+          -6,
+          3
+        ]
+      ],
+      "p2Atoll": [
+        [
+          7,
+          -3
+        ],
+        [
+          7,
+          -4
+        ],
+        [
+          6,
+          -3
+        ]
+      ],
+      "symmetry": "rotate180",
       "cultural": false
     }
   ]

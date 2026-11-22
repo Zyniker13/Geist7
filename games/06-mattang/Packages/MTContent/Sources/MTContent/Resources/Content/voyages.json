@@ -1,5 +1,48 @@
 {
   "schema_version": 1,
   "game": "06-mattang",
-  "voyages": []
+  "voyages": [
+    {
+      "id": "v01",
+      "chart": "single_swell",
+      "opponent": "sailor",
+      "lesson": "launch",
+      "title": "First launch"
+    },
+    {
+      "id": "v02",
+      "chart": "single_swell",
+      "opponent": "sailor",
+      "lesson": "node_chain",
+      "title": "Riding the chain"
+    },
+    {
+      "id": "v03",
+      "chart": "two_swells_basic",
+      "opponent": "sailor",
+      "lesson": "reflection",
+      "title": "Two swells"
+    },
+    {
+      "id": "v04",
+      "chart": "crossroads",
+      "opponent": "deep_water",
+      "lesson": "node_chain",
+      "title": "Crossroads"
+    },
+    {
+      "id": "v05",
+      "chart": "lagoon_mirror",
+      "opponent": "deep_water",
+      "lesson": "reflection",
+      "title": "The lagoon chart"
+    },
+    {
+      "id": "v06",
+      "chart": "lagoon_mirror",
+      "opponent": "deep_water",
+      "lesson": null,
+      "title": "Deep water"
+    }
+  ]
 }

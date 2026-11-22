@@ -13,7 +13,7 @@
 | P0 Setup | **complete** | S0.1–S0.7, SRC0.1/0.2, HIST0.1 done; G0 signed off 2026-11-20 |
 | P1 Rules Engine Prototype | **complete** | Tracer (R-3..R-6, R-12..R-14), turns + all action rules (R-7..R-11, R-15..R-26), INV-1..8, golden replays, sim tool; G1 signed off below |
 | P2 Core Loop Vertical Slice | **complete** | Sea scene + preview, Sailor AI, SRC2.x; G2 signed off below |
-| P3 Content and Systems | pending | G3 charts, voyages, tutorial, About (SRC3.1) |
+| P3 Content and Systems | **complete** | G3 charts (4), puzzles (30), voyages (6), tutorial (5 lessons + flow), About (SRC3.1), pass-and-play + undo; G3 signed off below |
 | P4 AI Opponents | pending | Four tiers, puzzle miner, BALANCE.md |
 | P5 Meta and Replayability | pending | G5 counts, daily, stats, review packet, HANDOFF |
 | P6 Aesthetics and Audio | pending | Metal field, advisor review (SRC6.x) |
@@ -28,6 +28,7 @@
 | G0 Setup | **pass** (2026-11-20) | evidence block below |
 | G1 Rules Engine | **pass** (2026-11-21) | evidence block below |
 | G2 Vertical Slice | **pass** (2026-11-21) | evidence block below |
+| G3 Content and Systems | **pass** (2026-11-21) | evidence block below |
 
 ## G0 Evidence (2026-11-20)
 
@@ -385,6 +386,72 @@ platforms, culturally guarded, deterministic, and captured on video.
 
 — GLM-SELF, 2026-11-21
 
+## G3 Evidence (2026-11-21)
+
+Phase work (branch `mattang/phase/P3-content`, commits through
+`58d1566`): MT-P3.1 content — `charts.json` grown to 4 charts
+(`two_swells_basic`, `lagoon_mirror` with the A.3 rim-atoll rows,
+`crossroads`, `single_swell`), `puzzles.json` at 30 verified-unique
+mined puzzles (miner + verifier in `Tools/mine-puzzles/`, the content
+loader validates every puzzle against the rules), `voyages.json` at 6
+voyages wired to the MT-P5.1 spec with the available opponent tiers;
+MT-P3.2 — `tutorial.json` 5 lessons with the scripted one-island/
+one-swell opener, `TutorialView` renders the lessons step by step
+(Next/Done control, "Lesson N of 5" progress), `-scenario tutorial`
+opens lesson 1 directly, About the Tradition (SRC3.1) drafted from
+`docs/SOURCING.md` with per-claim source keys and the advisor-written
+introduction as a placeholder; MT-P3.3 — pass-and-play
+(`-passAndPlay`, either side drives `localSide`, "West/East to move")
+and casual undo (reducer-backed `undoStack`, RNG state included so an
+undone replay streams identically, INV-1).
+
+### GATE G3 checks — real output
+
+1. **Counts met.** From the content tables (python json counts):
+   charts 4, puzzles 30, voyages 6, tutorial lessons 5. Unique/solvable
+   puzzle verification: `Tools/mine-puzzles` verifier output at mining
+   time, re-checked by `testPuzzlesAreUniqueAndSolvable` in MTContent's
+   loader tests (all 30 load through `ContentLoader.puzzleState`
+   without error and their ids are unique).
+2. **Lint clean.** `make lint` — swiftlint --quiet (no output),
+   swift-format lint --recursive --strict (no output), content-lint:
+   `content-lint: OK (14 manifest entries, 13 glossary terms, 4 charts)`
+   with the three `--expect-fail` fixtures failing as expected, and the
+   G3 sharpened rule (no Marshallese surface forms in release strings —
+   game text references glossary keys only) passing on the real tables.
+3. **Tutorial UI test passes.** `testTutorialLessonOnePlays`:
+   `Test Case '-[MattangUITests_iOS.MattangUITests testTutorialLessonOnePlays]'
+   passed (9.974 seconds)` / `** TEST SUCCEEDED **` — lesson 1 opens on
+   iPad (`-scenario tutorial`), title "One swell", step text and the
+   Next control render, three advances (Next, Next, Done) reach
+   "Lesson 2 of 5". The scripted core half replays legally in
+   `testLessonScriptsReplayLegally` (MTContent 25/25).
+
+Full-suite `make test` at the gate: **110 unit tests, 0 failures** plus
+packages (MTMeta 13, MTPlatform 13, MTRender 7+1 skip) and the UI test
+suite green; `make lint` exit 0. ADR-0016 (the G2 sharpened-check
+addendum) and ADR-0017 (`lagoon_mirror` symmetry) are in
+`docs/DECISIONS.md`.
+
+### G3 look-check
+
+Simulator screenshots of the menu and the `-scenario tutorial` lesson-1
+screen (vision-checked): menu is the correct three-button layout,
+lesson card is legible, no overlapping or clipped elements. Notes
+recorded as SLICE_ASSESSMENT item 11: the tutorial shows no board (the
+chart the lesson references renders nowhere) — deferred to the P6
+render pass, which owns board-in-tutorial composition; the quarter-arc
+in the bottom-right corner of every screenshot is a simulator/system
+layer artifact, not app code.
+
+### Sign-off
+
+GATE G3 PASSES. Counts, lint (including the sharpened rule), and the
+tutorial UI test all have real output above. Next: P4 AI Opponents
+(MT-P4.1 tiers, MT-P4.2 miner, `docs/BALANCE.md`).
+
+— GLM-SELF, 2026-11-21
+
 ## Open Maintainer Items
 
 - Issue #12 `mattang: cultural advisor review of Marshallese content (G0 request)` — advisor review is a release gate (G10), not a build gate; manifest entries stay `pending` until answered.
@@ -397,6 +464,8 @@ platforms, culturally guarded, deterministic, and captured on video.
 
 ## Log
 
+- 2026-11-21 — P3 executed on `mattang/phase/P3-content` across 14 commits: content to G3 counts (4 charts incl. `lagoon_mirror`/`crossroads`/`single_swell`, 30 mined verified puzzles, 6 voyages, 5 lessons), TutorialView + `-scenario tutorial`, About the Tradition with claim keys, pass-and-play + casual undo, the G3 sharpened content-lint rule (release strings carry no Marshallese surface forms), ADR-0016/0017, and the SLICE_ASSESSMENT look-check addendum (item 11: text-only tutorial → P6). The tutorial UI test took four iterations to green: identifier queries on staticTexts did not resolve (labels do — same as the About test's working pattern), and lesson 1's last control is "Done", so the test now steps Next/Next/Done and asserts "Lesson 2 of 5".
+- 2026-11-21 — **G3 signed off (GLM-SELF).** Counts met (4/30/6/5), `make test` 110 unit + packages + UI green, `make lint` exit 0 including the sharpened rule, `testTutorialLessonOnePlays` passed (9.974 s). Tag `mattang/gate-G3-pass` after CI green on the merge commit. Next: P4 AI (MT-P4.1 tiers, MT-P4.2 miner, BALANCE.md).
 - 2026-11-20 — P0 started on `mattang/phase/P0-setup`. Scaffold, packages, tests written; two real bugs found and fixed by tests (Fixed multiply/divide sign handling; see DECISIONS ADR-0004 rationale); 38/38 green.
 - 2026-11-20 — S0.4 verified on iPad sim (screenshot) + macOS (CGWindowList); UI-test fix (`starts(withText:)` → NSPredicate); lint suite clean; `make test` green on iOS (2 UI tests) and macOS unit (7 tests). Mac UI tests SUBSTITUTED (automation-mode timeout, issue #8 precedent). Advisor issue #12 filed. **G0 signed off.**
 - 2026-11-21 — P1 on `mattang/phase/P1-rules-engine`: MTCore rules engine built — swell tracer (rays, refraction, reflection, nodes), island placement, launch, sail (path legality incl. inter-island gaps), becalm/tow, victory, Zobrist hashing, sim tool (`Tools/sim`). 109 MTCore tests (rules, invariants INV-1..8, golden replays, tracer fixtures, reflection table, oracle-vs-tracer). 64 force-unwrap lint warnings fixed to Rosette's no-force-unwrap precedent (preconditioned `canoe(_:)` accessor, `preconditionFailure` guards); `make lint` clean. G1 evidence chain (swift test, sim 5000 ×2 determinism, perf, coverage) running.

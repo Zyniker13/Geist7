@@ -39,6 +39,77 @@ final class MattangUITests: XCTestCase {
         XCTAssertTrue(hashLine.exists, "debug overlay shows a state hash")
     }
 
+    // MARK: MT-P3.2 / ADR-0016 — the tutorial lesson-1 scripted test
+
+    /// The tutorial opens on lesson 1 under `-scenario tutorial`; the
+    /// lesson title, step text, and Next control render, and stepping
+    /// through lesson 1 reaches its complete step. The scripted core
+    /// side (the lesson steps replay legally through the reducer) is
+    /// pinned by `testLessonScriptsReplayLegally` in MTContent; this
+    /// test pins the rendered half (ADR-0016's G2 sharpened-check
+    /// addendum).
+    func testTutorialLessonOnePlays() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-scenario", "tutorial"]
+        app.launch()
+
+        let title = app.staticTexts["One swell"]
+        XCTAssertTrue(title.waitForExistence(timeout: 10), "lesson 1 opens")
+        XCTAssertTrue(
+            app.staticTexts.matching(
+                NSPredicate(format: "label BEGINSWITH 'This chart carries one swell'")
+            ).firstMatch.exists,
+            "step text renders")
+        let advance = app.buttons.matching(
+            NSPredicate(format: "label IN {'Next', 'Done'}")
+        ).firstMatch
+        XCTAssertTrue(advance.waitForExistence(timeout: 5), "Next control renders")
+
+        // Step through lesson 1's three steps (highlight, highlight,
+        // complete): the third click (Done) closes the lesson and
+        // advances to lesson 2.
+        advance.tap()
+        _ = advance.waitForExistence(timeout: 5)
+        advance.tap()
+        _ = advance.waitForExistence(timeout: 5)
+        advance.tap()
+        let progress = app.staticTexts["Lesson 2 of 5"]
+        XCTAssertTrue(progress.waitForExistence(timeout: 5), "lesson 2 follows")
+    }
+
+    // MARK: SRC3.1 — About the Tradition (MT-P3.2)
+
+    /// The menu opens the About screen; all four claim keys render with
+    /// their sourced text, plus the no-teaching-navigation statement
+    /// and the advisor-review placeholder.
+    func testAboutOpensAndShowsClaims() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let aboutButton = app.buttons["About the Tradition"]
+        XCTAssertTrue(aboutButton.waitForExistence(timeout: 10), "menu shows About")
+        aboutButton.tap()
+
+        let screen = app.otherElements["aboutScreen"].firstMatch
+        let exists = screen.waitForExistence(timeout: 5)
+        XCTAssertTrue(
+            exists || app.staticTexts["About the Tradition"].waitForExistence(timeout: 5),
+            "About screen opens")
+        XCTAssertTrue(app.staticTexts["C-1"].exists, "claim C-1 renders")
+        XCTAssertTrue(app.staticTexts["C-2"].exists, "claim C-2 renders")
+        XCTAssertTrue(app.staticTexts["C-3"].exists, "claim C-3 renders")
+        XCTAssertTrue(app.staticTexts["C-4"].exists, "claim C-4 renders")
+        XCTAssertTrue(
+            app.staticTexts[
+                "[Advisor-written introduction to the tradition — pending cultural review.]"
+            ]
+            .exists,
+            "advisor placeholder renders")
+        app.buttons["Back"].tap()
+        XCTAssertTrue(
+            app.buttons["Play"].waitForExistence(timeout: 5), "back returns to the menu")
+    }
+
     // MARK: SRC2.1 — the pending-advisor corner mark
 
     /// The match screen shows the "Pending advisor review" corner mark

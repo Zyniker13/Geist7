@@ -59,10 +59,11 @@ fi
 
 ERRORS=0
 
-python3 - "$DIR" <<'PYEOF' || ERRORS=$((ERRORS + 1))
+python3 - "$DIR" "$ROOT" <<'PYEOF' || ERRORS=$((ERRORS + 1))
 import json, os, re, sys
 
 content_dir = sys.argv[1]
+root_dir = sys.argv[2] if len(sys.argv) > 2 else "."
 errors = []
 
 def load(name):
@@ -293,6 +294,94 @@ for doc_name, doc in (
 # Cross-reference: charts reference known swells (when both are populated).
 if chart_ids and swell_ids:
     pass  # chart swell references are checked at P2 when the schema lands
+
+# ----------------------------------------------------------------------
+# G3 sharpened check (A.7): no Marshallese term appears in any RELEASE
+# string table — game-facing text may reference glossary KEYS only.
+# The Marshallese surface forms come from the glossary table's `term`
+# field (plus the attested chart-type list from docs/SOURCING.md §4).
+# Game-facing string fields (text fields, names, labels) in the content
+# tables AND the app's Swift string tables (App/Shared/AboutText.swift)
+# are scanned for any of these forms; the glossary's own term/gloss
+# fields and documentary fields are exempt.
+CHART_TYPE_TERMS = {"mattang", "meddo", "rebbelib", "wapepe"}
+MARSHALLESE_FORMS = []
+if glossary_rows is not None:
+    for row in glossary_rows:
+        term = row.get("term")
+        if isinstance(term, str) and term:
+            base = term.lower().split()[0]
+            if len(base) >= 3 and base not in CHART_TYPE_TERMS:
+                MARSHALLESE_FORMS.append((term.lower(), "glossary term"))
+APP_STRINGS = os.path.join(root_dir, "App", "Shared", "AboutText.swift")
+swift_string_fields = []
+if os.path.exists(APP_STRINGS):
+    with open(APP_STRINGS) as f:
+        for line in f:
+            m = re.match(r'\s*static let (\w+)\s*=', line)
+            if m:
+                swift_string_fields.append(m.group(1))
+    swift_text = open(APP_STRINGS).read()
+    # Extract every string literal with its enclosing constant.
+    for const in swift_string_fields:
+        block = re.search(
+            rf"static let {const}\s*=\s*([^\n]+)", swift_text)
+        literal = block.group(1) if block else ""
+        lowered = literal.lower()
+        for form, why in MARSHALLESE_FORMS:
+            if re.search(rf"\b{re.escape(form)}\b", lowered):
+                errors.append(
+                    f"AboutText.swift ({const}): Marshallese term "
+                    f"{form!r} ({why}) in a release string — use the "
+                    f"glossary key or neutral name"
+                )
+        # Chart-type terms may appear only in the chartTypes constant
+        # (SRC §4 context-only allowance) and as the game's working
+        # title in noTeachingNavigation (SRC §7 sanctions the title).
+        if const not in ("chartTypes", "noTeachingNavigation"):
+            for form in CHART_TYPE_TERMS:
+                if re.search(rf"\b{form}\b", lowered):
+                    errors.append(
+                        f"AboutText.swift ({const}): chart-type term "
+                        f"{form!r} outside the chartTypes context"
+                    )
+
+# Tutorial lesson text and swell/table name fields are game-facing:
+# scan every non-documentary string in every table for Marshallese forms
+# (the deny-list scan above already covers titles/framing; this one is
+# the term-level check).
+GAME_FACING_TEXT_FIELDS = {"text", "name", "label", "title", "subtitle"}
+
+def scan_marshallese(name, doc):
+    if doc is None:
+        return
+    def visit(node, path):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                visit(value, f"{path}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                visit(value, f"{path}[{index}]")
+        elif isinstance(node, str):
+            leaf = leaf_field(path)
+            if leaf in GAME_FACING_TEXT_FIELDS:
+                lowered = node.lower()
+                for form, why in MARSHALLESE_FORMS:
+                    if re.search(rf"\b{re.escape(form)}\b", lowered):
+                        errors.append(
+                            f"{name}{path}: Marshallese term {form!r} "
+                            f"({why}) in a game-facing text field"
+                        )
+    visit(doc, "")
+
+for doc_name, doc in (
+    ("charts.json", charts_doc),
+    ("swells.json", swells_doc),
+    ("puzzles.json", puzzles_doc),
+    ("voyages.json", voyages_doc),
+    ("tutorial.json", tutorial_doc),
+):
+    scan_marshallese(doc_name, doc)
 
 if errors:
     for e in errors:

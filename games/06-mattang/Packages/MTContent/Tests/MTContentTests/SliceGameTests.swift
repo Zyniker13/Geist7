@@ -90,11 +90,18 @@ final class SliceGameTests: XCTestCase {
 
     // MARK: - Error paths (buildChart from decoded rows)
 
-    /// Decoding the bundle's swell table yields the four slice rows,
-    /// each marked pending-advisor so the loader maps it to no name.
+    /// Decoding the bundle's swell table yields all five swell rows in
+    /// authored order, each marked pending-advisor so the loader maps
+    /// it to no name. `west_only` belongs to the `single_swell` chart
+    /// (G3 set); the first four serve the slice chart.
     func testSwellTableDecodesPendingAdvisorNames() throws {
         let defs = try SliceGameTests.swellDefs()
-        XCTAssertEqual(defs.map(\.id), ["east_dom", "north_dom", "west_min", "south_min"])
+        XCTAssertEqual(
+            defs.map(\.id),
+            [
+                "east_dom", "north_dom", "west_min", "south_min", "west_only",
+                "lm_dom_a", "lm_dom_b", "lm_min_c", "lm_min_d",
+            ])
         XCTAssertTrue(defs.allSatisfy { $0.name == nil }, "all names are pending_advisor")
     }
 

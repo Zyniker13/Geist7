@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "game": "06-mattang",
+  "lessons": [
+    {
+      "id": "lsn_fixture_term",
+      "title": "Reading the Sea",
+      "steps": [
+        {
+          "kind": "highlight_nodes",
+          "text": "The booj ahead marks where swells cross."
+        }
+      ]
+    }
+  ]
+}

@@ -38,11 +38,65 @@ public struct Chart: Hashable, Codable, Sendable {
         self.preIslands = preIslands
         self.atolls = atolls
         self.symmetry = symmetry
+        self._atollCellsMemo = MemoBox()
+        self._swellEdgesMemo = MemoBox()
     }
 
     public var ocean: Ocean { Ocean(radius: radius) }
 
-    public var atollCells: Set<Hex> { Set(atolls.flatMap(\.cells)) }
+    /// The union of both home atolls' cells. `Chart` is a value with
+    /// immutable content, so the set is computed once per copy via a
+    /// local memo box — every engine loop (movement, placement,
+    /// distance, search) reads this per node, and rebuilding a set of
+    /// six cells per read dominated the P4 profile.
+    public var atollCells: Set<Hex> {
+        if let cached = _atollCellsMemo?.value { return cached }
+        let built = Set(atolls.flatMap { $0.cells })
+        _atollCellsMemo?.value = built
+        return built
+    }
+
+    /// The entry arcs of every swell, memoized like `atollCells`: the
+    /// tracer reads one arc per swell per retrace, and each arc is a
+    /// full O(R²) scan of the ocean — the dominant cost inside search
+    /// leaf placement updates (FieldUpdate → Tracer.trace).
+    public var swellEntryEdges: [String: [Hex]] {
+        if let cached = _swellEdgesMemo?.value { return cached }
+        var built: [String: [Hex]] = [:]
+        for swell in swells { built[swell.id] = ocean.edge(swell.entrySide) }
+        _swellEdgesMemo?.value = built
+        return built
+    }
+
+    // Boxed memo: `Chart` stays a Sendable value; the box holds one
+    // optional set per copy. A data race can only waste a rebuild.
+    // Hash/Eq/ Codable ignore it (it is a cache of a pure function of
+    // the stored fields, declared AFTER the stored fields so the
+    // synthesized Hashable conformance skips it).
+    private var _atollCellsMemo: MemoBox<Set<Hex>>? = nil
+    private var _swellEdgesMemo: MemoBox<[String: [Hex]]>? = nil
+
+    public static func == (lhs: Chart, rhs: Chart) -> Bool {
+        lhs.id == rhs.id && lhs.radius == rhs.radius
+            && lhs.swells == rhs.swells && lhs.preIslands == rhs.preIslands
+            && lhs.atolls.count == rhs.atolls.count
+            && zip(lhs.atolls, rhs.atolls).allSatisfy { a, b in
+                a.player == b.player && a.cells == b.cells
+            }
+            && lhs.symmetry == rhs.symmetry
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(radius)
+        hasher.combine(swells)
+        hasher.combine(preIslands)
+        for atoll in atolls.sorted(by: { $0.player.rawValue < $1.player.rawValue }) {
+            hasher.combine(atoll.player)
+            hasher.combine(atoll.cells)
+        }
+        hasher.combine(symmetry)
+    }
 
     /// The home atoll of a player; charts always carry exactly one each.
     public func atoll(for player: PlayerID) -> Atoll {

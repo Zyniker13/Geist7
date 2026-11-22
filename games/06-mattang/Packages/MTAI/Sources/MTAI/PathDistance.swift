@@ -25,7 +25,9 @@ public enum PathDistance {
         for target in targets { best[target] = 0 }
         // 0–1 BFS from the targets over reversed edges; edge costs are
         // symmetric (node-to-node), so the reversed pass matches the
-        // forward one.
+        // forward one. Neighbor offsets are unrolled to a fixed tuple
+        // loop — the BFS runs once per leaf evaluation ×2 sides, and
+        // the array-built `neighbors()` was the map's hot path.
         var deque: [(cell: Hex, cost: Int)] = targets.map { ($0, 0) }
         var head = 0
 
@@ -36,7 +38,8 @@ public enum PathDistance {
             let cost = entry.cost
             if let seen = best[cell], seen < cost { continue }
 
-            for next in cell.neighbors() {
+            for d in 0..<6 {
+                let next = cell + Hex.directionVectors[d]
                 guard ocean.contains(next), !state.islands.contains(next) else { continue }
                 if state.chart.atollCells.contains(next), !targets.contains(next) { continue }
                 guard

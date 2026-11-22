@@ -105,9 +105,19 @@ public struct GameState: Hashable, Sendable {
 
     /// Cells where an island may be considered for placement, in
     /// row-major order: empty sea cells (R-7 filters further).
+    ///
+    /// Canoe occupancy is a dictionary probe, not an 8-way linear
+    /// scan per cell — this runs inside every AI node and quiescence
+    /// probe over ~170 cells.
     public func placeableCandidates() -> [Hex] {
-        chart.ocean.allCells.filter {
-            !$0.islandCell(in: self) && !chart.atollCells.contains($0) && canoe(at: $0) == nil
+        var occupied: Set<Hex> = []
+        occupied.reserveCapacity(canoes.count)
+        for (_, canoe) in canoes {
+            if case .sea(let at) = canoe.location { occupied.insert(at) }
+        }
+        return chart.ocean.allCells.filter {
+            !$0.islandCell(in: self) && !chart.atollCells.contains($0)
+                && !occupied.contains($0)
         }
     }
 

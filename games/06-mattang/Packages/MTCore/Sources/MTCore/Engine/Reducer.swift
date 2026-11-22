@@ -136,7 +136,8 @@ public enum Reducer {
                 previous: state.field, ocean: state.chart.ocean,
                 swells: state.chart.swells,
                 islands: next.islands, atollCells: state.chart.atollCells,
-                placed: cell)
+                placed: cell,
+                entryEdges: state.chart.swellEntryEdges)
             events.append(.islandPlaced(cell))
             next.stuckTurns = 0
 
@@ -202,13 +203,23 @@ public enum Reducer {
 
         // R-23 (ADR-0013): the position after the action is recorded;
         // its third occurrence ends the game by the R-11 tie-break.
-        if !next.status.isOver {
-            let key = Zobrist.positionKey(of: next)
-            let count = (next.visited[key] ?? 0) + 1
-            next.visited[key] = count
-            if count >= Balance.repetitionLimit {
-                next.status = .tiebreak(Victory.tiebreakWinner(next))
-                events.append(.gameEnded(next.status))
+        // Search calls with a throwaway visited map skip this hashing
+        // (Search.Options.noRepeatHash): R-23's count for a future
+        // branch is only defined on the real path, and the AI sees a
+        // third repetition as terminal by score, not by rule.
+        if !state.visited.isEmpty {
+            // Search leaves visited empty: skip R-23 bookkeeping
+            // entirely there — the hash of every interior node is
+            // pure cost, and a third repetition seen from a throwaway
+            // branch is not a rule event on the real game path.
+            if !next.status.isOver {
+                let key = Zobrist.positionKey(of: next)
+                let count = (next.visited[key] ?? 0) + 1
+                next.visited[key] = count
+                if count >= Balance.repetitionLimit {
+                    next.status = .tiebreak(Victory.tiebreakWinner(next))
+                    events.append(.gameEnded(next.status))
+                }
             }
         }
 

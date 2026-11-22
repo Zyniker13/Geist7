@@ -15,7 +15,8 @@ public enum FieldUpdate {
         swells: [Swell],
         islands: Set<Hex>,
         atollCells: Set<Hex>,
-        placed cell: Hex
+        placed cell: Hex,
+        entryEdges: [String: [Hex]]? = nil
     ) -> Field {
         // The obstacle set always includes the new island, whether the
         // caller passed the pre- or post-placement island set.
@@ -27,13 +28,20 @@ public enum FieldUpdate {
         // covers: the island can end a ray one step early, reflect a
         // ray that was about to step into the island's cell, or
         // refract a ray passing one step away.
+        //
+        // Both probes use the chart's memoized entry arcs
+        // (entryEdges) when supplied — per-swell `edge(_:)` scans and
+        // per-ray cell membership checks are the hot path of the AI's
+        // per-placement work, and the memo costs one dictionary lookup.
         var touching = Set<Int>()
         for (index, swell) in swells.enumerated() {
-            if ocean.edge(swell.entrySide).contains(cell) {
+            if entryEdges?[swell.id]?.contains(cell)
+                ?? ocean.edge(swell.entrySide).contains(cell)
+            {
                 touching.insert(index)
             }
         }
-        let nearCells = [cell] + cell.neighbors()
+        let nearCells = Set([cell] + cell.neighbors())
         for (index, swell) in swells.enumerated() where !touching.contains(index) {
             for ray in previous.rays where ray.swell == swell.id {
                 if ray.cells.contains(where: { nearCells.contains($0) }) {
@@ -44,7 +52,9 @@ public enum FieldUpdate {
         }
 
         // Re-trace the touching swells; copy the untouched swells'
-        // rays verbatim.
+        // rays verbatim. The entry arcs come from the chart's memo
+        // when the caller supplies them (the search path), else from
+        // the ocean scan (the full-trace path).
         var traced: [(index: Int, rays: [RayPath])] = []
         var untouched: [(index: Int, rays: [RayPath])] = []
         for (index, swell) in swells.enumerated() {
@@ -53,7 +63,8 @@ public enum FieldUpdate {
                     (
                         index,
                         Tracer.trace(
-                            ocean: ocean, swells: [swell], obstacles: obstacles)
+                            ocean: ocean, swells: [swell], obstacles: obstacles,
+                            entryEdges: entryEdges)
                     ))
             } else {
                 untouched.append((index, previous.rays.filter { $0.swell == swell.id }))

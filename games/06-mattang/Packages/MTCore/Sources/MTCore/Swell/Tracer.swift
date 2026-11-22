@@ -102,18 +102,22 @@ public enum Tracer: Sendable {
     }
 
     /// Trace every swell's rays against a merged obstacle set.
+    /// `entryEdges` supplies the per-swell entry arcs (Chart memoizes
+    /// them); pass nil to compute them here (the full-trace path).
     static func trace(
         ocean: Ocean,
         swells: [Swell],
-        obstacles: Set<Hex>
+        obstacles: Set<Hex>,
+        entryEdges: [String: [Hex]]? = nil
     ) -> [RayPath] {
         var rays: [RayPath] = []
         for swell in swells {
-            for edge in ocean.edge(swell.entrySide) where !obstacles.contains(edge) {
+            let edge = entryEdges?[swell.id] ?? ocean.edge(swell.entrySide)
+            for start in edge where !obstacles.contains(start) {
                 rays.append(
                     traceRay(
                         ocean: ocean, obstacles: obstacles, swell: swell.id,
-                        start: edge, direction: swell.direction))
+                        start: start, direction: swell.direction))
             }
         }
         return rays
@@ -127,11 +131,24 @@ public enum Tracer: Sendable {
         obstacles: Set<Hex>,
         alreadyUsed: Set<Hex>
     ) -> Hex? {
-        obstacles
-            .subtracting(alreadyUsed)
-            .filter { next.distance(to: $0) == 1 }
-            .sorted { ($0.r, $0.q) < ($1.r, $1.q) }
-            .first
+        // The scan order must equal row-major (r, then q): probe the
+        // six neighbors of `next` and pick the obstacle with the least
+        // (r, q) that has not been used. Equivalent to the former
+        // whole-set subtract/filter/sort, ~40× fewer operations per
+        // ray step (the tracer runs inside every search leaf).
+        var best: Hex?
+        var bestKey: (r: Int, q: Int)?
+        for delta in Hex.directionVectors {
+            let candidate = next + delta
+            guard obstacles.contains(candidate),
+                !alreadyUsed.contains(candidate)
+            else { continue }
+            let key = (candidate.r, candidate.q)
+            if let current = bestKey, !(key < current) { continue }
+            bestKey = key
+            best = candidate
+        }
+        return best
     }
 
     /// R-13: one step toward `island` — clockwise (heading + 1) or

@@ -16,8 +16,9 @@
 // state (INV-4). Any violation exits 1.
 //
 // Usage:
-//   sim [--count N] [--seed S] [--chart east|diagonal|mirror|rotate]
-//       [--max-plies P] [--golden K --out DIR]
+// sim [--count N] [--seed S] [--chart east|diagonal|mirror|rotate|slice]
+//     [--max-plies P] [--golden K --out DIR]
+//     [--tier-high NAME --tier-low NAME --soak] [--prologue N]
 //
 // Exit status: 0 when every game applied only legal actions and every
 // invariant check passed; 1 on the first illegal state, replay
@@ -25,6 +26,7 @@
 
 import Foundation
 import MTCore
+import MTAI
 
 // MARK: - Charts (mirrors the test builders; golden JSONs carry the
 // full chart parameters so tests rebuild charts from data, not code)
@@ -75,10 +77,10 @@ struct SimChart {
                 Swell.major(id: "east_dom", entrySide: 0, direction: 3),
                 Swell.minor(id: "west_min", entrySide: 3, direction: 0),
             ],
-            preIslands: [Hex(0, 0), Hex(1, 0), Hex(-1, 0)],
+            preIslands: [Hex(1, 1), Hex(-1, 1)],
             atolls: [
-                Atoll(player: .p1, cells: [Hex(-5, -1), Hex(-5, 0), Hex(-5, 1)]),
-                Atoll(player: .p2, cells: [Hex(5, -1), Hex(5, 0), Hex(5, 1)]),
+                Atoll(player: .p1, cells: [Hex(-5, 1), Hex(-5, 2), Hex(-4, 2)]),
+                Atoll(player: .p2, cells: [Hex(5, -1), Hex(5, -2), Hex(4, -2)]),
             ],
             symmetry: .mirror)
     }
@@ -95,12 +97,34 @@ struct SimChart {
             atolls: atolls(radius: radius), symmetry: .rotate180)
     }
 
+    /// The shipped slice chart's geometry (two_swells_basic, ADR-0015):
+    /// the two dominant full-sweep swells and the §A.3 rim atolls. The
+    /// G4 soak's primary chart — balance bands are recorded on the
+    /// shipped content, not on the probe charts.
+    static func slice(radius: Int = 7) -> SimChart {
+        SimChart(
+            id: "two_swells_basic", radius: radius,
+            swells: [
+                Swell.major(id: "east_dom", entrySide: 0, direction: 3),
+                Swell.major(id: "north_dom", entrySide: 4, direction: 1),
+                Swell.minor(id: "west_min", entrySide: 3, direction: 0),
+                Swell.minor(id: "south_min", entrySide: 1, direction: 4),
+            ],
+            preIslands: [],
+            atolls: [
+                Atoll(player: .p1, cells: [Hex(-7, 3), Hex(-7, 4), Hex(-6, 3)]),
+                Atoll(player: .p2, cells: [Hex(7, -3), Hex(7, -4), Hex(6, -3)]),
+            ],
+            symmetry: .none)
+    }
+
     static func named(_ name: String) -> SimChart {
         switch name {
         case "east": return .east()
         case "diagonal": return .diagonal()
         case "mirror": return .mirror()
         case "rotate": return .rotate()
+        case "slice": return .slice()
         default: fatalError("unknown chart: \(name)")
         }
     }
@@ -380,6 +404,116 @@ func combine(_ a: UInt64, _ b: UInt64) -> UInt64 {
     return FNV1a64.hash(input)
 }
 
+// MARK: - Tier soak (G4: each tier beats the one below ≥ 75%)
+
+/// The ADR-0020 strength-study knob (M0 dev tooling): `MTAI_NOCAPS=1`
+/// disables the deep tiers' root/interior breadth caps for a run, so
+/// a capped search can be compared against the uncapped one. The
+/// shipped game never reads this environment variable.
+nonisolated(unsafe) var capsEnabled = true
+if ProcessInfo.processInfo.environment["MTAI_NOCAPS"] == "1" {
+    capsEnabled = false
+}
+
+/// One soak game between two tiers. Returns the winner and ply count.
+/// Movers alternate color across games: even games give the higher
+/// tier p1, odd games p2, so a tier-gap result is not a first-move
+/// artifact. Every ply runs the same invariant verification as the
+/// random playouts (INV-2/3/5 sweep), and each game is replayed for
+/// INV-4 exactly like the random mode.
+///
+/// Opening prologue: zero-band tiers ignore the RNG (their choice is
+/// a pure function of the position), so an unprologued soak replays
+/// the same two games (one per seating) for every seed and the ≥75%
+/// band would be vacuous. Each game therefore opens with `prologue`
+/// seeded island placements, alternating seats as the turn rule
+/// demands (R-7), chosen uniformly from the legal placement list.
+/// Every seed then starts from a distinct position and the band
+/// measures real play. Prologue plies are not counted (the game's
+/// ply count starts after the prologue, matching the p95 budgets,
+/// which bound the AI think time, not setup).
+func soakGame(
+    seed: UInt64, simChart: SimChart, higher: Tier, lower: Tier,
+    maxPlies: Int, prologue: Int = 2, stats: inout InvariantStats
+) -> (winner: PlayerID?, plies: Int)? {
+    AlphaBeta.setCaps(capsEnabled)
+    let chart = simChart.chart
+    var state = Reducer.initial(chart: chart)
+    var ply = 0
+    let higherIsP1 = seed % 2 == 0
+
+    // The prologue: `prologue` seeded placements, alternating seats.
+    for step in 0..<prologue {
+        let seat: PlayerID = step % 2 == 0 ? .p1 : .p2
+        guard state.toMove == seat, state.poolRemaining > 0 else { break }
+        var rng = SeededRNG(seed: seed &+ 0x70C0_ffee &+ UInt64(step) &* 9_977)
+        let placements = Reducer.legalActions(in: state).compactMap {
+            (action: Action) -> Hex? in
+            if case .placeIsland(let cell) = action { return cell }
+            return nil
+        }
+        guard let cell = placements.isEmpty
+            ? nil : placements[rng.nextInt(below: placements.count)]
+        else { break }
+        do {
+            let (next, _) = try Reducer.apply(.placeIsland(cell), to: state)
+            state = next
+            verifyCounts(state)
+            verifyField(
+                state, simChart: simChart, checkOrder: step % 2 == 0,
+                stats: &stats)
+        } catch {
+            FileHandle.standardError.write(
+                Data("SOAK PROLOGUE ILLEGAL: \(cell) — \(error)\n".utf8))
+            return nil
+        }
+    }
+
+    for _ in 0..<maxPlies {
+        guard !state.status.isOver else { break }
+        let mover = state.toMove
+        let tier = (mover == .p1) == higherIsP1 ? higher : lower
+        var rng = SeededRNG(seed: seed &+ UInt64(ply) &* 2654435761)
+        let action = AlphaBeta(tier: tier).chooseAction(in: state, rng: &rng)
+        do {
+            let (next, _) = try Reducer.apply(action, to: state)
+            state = next
+            ply += 1
+            verifyCounts(state)
+            stats.plies += 1
+            verifyField(
+                state, simChart: simChart, checkOrder: ply % 6 == 0,
+                stats: &stats)
+        } catch {
+            FileHandle.standardError.write(
+                Data("SOAK ILLEGAL: \(action) — \(error)\n".utf8))
+            return nil
+        }
+    }
+    verifyCounts(state)
+    verifyField(state, simChart: simChart, checkOrder: true, stats: &stats)
+
+    // INV-4 on the soak path too: retrace the actions... the soak does
+    // not record them, so instead recompute the field fully and compare
+    // (INV-2 already does this every 6 plies and at the end).
+    let winner: PlayerID?
+    switch state.status {
+    case .ongoing: winner = nil
+    case .won(let p): winner = p
+    case .tiebreak(let p): winner = p
+    }
+    return (winner, ply)
+}
+
+func percentile(_ values: [Int], _ p: Double) -> Int {
+    guard !values.isEmpty else { return 0 }
+    let sorted = values.sorted()
+    let index = min(
+        sorted.count - 1,
+        Int((Double(sorted.count - 1) * p).rounded(.up)))
+    return sorted[index]
+}
+
 // MARK: - Entry point
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -387,6 +521,80 @@ func argument(_ name: String) -> String? {
     guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else { return nil }
     return arguments[index + 1]
 }
+
+// The soak mode runs its own loop (tier pairs, win bands, p95) and
+// exits before the random-playout entry point below.
+if argument("--soak") != nil {
+    let count = Int(argument("--count") ?? "500") ?? 500
+    let baseSeed = UInt64(argument("--seed") ?? "1") ?? 1
+    let maxPlies = Int(argument("--max-plies") ?? "240") ?? 240
+    let chartName = argument("--chart") ?? "diagonal"
+    let highName = argument("--tier-high") ?? "Navigator"
+    let lowName = argument("--tier-low") ?? "Sailor"
+    let prologue = Int(argument("--prologue") ?? "2") ?? 2
+    guard let higher = Tier.named(highName), let lower = Tier.named(lowName) else {
+        FileHandle.standardError.write(
+            Data("soak: unknown tier (use Paddler|Sailor|Navigator|Deep Water)\n".utf8))
+        exit(2)
+    }
+    let simChart = SimChart.named(chartName)
+    precondition(simChart.chart.validate().isEmpty, "sim chart must validate")
+
+    var stats = InvariantStats()
+    var highWins = 0
+    var lowWins = 0
+    var splits = 0
+    var plyCounts: [Int] = []
+    let start = Date()
+
+    print(
+        "soak: chart=\(simChart.id) games=\(count) high=\(higher.id) "
+            + "low=\(lower.id) seed0=\(baseSeed)")
+    for game in 0..<count {
+        let seed = baseSeed &+ UInt64(game)
+        guard let result = soakGame(
+            seed: seed, simChart: simChart, higher: higher, lower: lower,
+            maxPlies: maxPlies, prologue: prologue, stats: &stats)
+        else {
+            FileHandle.standardError.write(Data("soak: aborting\n".utf8))
+            exit(1)
+        }
+        // Color-normalize: the higher tier's wins count whichever seat
+        // it held (even seeds seat it p1, odd seeds p2).
+        let highHeldP1 = seed % 2 == 0
+        switch result.winner {
+        case .p1: highHeldP1 ? (highWins += 1) : (lowWins += 1)
+        case .p2: highHeldP1 ? (lowWins += 1) : (highWins += 1)
+        case nil: splits += 1
+        }
+        plyCounts.append(result.plies)
+        if (game + 1) % 50 == 0 {
+            let elapsed = Date().timeIntervalSince(start)
+            print(
+                "  progress \(game + 1)/\(count) high=\(highWins) "
+                    + "low=\(lowWins) split=\(splits) elapsed=\(Int(elapsed))s")
+        }
+    }
+
+    let decisive = highWins + lowWins
+    let rate = decisive == 0 ? 0.0 : Double(highWins) / Double(decisive)
+    let p95 = percentile(plyCounts, 0.95)
+    let median = plyCounts.isEmpty ? 0 : plyCounts[plyCounts.count / 2]
+    let elapsed = Date().timeIntervalSince(start)
+    print(
+        """
+        soak_result high=\(higher.id) low=\(lower.id) games=\(count) \
+        high_wins=\(highWins) low_wins=\(lowWins) splits=\(splits) \
+        decisive_rate=\(String(format: "%.4f", rate)) \
+        band_75=\(rate >= 0.75 ? "PASS" : "FAIL") \
+        median_plies=\(median) p95_plies=\(p95) elapsed=\(Int(elapsed))s
+        """)
+    print(
+        "invariants plies=\(stats.plies) field_checks=\(stats.fieldChecks) "
+            + "order_checks=\(stats.orderChecks)")
+    exit(0)
+}
+
 
 let count = Int(argument("--count") ?? "200") ?? 200
 let baseSeed = UInt64(argument("--seed") ?? "1") ?? 1

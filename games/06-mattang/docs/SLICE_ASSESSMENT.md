@@ -77,6 +77,15 @@ placeholder names until advisor review.
     field (ADR-0016) must re-verify the budget. → **P8 perf pass**
     (§7 budgets measured from real captures per the perf skill; P6
     re-measures with the wave field).
+11. **The tutorial screen is text-only.** The G3 look-check of the
+    `-scenario tutorial` screen (2026-11-21) shows a legible,
+    non-overlapping lesson card but no board: the chart the lesson
+    text references renders nowhere. A cosmetic quarter-arc at the
+    screen's bottom-right corner also appears on every screen (menu
+    included) and is not in this app's SwiftUI code, so it is a
+    simulator/system-layer artifact. → **P6 render pass** owns the
+    board-in-tutorial composition and the visual sweep; the tutorial's
+    content correctness is already pinned by tests.
 
 ## Not weaknesses (verified in the slice)
 

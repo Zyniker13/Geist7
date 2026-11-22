@@ -16,6 +16,8 @@ enum LaunchArguments {
         var aiDelay: Double?
         /// MT-P3.3: local pass-and-play — both sides are human.
         var passAndPlay = false
+        /// MT-P3.2: open the tutorial (lesson 1) instead of the menu.
+        var tutorial = false
     }
 
     static var current: Parsed {
@@ -39,6 +41,8 @@ enum LaunchArguments {
                 result.autoPilot = true
             case "-passAndPlay":
                 result.passAndPlay = true
+            case "-tutorial":
+                result.tutorial = true
             case "-scenario":
                 result.scenario = nextValue()
             case "-snapshotPly":

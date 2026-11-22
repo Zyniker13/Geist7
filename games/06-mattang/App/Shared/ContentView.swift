@@ -7,10 +7,15 @@ struct ContentView: View {
     @State private var debugVisible = LaunchArguments.current.debugOverlay
     @State private var matchModel: MatchModel?
     @State private var showAbout = false
+    /// MT-P3.2: the tutorial opens from the menu, or directly under
+    /// `-scenario tutorial` for the scripted UI test.
+    @State private var showTutorial = LaunchArguments.current.scenario == "tutorial"
 
     var body: some View {
         if let model = matchModel {
             MatchView(model: model, onExit: exitMatch)
+        } else if showTutorial {
+            TutorialView(lessons: TutorialContent.loadLessons())
         } else {
             menu
         }
@@ -25,11 +30,16 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Button("Play") { startMatch() }
                 .buttonStyle(.borderedProminent)
+            Button("Learn: the tutorial") { showTutorial = true }
+                .buttonStyle(.bordered)
             Button("About the Tradition") { showAbout = true }
                 .buttonStyle(.bordered)
         }
         .sheet(isPresented: $showAbout) {
             AboutView { showAbout = false }
+        }
+        .sheet(isPresented: $showTutorial) {
+            TutorialView(lessons: TutorialContent.loadLessons())
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

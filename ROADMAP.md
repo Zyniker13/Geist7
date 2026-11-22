@@ -52,7 +52,7 @@ Filing never pauses work. The build agent never closes an issue the maintainer o
 
 ## Program Loop
 
-Only one game is in progress at a time. The build agent never stops a game to wait for anything: owner-only steps, failing checks, and questions are handled as in `_CONVENTIONS.md` §1.1 and filed as above.
+At most two games are in progress at a time (maintainer, 2026-11-22): Mattang (`games/06-mattang/`) in the main working copy, and the next game, Dry Garden (`games/04-dry-garden/`), built in its own git worktree (`../Geist7-dry-garden`) on its own `dry-garden/...` branches. Each game keeps its own branches, tags, CI workflow and `docs/STATUS.md`, and touches only its own folder and workflow. When one of the two is Done or Blocked, the next Not Started game in the build order takes its place. The build agent never stops a game to wait for anything: owner-only steps, failing checks, and questions are handled as in `_CONVENTIONS.md` §1.1 and filed as above.
 
 ### Game States
 
@@ -68,9 +68,9 @@ Only one game is in progress at a time. The build agent never stops a game to wa
 At the start of every session and after every gate, `git pull`, check `gh auth status`, and pick the first that applies:
 
 1. **CI is red on `main`:** fix it first.
-2. **A game is in progress** (state P0 to P10): continue it.
+2. **A game is in progress** (state P0 to P10): continue it, and continue the other game in progress alongside it.
 3. **The maintainer has answered or acted on an issue** (a comment, a closed issue, or an answer under a fallback item): apply it to that game (resuming it if it is Blocked), then return here.
-4. **Otherwise, start the next Not Started game** in the build order.
+4. **Fewer than two games are in progress:** start the next Not Started game in the build order, in its own worktree.
 5. **Every game is Done or Blocked:** retry every `FAILED` check across the games once more and apply any new maintainer answers. If games are still Blocked, check their issues again at the next session; otherwise the program is done.
 
 ### At Every Gate

@@ -4,8 +4,8 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** **06 Mattang — P3 complete (G3 signed off 2026-11-21)**; merge `e509f1c` on `main`, tag `mattang/gate-G3-pass` pushed after CI. P3 delivered: charts grown to 4 (`lagoon_mirror`, `crossroads`, `single_swell`), 30 mined verified puzzles, 6 voyages, 5-lesson tutorial with flow (`TutorialView`, `-scenario tutorial`) and its scripted lesson-1 UI test, About the Tradition (SRC3.1) with claim keys, pass-and-play + casual undo (reducer-backed, RNG-preserving), the G3 sharpened content-lint rule (no Marshallese surface forms in release strings), ADR-0016/0017, SLICE_ASSESSMENT item 11 (text-only tutorial → P6). `make test` 110 unit + packages + UI green, `make lint` exit 0.
-- **Next step:** P4 AI Opponents on a new `mattang/phase/P4-ai` branch — MT-P4.1 four tiers (tier gap ≥ 75% over 500 games, p95 latency within budgets), MT-P4.2 puzzle miner to 120 verified-unique puzzles, `docs/BALANCE.md` win-rate bands. Rosette is Complete (P10/G10); maintainer items: #4, #7–#12.
+- **Game in progress:** **06 Mattang — P4 AI Opponents on `mattang/phase/P4-ai`** (P3/G3 signed off 2026-11-21). P4.1 tiers/search/evaluator built; soak evidence in `docs/BALANCE.md`. P4.2 miner regenerated 2026-11-23 in release: the Phase B sort-comparator wedge (difficulty recomputed per comparison) fixed by memoizing before the sort; shipped corpus now 120 verified puzzles (per-chart 40/30/25/25, all ply-1), MTContent 26/26. MTAI release suite 33/33; SailorTests seed-3 self-play passes in release (2.3 s). Remaining P4: G4 tier-vs-tier win rates (≥75 % over 500 games), p95 latency budgets, BALANCE.md win-rate bands.
+- **Next step:** G4 evidence runs on `mattang/phase/P4-ai` (`sim --tier-high/--tier-low --soak` matchups, 500 games per adjacent pair), BALANCE.md bands, then the G4 GATE block. Rosette is Complete (P10/G10); maintainer items: #4, #7–#12. Dry Garden P1 running in its own worktree on `dry-garden/phase/P1-rules-engine`.
 
 ## Environment Check
 

@@ -10,6 +10,61 @@ import XCTest
 @testable import MTCore
 
 final class LoaderTests: XCTestCase {
+    // MARK: - Puzzles (MT-P4.2 wiring: shipped rows ↔ the real engine)
+
+    /// Every shipped puzzle row reconstructs into a state that is
+    /// winnable by the real reducer: some legal action lands a canoe
+    /// (a landing ends the game, so the row is solvable), exactly one
+    /// does (the puzzle's unique first move), and the landing event
+    /// fires with the goal owner's landed count rising. For a
+    /// plies-2 row, after the unique first move EVERY defender reply
+    /// must leave a plies-1 landing available — the same AND/OR
+    /// semantics the miner's verifier uses, re-checked here from the
+    /// shipped file so the row and the engine never drift apart.
+    func testShippedPuzzlesAreWinnableByTheReducer() throws {
+        let defs = try ContentLoader.puzzles()
+        XCTAssertGreaterThanOrEqual(
+            defs.count, 30, "the shipped pool starts at the G3 count and grows")
+        for def in defs {
+            let state = try ContentLoader.puzzleState(def)
+            XCTAssertEqual(state.toMove.rawValue, def.toMove)
+            let landing = legalLandingActions(in: state, owner: state.toMove)
+            XCTAssertEqual(
+                landing.count, 1,
+                "\(def.id): expected exactly one landing action")
+            let (after, events) = try Reducer.apply(try XCTUnwrap(landing.first), to: state)
+            XCTAssertTrue(
+                events.contains { if case .landed = $0 { return true }; return false },
+                "\(def.id): the unique action must land")
+            XCTAssertEqual(
+                after.landed[state.toMove], 1, "\(def.id): landed count must rise")
+            if def.plies >= 2 {
+                let replies = Reducer.legalActions(in: after)
+                XCTAssertFalse(replies.isEmpty, "\(def.id): no defender reply")
+                for reply in replies {
+                    let (afterReply, _) = try Reducer.apply(reply, to: after)
+                    XCTAssertFalse(
+                        legalLandingActions(in: afterReply, owner: state.toMove).isEmpty,
+                        "\(def.id): reply \(reply) escapes the forced line")
+                }
+            }
+        }
+    }
+
+    /// The legal actions whose application lands a canoe for `owner`.
+    private func legalLandingActions(in state: GameState, owner: PlayerID) -> [Action] {
+        Reducer.legalActions(in: state).filter { action in
+            guard let (next, events) = try? Reducer.apply(action, to: state) else {
+                return false
+            }
+            let landed = events.contains { event in
+                if case .landed = event { return true }
+                return false
+            }
+            return landed && next.landed[owner, default: 0] > state.landed[owner, default: 0]
+        }
+    }
+
     // MARK: - Charts (G3 count: 4)
 
     /// All four authored charts load and pass the engine's structural

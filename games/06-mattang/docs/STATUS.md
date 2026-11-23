@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Phase:** P2 complete — G2 signed off 2026-11-21 (evidence below). Next: P3 Content and Systems (MT-P3.1 G3 charts and puzzles, voyages campaign (6), tutorial flow, About (SRC3.1)).
-- **Branch:** `mattang/phase/P2-vertical-slice`. Final-tree runs: MTCore 110/110, MTContent 14/14, MTAI 14/14, MTRender 13/13, iOS UI 6/6 (1 config-skip), macOS unit 10/10, lint clean.
+- **Phase:** P4 AI Opponents in progress on `mattang/phase/P4-ai` — P4.1 tiers/search/evaluator built with BALANCE.md soak evidence recorded; open design-level balance issues listed in BALANCE.md (slice decisiveness, tier gap, per-ply cost) are the remaining P4 work. P4.2 miner restructured 2026-11-22: bounded deterministic plies-2 upgrades (≤8 attempts/chart, cheapest-sweep-first), progress output, resume-safe reruns; wiring test `LoaderTests/testShippedPuzzlesAreWinnableByTheReducer` guards the shipped pool against the real reducer.
+- **Branch:** `mattang/phase/P4-ai`. Final-tree runs: MTCore 110/110, MTContent 14/14, MTAI 14/14, MTRender 13/13, iOS UI 6/6 (1 config-skip), macOS unit 10/10, lint clean.
 - **Blocked on:** nothing.
 
 ## Phase Queue

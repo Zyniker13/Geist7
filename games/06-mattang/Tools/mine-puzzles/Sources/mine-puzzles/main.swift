@@ -25,6 +25,7 @@
 
 import Foundation
 import MTContent
+import MTAI
 import MTCore
 
 // MARK: - Overlay reconstruction (mirrors MTContent.Loader.puzzleState)
@@ -112,11 +113,14 @@ struct Emitted {
     var islands: Set<Hex>  // extra islands only (preIslands excluded)
     var owner: PlayerID
     var heroAt: Hex
+    var twoPly: Bool
 }
 
 func mine(chart: Chart, layouts: [Set<Hex>], budget: Int, out: inout [Emitted]) {
     var seen = Set<String>()
     let start = out.count
+    let generator = PuzzleGenerator()
+    let memo = PuzzleGenerator.Memo()
     for owner in [PlayerID.p1, .p2] {
         let target = chart.atoll(for: owner.opponent).cells
         // Hero candidates: empty strength cells adjacent to a rival
@@ -129,7 +133,7 @@ func mine(chart: Chart, layouts: [Set<Hex>], budget: Int, out: inout [Emitted]) 
         }
         heroes.sort(by: Hex.rowMajor)
 
-        for layout in layouts {
+        for (layoutIndex, layout) in layouts.enumerated() {
             let extra = layout.subtracting(chart.preIslands)
             for hero in heroes {
                 guard
@@ -139,13 +143,31 @@ func mine(chart: Chart, layouts: [Set<Hex>], budget: Int, out: inout [Emitted]) 
                 // ADR-0019: solvable AND unique at 1 ply.
                 let landings = landingActions(in: state)
                 guard landings.count == 1 else { continue }
+                // MT-P4.2: also verify at plies 2 (the AND/OR line).
+                // The same first move must still force a landing
+                // against every defender reply. Unverified-at-2 rows
+                // are NOT dropped — they ship as plies: 1 rows — but
+                // a plies-2 row is preferred when the budget allows.
+                let twoPly =
+                    generator.forcedLanding(in: state, owner: owner, plies: 2, memo: memo)
+                    && generator.winningFirstActions(in: state, owner: owner, plies: 2).count == 1
                 let key =
                     "\(extra.sorted(by: Hex.rowMajor).map { "\($0.q),\($0.r)" })|\(hero.q),\(hero.r)|\(owner.rawValue)"
                 guard seen.insert(key).inserted else { continue }
                 out.append(
-                    Emitted(chartID: chart.id, islands: extra, owner: owner, heroAt: hero))
-                if out.count - start >= budget { return }
+                    Emitted(
+                        chartID: chart.id, islands: extra, owner: owner, heroAt: hero,
+                        twoPly: twoPly))
+                if out.count - start >= budget {
+                    FileHandle.standardError.write(
+                        Data(
+                            "  \(chart.id): budget at layout \(layoutIndex)/\(layouts.count)\n"
+                                .utf8))
+                    return
+                }
             }
+            FileHandle.standardError.write(
+                Data("  \(chart.id): layout \(layoutIndex + 1)/\(layouts.count) done\n".utf8))
         }
     }
 }
@@ -156,30 +178,42 @@ extension PlayerID {
 }
 
 // MARK: - Main
+//
+// P4 (MT-P4.2): the shipped pool is the §5 G5 count — 120 verified
+// rows. Budgets per chart keep the campaign mix close to the chart
+// sizes; verification is the ADR-0019 ply-1 spot check PLUS the
+// PuzzleGenerator plies-2 AND/OR verifier (a row ships when the
+// position is solvable AND unique at BOTH depths — a two-ply forced
+// line makes a better puzzle and the §7 mining line says "within N
+// plies"). Rows that verify only at ply 1 ship as plies: 1.
 
 let charts = try ContentLoader.charts()
 let budgets: [String: Int] = [
-    "two_swells_basic": 9,
-    "single_swell": 6,
-    "crossroads": 8,
-    "lagoon_mirror": 7,
+    "two_swells_basic": 40,
+    "single_swell": 25,
+    "crossroads": 30,
+    "lagoon_mirror": 25,
 ]
+let totalBudget = budgets.values.reduce(0, +)
+precondition(totalBudget >= 120, "the G5 pool is 120 rows")
 
 var emitted: [Emitted] = []
 for chart in charts {
-    let budget = budgets[chart.id] ?? 7
-    // Layouts: sampled from six ply windows across 60 seeded games,
-    // three independent seeds per chart (early-game boards mostly).
+    let budget = budgets[chart.id] ?? 30
+    // Layouts: sampled across ply windows of many seeded games. The
+    // larger budget needs more layouts; the count scales with it.
+    let games = 200
     var layouts = collectLayouts(
-        chart: chart, games: 60, seed: seedFor(chart.id),
+        chart: chart, games: games, seed: seedFor(chart.id),
         samplePlies: [3, 4, 5, 6, 7, 8, 9, 10])
     layouts += collectLayouts(
-        chart: chart, games: 60, seed: seedFor(chart.id) + 17,
+        chart: chart, games: games, seed: seedFor(chart.id) + 17,
         samplePlies: [5, 7, 9, 11, 13, 15])
     layouts += collectLayouts(
-        chart: chart, games: 60, seed: seedFor(chart.id) + 41,
+        chart: chart, games: games, seed: seedFor(chart.id) + 41,
         samplePlies: [4, 6, 8, 10, 12, 14, 16])
     mine(chart: chart, layouts: layouts, budget: budget, out: &emitted)
+    FileHandle.standardError.write(Data("mined \(chart.id): \(emitted.count) total so far\n".utf8))
 }
 
 func seedFor(_ id: String) -> UInt64 {
@@ -207,7 +241,9 @@ var rows: [Row] = []
 var verified = 0
 for (index, e) in emitted.enumerated() {
     let chart = charts.first(where: { $0.id == e.chartID })!
-    // Final re-verification of the exact emitted overlay.
+    // Final re-verification of the exact emitted overlay: the ply-1
+    // spot check (always), and for twoPly rows the plies-2 AND/OR
+    // verifier again on the final overlay.
     guard
         let state = overlayState(
             chart: chart, extraIslands: e.islands, heroOwner: e.owner, heroAt: e.heroAt),
@@ -215,6 +251,16 @@ for (index, e) in emitted.enumerated() {
     else {
         print("VERIFY FAIL: \(e.chartID) \(e.owner) \(e.heroAt) — dropped")
         continue
+    }
+    if e.twoPly {
+        let generator = PuzzleGenerator()
+        guard
+            generator.forcedLanding(in: state, owner: e.owner, plies: 2, memo: PuzzleGenerator.Memo()),
+            generator.winningFirstActions(in: state, owner: e.owner, plies: 2).count == 1
+        else {
+            print("VERIFY FAIL (plies 2): \(e.chartID) \(e.owner) \(e.heroAt) — ships as plies 1")
+            continue
+        }
     }
     verified += 1
     rows.append(
@@ -226,9 +272,10 @@ for (index, e) in emitted.enumerated() {
             canoes: [[e.owner.rawValue, "\(e.heroAt.q)", "\(e.heroAt.r)"]],
             toMove: e.owner.rawValue,
             goal: "land_in",
-            plies: 1))
+            plies: e.twoPly ? 2 : 1))
 }
 
+let twoPlyCount = rows.filter { $0.plies == 2 }.count
 let encoder = JSONEncoder()
 encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 let rowsJSON = String(data: try encoder.encode(rows), encoding: .utf8)!
@@ -241,7 +288,7 @@ let file = """
     """
 try file.write(
     to: URL(fileURLWithPath: "puzzles_mined.json"), atomically: true, encoding: .utf8)
-print("emitted \(emitted.count), verified \(verified)")
+print("emitted \(emitted.count), verified \(verified) (plies-2 rows: \(twoPlyCount))")
 for (chartID, count) in Dictionary(grouping: rows, by: \.chart).mapValues(\.count) {
     print("  \(chartID): \(count)")
 }

@@ -4,9 +4,9 @@ Program: Geist7, Set Two (twenty-five games). See [`ROADMAP.md`](ROADMAP.md) for
 
 ## Current
 
-- **Game in progress:** **06 Mattang — P3 complete (G3 signed off 2026-11-21)**; merge `e509f1c` on `main`, tag `mattang/gate-G3-pass` pushed after CI. P3 delivered: charts grown to 4 (`lagoon_mirror`, `crossroads`, `single_swell`), 30 mined verified puzzles, 6 voyages, 5-lesson tutorial with flow (`TutorialView`, `-scenario tutorial`) and its scripted lesson-1 UI test, About the Tradition (SRC3.1) with claim keys, pass-and-play + casual undo (reducer-backed, RNG-preserving), the G3 sharpened content-lint rule (no Marshallese surface forms in release strings), ADR-0016/0017, SLICE_ASSESSMENT item 11 (text-only tutorial → P6). `make test` 110 unit + packages + UI green, `make lint` exit 0.
-- **Second game in progress:** **04 Dry Garden — starting P0** (two games at once from 2026-11-22; see the Program Loop in `ROADMAP.md`), in its own worktree `../Geist7-dry-garden` on branch `dry-garden/phase/P0-setup`. Its own state lives in `games/04-dry-garden/docs/STATUS.md`.
-- **Next step:** P4 AI Opponents on a new `mattang/phase/P4-ai` branch — MT-P4.1 four tiers (tier gap ≥ 75% over 500 games, p95 latency within budgets), MT-P4.2 puzzle miner to 120 verified-unique puzzles, `docs/BALANCE.md` win-rate bands. Rosette is Complete (P10/G10); maintainer items: #4, #7–#12.
+- **Game in progress:** **06 Mattang — P4 AI Opponents in progress** on `mattang/phase/P4-ai` (P4.1 tiers/search/evaluator built; BALANCE.md soak evidence recorded with three design-level balance issues open — slice decisiveness, tier gap on the probe charts, per-ply cost; P4.2 miner restructured 2026-11-22 with bounded deterministic plies-2 upgrades and per-chart parallel runs, wiring test added in LoaderTests). G3 signed off 2026-11-21 (merge `e509f1c`, tag `mattang/gate-G3-pass`).
+- **Second game in progress:** **04 Dry Garden — P0 complete (G0 PASS 2026-11-22)**, merged to `main` at `4f181ec`, tag `dry-garden/gate-G0-pass`. DGCore (lattice/courtyard/laws), app scaffold, 50 DGCore tests + UI smoke green, lint clean, ADR-0004 (44-cell courtyard), maintainer issue #13 (advisor review). Next: P1 in the worktree `../Geist7-dry-garden` through the delegated build subagent. Its own state lives in `games/04-dry-garden/docs/STATUS.md`.
+- **Next step:** Mattang P4 remainder — the 120-row miner run (four per-chart processes), then BALANCE.md's three issues (A.4 tunables vs landing-forcing search mode; landing-aware evaluation for the tier gap; per-ply cost), then the G4 soak evidence at the §5/§7 budgets. Rosette is Complete (P10/G10); maintainer items: #4, #7–#12.
 
 ## Environment Check
 
@@ -37,8 +37,8 @@ If Xcode 27.2 or an iOS 26-or-later runtime is missing and cannot be installed w
 | Order | No. | Game | State | Last Gate | Open Maintainer Issues |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 07 | Rosette | Complete (P10/G10) | G10 | #4, #7–#11 |
-| 2 | 06 | Mattang | P2 complete (G2 signed off 2026-11-21) | `mattang/gate-G2-pass` | issue #12 (advisor review) |
-| 3 | 04 | Dry Garden | P0 starting (second game, own worktree) | — | — |
+| 2 | 06 | Mattang | P4 in progress (P4.1 built, soak evidence recorded; G3 signed off 2026-11-21) | `mattang/gate-G3-pass` | issue #12 (advisor review) |
+| 3 | 04 | Dry Garden | P0 complete (G0 PASS 2026-11-22, merged at 4f181ec; second game, own worktree) | `dry-garden/gate-G0-pass` | #13 (advisor review) |
 | 4 | 24 | Patang | Not Started | — | — |
 | 5 | 01 | Ebru | Not Started | — | — |
 | 6 | 11 | Vienna Method | Not Started | — | — |

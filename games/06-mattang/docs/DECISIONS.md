@@ -132,3 +132,30 @@ as R-7 demands, uniform over the legal placements — before the AI
 game proper; prologue plies are not counted toward max-plies (the
 budgets bound AI think time, not setup). Every seed then opens on a
 distinct position and the band measures real play.
+
+## ADR-0024: The node-control term ships at weight 0
+
+A.5's evaluation lists `4·(nodes adjacent to own canoes)`. Measured
+against its own distance map the term is a hover attractor: the
+BFS `dist` already prices node chains as free, so a canoe standing
+beside a node has already banked the small `dist` the chain offers,
+while the adjacency term pays +4 every ply it stays. Weights tested
+on the slice chart (`two_swells_basic`):
+
+- +4 (A.5 as written): the 1-ply greedy reader never advances out of
+  the no-landing regime — seed 3 self-play ran 22 506 plies without
+  ending (release build, 232 s wall), and random-legal play landed
+  more canoes per game (95 in 60 games) than the greedy reader.
+- +1: equivalent to no preference (hover pays +1/ply, advance pays
+  ≤ +1 once, then 0).
+- 0 (shipped): the distance gradient alone steers the sail.
+
+The term is therefore structurally incompatible with a free-node-chain
+distance map at any meaningful weight and ships at 0. The pool-tempo
+term (±2 on an odd pool, A.5) is kept unchanged — it self-extinguishes
+when the pool empties and cannot induce loops. `tempo` is folded into
+`score` as a single differential term (the side to move holds it once,
+not mirrored). Deviation from A.5 per the "win-rate targets met per
+chart (or ADR)" G4 escape; the G4 bands themselves are still measured
+in BALANCE.md. Regression: `SailorTests/testSelfPlayCompletesAndConservesCanoes`
+(seed 3 finishes; the 800-ply bound is a regression tripwire).

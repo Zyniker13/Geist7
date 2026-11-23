@@ -91,4 +91,108 @@ final class EvaluatorTests: XCTestCase {
         XCTAssertEqual(Evaluator.side(state: oneAtSea, player: .p1), 77)
         XCTAssertEqual(Evaluator.side(state: oneAtSea, player: .p2), 0)
     }
+
+    // MARK: A.5's node-control term — ships at weight 0 (ADR-0024)
+    //
+    // The BFS distance map already prices node chains as free, so any
+    // adjacency weight ≥ ~2 makes hovering on node cells strictly
+    // better than advancing (measured: the +4 term left seed-3
+    // self-play at 22 506 plies without ending), and +1 degenerates to
+    // no preference. These tests pin the zero weight from both sides.
+
+    /// The corridor state with two nodes OFF the sail corridor (their
+    /// strength-2 cells give no shorter route to either atoll, so the
+    /// distance terms match the nodeless baseline exactly): (0,1)
+    /// sits beside two p1 canoes — (0,0) and (1,0) — and (-1,-1)
+    /// beside (-2,0) and (0,0).
+    private func nodeControlPair() -> (without: GameState, with: GameState) {
+        let chart = Fixtures.chart()
+        let locations: [CanoeID: CanoeLocation] = [
+            CanoeID(player: .p1, index: 0): .sea(Hex(-2, 0)),
+            CanoeID(player: .p1, index: 1): .sea(Hex(0, 0)),
+            CanoeID(player: .p1, index: 2): .sea(Hex(1, 0)),
+        ]
+        var baseStrong: [Hex: Int] = [:]
+        for q in -2...2 { baseStrong[Hex(q, 0)] = 1 }
+        let base = Fixtures.state(
+            chart: chart, field: Fixtures.field(strong: baseStrong), locations: locations)
+        var withStrong = baseStrong
+        withStrong[Hex(0, 1)] = 2
+        withStrong[Hex(-1, -1)] = 2
+        let with = Fixtures.state(
+            chart: chart,
+            field: Fixtures.field(
+                strong: withStrong, nodes: [Hex(0, 1), Hex(-1, -1)]),
+            locations: locations)
+        return (base, with)
+    }
+
+    func testNodeControlTermShipsAtWeightZero() {
+        let (base, with) = nodeControlPair()
+        // Two distinct nodes adjacent to p1's canoes change nothing:
+        // the adjacency bonus is 0 (ADR-0024), and the distance terms
+        // are identical by construction.
+        XCTAssertEqual(Evaluator.side(state: with, player: .p1),
+                       Evaluator.side(state: base, player: .p1))
+        XCTAssertEqual(Evaluator.side(state: with, player: .p2),
+                       Evaluator.side(state: base, player: .p2))
+    }
+
+    func testNodeAdjacencyContributesNothingEvenWhenAdjacencyChanges() {
+        let (base, with) = nodeControlPair()
+        // Sending the middle canoe home removes one canoe's adjacency
+        // to node (0,1) and its whole distance credit (27 for (0,0)):
+        // the score must move by EXACTLY −27. Any nonzero adjacency
+        // weight would show up as an extra term here.
+        var solo = with
+        solo.canoes[CanoeID(player: .p1, index: 1)] = CanoeState(
+            owner: .p1, location: .home, becalmed: false)
+        XCTAssertEqual(
+            Evaluator.side(state: solo, player: .p1)
+                - Evaluator.side(state: with, player: .p1), -27)
+    }
+
+    func testRivalNodeAdjacencyLeavesTheScoreUnchanged() {
+        let chart = Fixtures.chart()
+        var strong: [Hex: Int] = [:]
+        for q in -2...2 { strong[Hex(q, 0)] = 1 }
+        strong[Hex(2, 1)] = 2  // beside p2's canoe at (2,0)
+        let locations: [CanoeID: CanoeLocation] = [
+            CanoeID(player: .p2, index: 0): .sea(Hex(2, 0))
+        ]
+        var baseStrong = strong
+        baseStrong[Hex(2, 1)] = nil
+        let base = Fixtures.state(
+            chart: chart, field: Fixtures.field(strong: baseStrong), locations: locations)
+        let with = Fixtures.state(
+            chart: chart,
+            field: Fixtures.field(strong: strong, nodes: [Hex(2, 1)]),
+            locations: locations)
+        // A node adjacent to the RIVAL's canoe changes nothing either:
+        // the term is 0 from every side (ADR-0024).
+        XCTAssertEqual(Evaluator.score(state: with, for: .p1),
+                       Evaluator.score(state: base, for: .p1))
+        XCTAssertEqual(Evaluator.score(state: with, for: .p2),
+                       Evaluator.score(state: base, for: .p2))
+    }
+
+    // MARK: A.5's poolTempo term (+2 for the side to move on an odd pool)
+
+    func testPoolTempoRewardsTheSideToMoveOnAnOddPool() {
+        let chart = Fixtures.chart()
+        let field = Fixtures.corridor()
+        let even = Fixtures.state(chart: chart, field: field, pool: 4, toMove: .p1)
+        let odd = Fixtures.state(chart: chart, field: field, pool: 5, toMove: .p1)
+        // p1 to move on an odd pool: p1 takes the last island (+2/-2).
+        XCTAssertEqual(
+            Evaluator.score(state: odd, for: .p1)
+                - Evaluator.score(state: even, for: .p1), 2)
+        XCTAssertEqual(
+            Evaluator.score(state: odd, for: .p2)
+                - Evaluator.score(state: even, for: .p2), -2)
+        // An even pool carries no tempo term for either side.
+        XCTAssertEqual(
+            Evaluator.score(state: even, for: .p1),
+            Evaluator.score(state: even, for: .p2))
+    }
 }

@@ -18,6 +18,15 @@ public enum Evaluator {
     /// A.5's evaluation, from `player`'s point of view: each side is
     /// measured against its OWN rival's atoll, so the two sides need
     /// two distance maps.
+    ///
+    /// A.5's pool-tempo term is differential-once: it belongs to the
+    /// side to move, so it is added once for the holder and subtracted
+    /// once from the other (mirroring it per side would double-count).
+    /// A.5's node-control term is NOT implemented: the BFS distance
+    /// map already prices node chains as free, so an adjacency bonus
+    /// outweighs the 1-per-cell gradient and the reader hovers on
+    /// node lines instead of advancing (measured at +4 and +1;
+    /// ADR-0024). The term ships at weight 0.
     public static func score(state: GameState, for player: PlayerID) -> Int {
         let ownMap = PathDistance.distanceMap(
             to: state.chart.atoll(for: player.opponent).cells, in: state)
@@ -25,6 +34,7 @@ public enum Evaluator {
             to: state.chart.atoll(for: player).cells, in: state)
         return side(state: state, player: player, distances: ownMap)
             - side(state: state, player: player.opponent, distances: rivalMap)
+            + tempo(state: state, for: player)
     }
 
     /// One side's terms: landed × 100, plus the best-three distance
@@ -71,6 +81,23 @@ public enum Evaluator {
         let best3 = credits.sorted(by: >).prefix(3).reduce(0) { $0 + $1 }
         let landedScore = 100 * (state.landed[player] ?? 0)
         return landedScore + best3 - 8 * becalmedCount
+    }
+
+    /// A.5's node-control term at weight 0 (ADR-0024): the BFS
+    /// distance map already prices node chains as free, so any
+    /// adjacency weight ≥ ~2 makes hovering strictly better than
+    /// advancing, and +1 degenerates to no preference. Kept as an
+    /// always-zero seam so the A.5 shape stays visible in code.
+    static func nodeControl(state: GameState, player: PlayerID) -> Int {
+        0
+    }
+
+    /// A.5's poolTempo term: on an ODD remaining pool, the side to
+    /// move takes the last island (±2); on an even pool, the rival
+    /// does and neither holds the advantage.
+    static func tempo(state: GameState, for player: PlayerID) -> Int {
+        guard state.poolRemaining % 2 == 1 else { return 0 }
+        return state.toMove == player ? 2 : -2
     }
 
     /// The credit a home canoe faces: 30 − (1 + the best launch cell's

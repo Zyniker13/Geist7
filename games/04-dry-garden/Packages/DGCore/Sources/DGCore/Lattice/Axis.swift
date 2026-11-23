@@ -91,12 +91,12 @@ public enum AxisEnumeration {
         // Bounds are generous: each family's offset sweeps its whole
         // bounding interval, so no axis is missed by a boundary cell.
         let ranges: [[Int]] = [
-            Array(rMin - 3...rMax + 3),                    // family 0 (k)
-            Array(2 * qMin + rMin - 3...2 * qMax + rMax + 3),  // family 1 (e = 2q + r)
-            Array(qMin - rMax - 3...qMax - rMin + 3),      // family 2 (d = q − r)
-            Array(qMin - 3...qMax + 3),                    // family 3 (n = q)
-            Array(qMin + rMin - 3...qMax + rMax + 3),      // family 4 (n = q + r)
-            Array(qMin + 2 * rMin - 3...qMax + 2 * rMax + 3),  // family 5 (e = q + 2r)
+            Array(rMin - 3...rMax + 3),  // family 0 (k)
+            Array((2 * qMin + rMin - 3)...(2 * qMax + rMax + 3)),  // family 1 (e = 2q + r)
+            Array((qMin - rMax - 3)...(qMax - rMin + 3)),  // family 2 (d = q − r)
+            Array(qMin - 3...qMax + 3),  // family 3 (n = q)
+            Array((qMin + rMin - 3)...(qMax + rMax + 3)),  // family 4 (n = q + r)
+            Array((qMin + 2 * rMin - 3)...(qMax + 2 * rMax + 3)),  // family 5 (e = q + 2r)
         ]
 
         var result: [(family: Int, offset: Int, mapped: Int)] = []

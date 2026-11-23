@@ -68,9 +68,12 @@ final class AxisTests: XCTestCase {
             cells.append(Hex(rng.nextInt(below: 17) - 8, rng.nextInt(below: 17) - 8))
         }
         let set = Set(cells)
-        let a = AxisEnumeration.axesInPlay(cells: cells).map { Axis(family: $0.family, offset: $0.offset) }
+        let toAxis = { (item: (family: Int, offset: Int, mapped: Int)) -> Axis in
+            Axis(family: item.family, offset: item.offset)
+        }
+        let a = AxisEnumeration.axesInPlay(cells: cells).map(toAxis)
         let shuffled = Array(set).shuffled()
-        let b = AxisEnumeration.axesInPlay(cells: shuffled).map { Axis(family: $0.family, offset: $0.offset) }
+        let b = AxisEnumeration.axesInPlay(cells: shuffled).map(toAxis)
         XCTAssertEqual(a, b)
     }
 

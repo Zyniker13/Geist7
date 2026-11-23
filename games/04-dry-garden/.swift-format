@@ -1,0 +1,8 @@
+{
+  "indentation": {"spaces": 4, "tabWidth": 4},
+  "indentSwitchCaseContent": true,
+  "lineBreakAtEndOfFiles": true,
+  "spacesAroundRangeFormationExpression": false,
+  "tabWidth": 4,
+  "version": 1
+}

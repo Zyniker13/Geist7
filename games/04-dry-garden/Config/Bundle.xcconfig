@@ -1,0 +1,5 @@
+// Bundle.xcconfig — Dry Garden bundle identity.
+// GEIST_BUNDLE_ID is a placeholder across the whole program; it is never
+// changed from this placeholder value (maintainer sets the real ID at
+// release time).
+GEIST_BUNDLE_ID = com.example.drygarden

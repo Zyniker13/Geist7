@@ -1,0 +1,105 @@
+name: DryGarden
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+    macOS: "26.0"
+  xcodeGen:
+    generateCleanLayer: true
+
+settings:
+  base:
+    GEIST_BUNDLE_ID: com.example.drygarden
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+packages:
+  DGCore:
+    path: Packages/DGCore
+
+targets:
+  DryGarden-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/iOS
+      - path: App/Shared
+    dependencies:
+      - package: DGCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/iOS/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  DryGarden-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/macOS
+      - path: App/Shared
+    dependencies:
+      - package: DGCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(GEIST_BUNDLE_ID)
+        SWIFT_EMIT_LOC_STRINGS: YES
+    info:
+      path: App/macOS/Info.plist
+
+  DryGardenUITests-iOS:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/UITests
+    dependencies:
+      - target: DryGarden-iOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  DryGardenUnitTests-macOS:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/UnitTests
+    dependencies:
+      - target: DryGarden-macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  DryGarden-iOS:
+    build:
+      targets:
+        DryGarden-iOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DryGardenUITests-iOS
+  DryGarden-macOS:
+    build:
+      targets:
+        DryGarden-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - DryGardenUnitTests-macOS

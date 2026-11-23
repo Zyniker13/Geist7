@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Phase:** P4 AI Opponents in progress on `mattang/phase/P4-ai` — P4.1 tiers/search/evaluator built with BALANCE.md soak evidence recorded; open design-level balance issues listed in BALANCE.md (slice decisiveness, tier gap, per-ply cost) are the remaining P4 work. P4.2 miner restructured 2026-11-22: bounded deterministic plies-2 upgrades (≤8 attempts/chart, cheapest-sweep-first), progress output, resume-safe reruns; wiring test `LoaderTests/testShippedPuzzlesAreWinnableByTheReducer` guards the shipped pool against the real reducer.
-- **Branch:** `mattang/phase/P4-ai`. Final-tree runs: MTCore 110/110, MTContent 14/14, MTAI 14/14, MTRender 13/13, iOS UI 6/6 (1 config-skip), macOS unit 10/10, lint clean.
+- **Phase:** P4 AI Opponents in progress on `mattang/phase/P4-ai` — P4.1 tiers/search/evaluator built with BALANCE.md soak evidence recorded; open design-level balance issues listed in BALANCE.md (slice decisiveness, tier gap, per-ply cost) are the remaining P4 work. P4.2 miner regenerated 2026-11-23 in release (`Tools/mine-puzzles`, exit 0 in ~40 min): the Phase B sort recomputed `difficulty` inside the comparator (n·log n full reducer sweeps — the wedge that made earlier runs silent for hours); difficulty is now memoized before the sort, with per-candidate progress lines. Shipped corpus is 120 puzzles (two_swells_basic 40, crossroads 30, single_swell 25, lagoon_mirror 25, all ply-1; no candidate passed the bounded plies-2 uniqueness sweep), verified by `LoaderTests/testShippedPuzzlesAreWinnableByTheReducer` (MTContent 26/26 release).
+- **Branch:** `mattang/phase/P4-ai`. Final-tree runs: MTCore 110/110, MTContent 26/26, MTAI 33/33 (release, 2026-11-23), MTRender 13/13, iOS UI 6/6 (1 config-skip), macOS unit 10/10, lint clean.
 - **Blocked on:** nothing.
 
 ## Phase Queue

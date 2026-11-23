@@ -39,6 +39,13 @@ public struct Courtyard: Hashable, Codable, Sendable {
     /// Mirror axes in play (R-17's 70% filter), precomputed at load.
     public var axes: [Axis]
 
+    /// Fast membership set, built at init. Excluded from Codable by
+    /// the custom CodingKeys below (it is derivable from `cells`;
+    /// decoded instances rebuild it).
+    private var cachedCellSet: Set<Hex>
+    /// Feature-cell set, built at init (same rationale).
+    private var cachedFeatureSet: Set<Hex>
+
     public init(
         id: String, name: String, cells: [Hex], features: [Feature],
         veranda: String, axes: [Axis]
@@ -49,6 +56,26 @@ public struct Courtyard: Hashable, Codable, Sendable {
         self.features = features
         self.veranda = veranda
         self.axes = axes
+        self.cachedCellSet = Set(cells)
+        self.cachedFeatureSet = Set(features.map(\.cell))
+    }
+
+    /// Decoding rebuilds the caches; membership lookups happen far
+    /// more often than decodes.
+    private enum CodingKeys: String, CodingKey {
+        case id, name, cells, features, veranda, axes
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        cells = try container.decode([Hex].self, forKey: .cells)
+        features = try container.decode([Feature].self, forKey: .features)
+        veranda = try container.decode(String.self, forKey: .veranda)
+        axes = try container.decode([Axis].self, forKey: .axes)
+        cachedCellSet = Set(cells)
+        cachedFeatureSet = Set(features.map(\.cell))
     }
 
     // MARK: Parsing (DG-P0.2)
@@ -95,19 +122,18 @@ public struct Courtyard: Hashable, Codable, Sendable {
 
     // MARK: Queries
 
-    /// The set of courtyard cells (fast membership).
+    /// The set of courtyard cells (fast membership; cached at init).
     public var cellSet: Set<Hex> {
-        Set(cells)
+        cachedCellSet
     }
 
     /// Cells that can receive a stone: on the mask, not a feature.
     public var placeableCells: [Hex] {
-        let featureCells = Set(features.map(\.cell))
-        return cells.filter { !featureCells.contains($0) }
+        cells.filter { !cachedFeatureSet.contains($0) }
     }
 
     /// True when the cell is a feature cell (moss or basin, R-1).
     public func isFeature(_ cell: Hex) -> Bool {
-        features.contains { $0.cell == cell }
+        cachedFeatureSet.contains(cell)
     }
 }

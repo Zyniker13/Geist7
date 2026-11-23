@@ -10,7 +10,9 @@ SIMDEST ?= platform=iOS Simulator,name=iPhone 18 Pro Max
 DEST ?= platform=macOS
 
 .PHONY: help generate build build-mac test test-pkgs test-mac lint swiftlint \
-        swiftformat check-imports sim coverage clean
+        swiftformat check-imports sim build-sim coverage clean
+
+SIMBIN ?= .build/release/sim
 
 help:
 	@echo "make generate   - regenerate DryGarden.xcodeproj with xcodegen"
@@ -60,8 +62,13 @@ swiftformat:
 check-imports:
 	Tools/check-imports.sh
 
-sim:
-	@echo "sim: arrives in P1 with the rules engine (DG-P1.x)"; exit 1
+sim: build-sim
+	$(SIMBIN) $(or $(N),200) --seed $(or $(SEED),1)
+
+build-sim:
+	@set -o pipefail; \
+	$(SWIFT) build -c release --package-path . 2>&1 | tail -1; \
+	test -x .build/release/sim || { echo "sim build failed"; exit 1; }
 
 coverage: test-pkgs
 	@$(SWIFT) test --package-path Packages/DGCore --enable-code-coverage \

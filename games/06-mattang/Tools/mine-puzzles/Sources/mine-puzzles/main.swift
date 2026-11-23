@@ -116,11 +116,35 @@ struct Emitted {
     var twoPly: Bool
 }
 
+/// The deterministic two-ply upgrade budget: per chart, at most this
+/// many plies-2 uniqueness sweeps are run (hardest candidates first).
+let upgradeAttempts = 8
+
+/// One qualifying pair: the reconstructed state, its identity key,
+/// and the overlay it ships with.
+struct Candidate {
+    var key: String
+    var state: GameState
+    var owner: PlayerID
+    var heroAt: Hex
+    var islands: Set<Hex>
+}
+
+/// A cheap plies-2 difficulty score: the smallest defender-reply
+/// count after the row's unique landing action. Fewer replies to
+/// refute means a cheaper uniqueness sweep, so the miner upgrades
+/// the cheapest-to-verify candidates first.
+func difficulty(_ state: GameState) -> Int {
+    guard let landing = landingActions(in: state).first,
+        let (after, _) = try? Reducer.apply(landing, to: state)
+    else { return Int.max }
+    return Reducer.legalActions(in: after).count
+}
+
 func mine(chart: Chart, layouts: [Set<Hex>], budget: Int, out: inout [Emitted]) {
     var seen = Set<String>()
     let start = out.count
-    let generator = PuzzleGenerator()
-    let memo = PuzzleGenerator.Memo()
+    var candidates: [Candidate] = []
     for owner in [PlayerID.p1, .p2] {
         let target = chart.atoll(for: owner.opponent).cells
         // Hero candidates: empty strength cells adjacent to a rival
@@ -140,36 +164,88 @@ func mine(chart: Chart, layouts: [Set<Hex>], budget: Int, out: inout [Emitted]) 
                     let state = overlayState(
                         chart: chart, extraIslands: extra, heroOwner: owner, heroAt: hero)
                 else { continue }
-                // ADR-0019: solvable AND unique at 1 ply.
-                let landings = landingActions(in: state)
-                guard landings.count == 1 else { continue }
-                // MT-P4.2: also verify at plies 2 (the AND/OR line).
-                // The same first move must still force a landing
-                // against every defender reply. Unverified-at-2 rows
-                // are NOT dropped — they ship as plies: 1 rows — but
-                // a plies-2 row is preferred when the budget allows.
-                let twoPly =
-                    generator.forcedLanding(in: state, owner: owner, plies: 2, memo: memo)
-                    && generator.winningFirstActions(in: state, owner: owner, plies: 2).count == 1
-                let key =
-                    "\(extra.sorted(by: Hex.rowMajor).map { "\($0.q),\($0.r)" })|\(hero.q),\(hero.r)|\(owner.rawValue)"
+                // ADR-0019: solvable AND unique at 1 ply. The plies-2
+                // upgrade decision is deferred to the bounded phase
+                // below (the per-pair AND/OR sweep is too expensive to
+                // run inline for every qualifying pair).
+                guard landingActions(in: state).count == 1 else { continue }
+                let islandText = extra.sorted(by: Hex.rowMajor)
+                    .map { "\($0.q),\($0.r)" }
+                    .joined(separator: ";")
+                let key = "\(islandText)|\(hero.q),\(hero.r)|\(owner.rawValue)"
                 guard seen.insert(key).inserted else { continue }
-                out.append(
-                    Emitted(
-                        chartID: chart.id, islands: extra, owner: owner, heroAt: hero,
-                        twoPly: twoPly))
-                if out.count - start >= budget {
-                    FileHandle.standardError.write(
-                        Data(
-                            "  \(chart.id): budget at layout \(layoutIndex)/\(layouts.count)\n"
-                                .utf8))
-                    return
-                }
+                let candidate = Candidate(
+                    key: key, state: state, owner: owner, heroAt: hero, islands: extra)
+                candidates.append(candidate)
             }
             FileHandle.standardError.write(
                 Data("  \(chart.id): layout \(layoutIndex + 1)/\(layouts.count) done\n".utf8))
         }
     }
+
+    // Phase B: order the candidates — cheapest uniqueness sweep first
+    // (fewest defender replies), then row-major key; no rng. Difficulty
+    // is memoized before the sort: recomputing it inside the comparator
+    // made the sort O(n log n) full reducer sweeps and wedged Phase C
+    // for hours (2026-11-23 sample, main.swift:188).
+    let difficulties = candidates.map { difficulty($0.state) }
+    let order = Array(candidates.indices).sorted {
+        (difficulties[$0], candidates[$0].key)
+            < (difficulties[$1], candidates[$1].key)
+    }
+    candidates = order.map { candidates[$0] }
+
+    // Phase C: bounded plies-2 upgrades — the top candidates get the
+    // full forced-line + uniqueness sweep; the first fully-verified
+    // row ships as plies 2 (one per chart keeps the run bounded and
+    // the mix ply-1-dominant), the rest ship as plies 1.
+    let generator = PuzzleGenerator()
+    var upgrades = 0
+    var attempts = 0
+    FileHandle.standardError.write(
+        Data(
+            "  \(chart.id): \(candidates.count) candidates, plies-2 upgrade cap \(upgradeAttempts)\n"
+                .utf8))
+    for candidate in candidates {
+        guard attempts < upgradeAttempts, upgrades == 0 else { break }
+        attempts += 1
+        FileHandle.standardError.write(
+            Data(
+                "  \(chart.id): upgrade attempt \(attempts)/\(upgradeAttempts): \(candidate.key)\n"
+                    .utf8))
+        let sharedMemo = PuzzleGenerator.Memo()
+        let forced = generator.forcedLanding(
+            in: candidate.state, owner: candidate.owner, plies: 2, memo: sharedMemo)
+        let unique = forced
+            && generator.winningFirstActions(
+                in: candidate.state, owner: candidate.owner, plies: 2).count == 1
+        FileHandle.standardError.write(
+            Data(
+                "  \(chart.id): plies-2 candidate \(candidate.key): forced=\(forced) unique=\(unique)\n"
+                    .utf8))
+        guard unique else { continue }
+        out.append(
+            Emitted(
+                chartID: chart.id, islands: candidate.islands, owner: candidate.owner,
+                heroAt: candidate.heroAt, twoPly: true))
+        upgrades += 1
+    }
+    // Phase D: every remaining candidate ships as a ply-1 row.
+    for candidate in candidates {
+        if out.count - start >= budget {
+            FileHandle.standardError.write(
+                Data("  \(chart.id): budget reached at ply-1 emission\n".utf8))
+            return
+        }
+        out.append(
+            Emitted(
+                chartID: chart.id, islands: candidate.islands, owner: candidate.owner,
+                heroAt: candidate.heroAt, twoPly: false))
+    }
+    FileHandle.standardError.write(
+        Data(
+            "  \(chart.id): \(out.count - start) rows (\(upgrades) upgraded to plies 2)\n"
+                .utf8))
 }
 
 extension PlayerID {
@@ -182,12 +258,28 @@ extension PlayerID {
 // P4 (MT-P4.2): the shipped pool is the §5 G5 count — 120 verified
 // rows. Budgets per chart keep the campaign mix close to the chart
 // sizes; verification is the ADR-0019 ply-1 spot check PLUS the
-// PuzzleGenerator plies-2 AND/OR verifier (a row ships when the
-// position is solvable AND unique at BOTH depths — a two-ply forced
-// line makes a better puzzle and the §7 mining line says "within N
-// plies"). Rows that verify only at ply 1 ship as plies: 1.
+// PuzzleGenerator plies-2 AND/OR verifier. Rows that verify only at
+// ply 1 ship as plies: 1 — but the upgrade to plies 2 is DETERMINISTIC
+// and bounded (ADR-0002): per chart, the miner evaluates the plies-2
+// forced-line and uniqueness conditions over at most 8 candidate rows
+// (ordered by a plies-2 difficulty score, then the row-major overlay
+// key, no rng), and ships a plies-2 row only after the winner's full
+// uniqueness sweep; further candidates keep shipping as plies-1 rows.
+// Without the cap the uniqueness sweep (~150 first actions × ~150
+// replies each) runs for every qualifying pair and the G4 run cannot
+// finish.
 
 let charts = try ContentLoader.charts()
+FileHandle.standardError.write(
+    Data("CHART IDS: \(charts.map { $0.id })\n".utf8))
+let only: String? = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : nil
+let chartsToMine = only.map { id in
+    guard let chart = charts.first(where: { $0.id == id }) else {
+        FileHandle.standardError.write(Data("no chart named \(id)\n".utf8))
+        exit(2)
+    }
+    return [chart]
+} ?? charts
 let budgets: [String: Int] = [
     "two_swells_basic": 40,
     "single_swell": 25,
@@ -198,7 +290,7 @@ let totalBudget = budgets.values.reduce(0, +)
 precondition(totalBudget >= 120, "the G5 pool is 120 rows")
 
 var emitted: [Emitted] = []
-for chart in charts {
+for chart in chartsToMine {
     let budget = budgets[chart.id] ?? 30
     // Layouts: sampled across ply windows of many seeded games. The
     // larger budget needs more layouts; the count scales with it.

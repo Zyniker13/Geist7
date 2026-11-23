@@ -182,6 +182,93 @@ func decode(_ string: String) -> Action? {
     }
 }
 
+// MARK: - Landability probe (P4 balance: why do games not end?)
+
+/// Random-legal play with per-game diagnostics: how close does any
+/// canoe get to the rival atoll (the R-10 entry needs a sailable
+/// neighbour of the atoll), how many islands got placed, how many
+/// launches and node-chain sails happened. Answers "is landing
+/// possible at all on this chart, and what blocks it".
+func landabilityGame(
+    seed: UInt64, simChart: SimChart, maxPlies: Int
+) -> (
+    landedP1: Int, landedP2: Int, minDistP1: Int, minDistP2: Int,
+    islands: Int, launches: Int, nodeSails: Int, plies: Int
+)? {
+    let chart = simChart.chart
+    var rng = SeededRNG(seed: seed)
+    var state = Reducer.initial(chart: chart)
+    var islands = 0
+    var launches = 0
+    var nodeSails = 0
+    var ply = 0
+    var minDist = [PlayerID.p1: Int.max, .p2: Int.max]
+    for _ in 0..<maxPlies {
+        guard !state.status.isOver else { break }
+        // Measure before the ply: the current canoe distances.
+        for player in PlayerID.allCases {
+            let dists = Victory.canoeDistances(state, player)
+            if let d = dists.first, d < minDist[player]! { minDist[player]! = d }
+        }
+        let action = chooseAction(in: state, rng: &rng)
+        switch action {
+        case .placeIsland: islands += 1
+        case .launch: launches += 1
+        case .sail(_, let cells):
+            if state.field.isNode(cells.last!) { nodeSails += 1 }
+        case .pass, .tow:
+            break
+        }
+        guard let (next, _) = try? Reducer.apply(action, to: state) else { return nil }
+        state = next
+        ply += 1
+    }
+    return (
+        state.landed[.p1] ?? 0, state.landed[.p2] ?? 0,
+        minDist[.p1] == Int.max ? -1 : minDist[.p1]!,
+        minDist[.p2] == Int.max ? -1 : minDist[.p2]!,
+        islands, launches, nodeSails, ply)
+}
+
+func runLandability(count: Int, seed0: UInt64, chartName: String, maxPlies: Int) {
+    let simChart = SimChart.named(chartName)
+    precondition(simChart.chart.validate().isEmpty, "sim chart must validate")
+    var totals = (
+        landed: 0, minDistLe0: 0, minDistLe2: 0, minDistLe4: 0, unreachable: 0,
+        islands: 0, launches: 0, nodeSails: 0, plies: 0
+    )
+    var nodeSailGames = 0
+    for game in 0..<count {
+        guard
+            let r = landabilityGame(
+                seed: seed0 &+ UInt64(game), simChart: simChart, maxPlies: maxPlies)
+        else {
+            FileHandle.standardError.write(Data("landability: illegal ply\n".utf8))
+            exit(1)
+        }
+        if r.minDistP1 <= 0 || r.minDistP2 <= 0 { totals.minDistLe0 += 1 }
+        if r.minDistP1 <= 2 || r.minDistP2 <= 2 { totals.minDistLe2 += 1 }
+        if r.minDistP1 <= 4 || r.minDistP2 <= 4 { totals.minDistLe4 += 1 }
+        if r.minDistP1 < 0 || r.minDistP2 < 0 { totals.unreachable += 1 }
+        totals.islands += r.islands
+        totals.launches += r.launches
+        totals.nodeSails += r.nodeSails
+        totals.plies += r.plies
+        if r.nodeSails > 0 { nodeSailGames += 1 }
+        totals.landed += r.landedP1 + r.landedP2
+    }
+    print(
+        """
+        landability chart=\(chartName) games=\(count) plies=\(maxPlies) \
+        reached_atoll_edge=\(totals.minDistLe0) dist<=2=\(totals.minDistLe2) \
+        dist<=4=\(totals.minDistLe4) never_reachable=\(totals.unreachable) \
+        landings=\(totals.landed) islands/game=\(String(format: "%.1f", Double(totals.islands) / Double(count))) \
+        launches/game=\(String(format: "%.1f", Double(totals.launches) / Double(count))) \
+        node_sails/game=\(String(format: "%.1f", Double(totals.nodeSails) / Double(count))) \
+        games_with_node_sails=\(nodeSailGames) avg_plies=\(String(format: "%.0f", Double(totals.plies) / Double(count)))
+        """)
+}
+
 // MARK: - Invariant verification (G1: INV-1…INV-5 over every seed)
 
 struct InvariantStats {
@@ -520,6 +607,17 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 func argument(_ name: String) -> String? {
     guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else { return nil }
     return arguments[index + 1]
+}
+
+// The landability probe runs its own loop (per-game diagnostics) and
+// exits before the soak and random-playout entry points below.
+if argument("--landability") != nil {
+    let count = Int(argument("--count") ?? "200") ?? 200
+    let baseSeed = UInt64(argument("--seed") ?? "7") ?? 7
+    let maxPlies = Int(argument("--max-plies") ?? "240") ?? 240
+    let chartName = argument("--chart") ?? "diagonal"
+    runLandability(count: count, seed0: baseSeed, chartName: chartName, maxPlies: maxPlies)
+    exit(0)
 }
 
 // The soak mode runs its own loop (tier pairs, win bands, p95) and

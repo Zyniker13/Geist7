@@ -162,11 +162,15 @@ public enum InfluenceEngine {
 
     /// The R-12/R-25 bonus amount a stone earns in the given position
     /// context (0 when the stone is small, the bonus is off, the facing
-    /// is not veranda-ward, or the view is blocked).
+    /// does not point at the veranda, or the view is blocked). R-12's
+    /// facing gate: the stone must face one of the veranda edge's three
+    /// directions (`VerandaEdge.bottom → [1, 2, 3]` on long_wall).
     public static func viewingBonus(
-        for stone: Stone, stones: [Stone], balance: Balance
+        for stone: Stone, stones: [Stone], balance: Balance,
+        veranda: VerandaEdge = .bottom
     ) -> Int {
         guard isViewingStone(stone), balance.viewingFaceBonus > 0 else { return 0 }
+        guard veranda.facingDirections.contains(stone.facing) else { return 0 }
         guard viewIsClear(stone, stones: stones) else { return 0 }
         return balance.viewingFaceBonus
     }

@@ -16,10 +16,13 @@ public struct Ownership: Sendable {
     /// is rebuilt per game).
     private let balance: Balance
     private let courtyard: Courtyard
+    /// The courtyard's veranda edge — R-12's facing gate reads it.
+    private let veranda: VerandaEdge
 
     public init(courtyard: Courtyard, balance: Balance = .standard()) {
         self.courtyard = courtyard
         self.balance = balance
+        self.veranda = VerandaEdge(rawValue: courtyard.veranda) ?? .bottom
     }
 
     /// R-11: the owner of a cell from the current tallies.
@@ -57,7 +60,8 @@ public struct Ownership: Sendable {
             stone, cells: courtyard.cells,
             curve: balance.curve(for: stone.size),
             bonus: InfluenceEngine.viewingBonus(
-                for: stone, stones: context, balance: balance),
+                for: stone, stones: context, balance: balance,
+                veranda: veranda),
             into: &tallies)
     }
 

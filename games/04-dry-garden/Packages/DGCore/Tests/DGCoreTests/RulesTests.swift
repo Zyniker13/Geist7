@@ -80,7 +80,8 @@ final class RulesTests: XCTestCase {
     ) {
         if let reason = act(
             .place(cell: h(cell.0, cell.1), size: size, facing: 0),
-            as: owner, to: &state) {
+            as: owner, to: &state)
+        {
             XCTFail(
                 "setup \(owner) (\(cell.0),\(cell.1)) \(size): \(reason)",
                 file: file, line: line)
@@ -97,7 +98,8 @@ final class RulesTests: XCTestCase {
             .rake(
                 start: h(start.0, start.1), direction: direction,
                 length: length),
-            as: owner, to: &state) {
+            as: owner, to: &state)
+        {
             XCTFail(
                 "setup rake \(owner) (\(start.0),\(start.1)) d\(direction)"
                     + " l\(length): \(reason)",
@@ -111,31 +113,35 @@ final class RulesTests: XCTestCase {
         // Each case: setup stones (explicit owners), optional pre-laid
         // rakes, the candidate placement (cell, size, facing), the
         // forced mover, and the expected verdict (nil = accepted).
-        var cases: [(
-            setup: [(PlayerID, Int, Int, StoneSize)],
-            pre: [(PlayerID, (Int, Int), Int, Int)],
-            cell: (Int, Int), size: StoneSize, facing: Int,
-            mover: PlayerID, expect: IllegalReason?
-        )] = []
+        var cases:
+            [(
+                setup: [(PlayerID, Int, Int, StoneSize)],
+                pre: [(PlayerID, (Int, Int), Int, Int)],
+                cell: (Int, Int), size: StoneSize, facing: Int,
+                mover: PlayerID, expect: IllegalReason?
+            )] = []
 
         // P4-01..12: empty-board placements across the mask accept any
         // size (R-4's basic grant).
         let sizes: [StoneSize] = [.large, .medium, .small]
         for (index, cell) in courtyard.placeableCells.prefix(12).enumerated() {
-            cases.append((
-                [], [], (cell.q, cell.r), sizes[index % 3], 0, .one, nil
-            ))
+            cases.append(
+                (
+                    [], [], (cell.q, cell.r), sizes[index % 3], 0, .one, nil
+                ))
         }
         // P4-13: occupied cell — same player's stone there.
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), .medium, 0, .one,
-            .occupied
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), .medium, 0, .one,
+                .occupied
+            ))
         // P4-14: occupied cell — the opponent's stone there too.
-        cases.append((
-            [(.two, 2, 0, .large)], [], (2, 0), .small, 0, .one,
-            .occupied
-        ))
+        cases.append(
+            (
+                [(.two, 2, 0, .large)], [], (2, 0), .small, 0, .one,
+                .occupied
+            ))
         // P4-15: off courtyard (row 3 holds only q −1,0).
         cases.append(([], [], (4, 3), .small, 0, .one, .offCourtyard))
         // P4-16: off courtyard (row 0 ends at q 5).
@@ -147,42 +153,50 @@ final class RulesTests: XCTestCase {
         // P4-19..24: same-size adjacency around P1's large at (4,2):
         // each in-yard neighbour rejects the same size, accepts others.
         for n in [(4, 1), (5, 1), (5, 2)] {
-            cases.append((
-                [(.one, 4, 2, .large)], [], n, .large, 0, .one,
-                .sameSizeAdjacent
-            ))
-            cases.append((
-                [(.one, 4, 2, .large)], [], n, .medium, 0, .one, nil
-            ))
+            cases.append(
+                (
+                    [(.one, 4, 2, .large)], [], n, .large, 0, .one,
+                    .sameSizeAdjacent
+                ))
+            cases.append(
+                (
+                    [(.one, 4, 2, .large)], [], n, .medium, 0, .one, nil
+                ))
         }
         // P4-25: two DIFFERENT own sizes adjacent — a small may sit
         // between a large and a medium.
-        cases.append((
-            [(.one, 4, 1, .large), (.one, 5, 1, .medium)], [], (4, 2),
-            .small, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 1, .large), (.one, 5, 1, .medium)], [], (4, 2),
+                .small, 0, .one, nil
+            ))
         // P4-26/27: the anti-clump rule is per size: a medium next to a
         // medium and a small next to a small both fail.
-        cases.append((
-            [(.one, 4, 1, .medium)], [], (4, 2), .medium, 0, .one,
-            .sameSizeAdjacent
-        ))
-        cases.append((
-            [(.one, 4, 1, .small)], [], (4, 2), .small, 0, .one,
-            .sameSizeAdjacent
-        ))
+        cases.append(
+            (
+                [(.one, 4, 1, .medium)], [], (4, 2), .medium, 0, .one,
+                .sameSizeAdjacent
+            ))
+        cases.append(
+            (
+                [(.one, 4, 1, .small)], [], (4, 2), .small, 0, .one,
+                .sameSizeAdjacent
+            ))
         // P4-28: a large next to a small is fine.
-        cases.append((
-            [(.one, 4, 1, .large)], [], (4, 2), .medium, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 1, .large)], [], (4, 2), .medium, 0, .one, nil
+            ))
         // P4-29: same size two cells apart on a row is fine.
-        cases.append((
-            [(.one, 4, 2, .large)], [], (6, 2), .large, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 2, .large)], [], (6, 2), .large, 0, .one, nil
+            ))
         // P4-30: same size at distance 2 off-row is fine.
-        cases.append((
-            [(.one, 4, 2, .large)], [], (6, 1), .large, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 2, .large)], [], (6, 1), .large, 0, .one, nil
+            ))
         // P4-31..34: R-20 basin adjacency — the four placeable basin
         // neighbours (2,7),(4,7),(2,8),(3,8) all reject.
         for c in [(2, 7), (4, 7), (2, 8), (3, 8)] {
@@ -194,47 +208,53 @@ final class RulesTests: XCTestCase {
         cases.append(([], [], (0, 10), .large, 0, .one, nil))
         // P4-37: R-2/INV-3 supply exhaustion — both larges placed, the
         // next large fails (noSupply).
-        cases.append((
-            [
-                (.one, 2, 0, .large), (.two, 3, 0, .large),
-                (.one, 6, 1, .large), (.two, 6, 2, .large),
-            ], [], (4, 2), .large, 0, .one, .noSupply
-        ))
+        cases.append(
+            (
+                [
+                    (.one, 2, 0, .large), (.two, 3, 0, .large),
+                    (.one, 6, 1, .large), (.two, 6, 2, .large),
+                ], [], (4, 2), .large, 0, .one, .noSupply
+            ))
         // P4-38: other sizes remain after the larges run out.
-        cases.append((
-            [
-                (.one, 2, 0, .large), (.two, 3, 0, .large),
-                (.one, 6, 1, .large), (.two, 6, 2, .large),
-            ], [], (4, 2), .medium, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [
+                    (.one, 2, 0, .large), (.two, 3, 0, .large),
+                    (.one, 6, 1, .large), (.two, 6, 2, .large),
+                ], [], (4, 2), .medium, 0, .one, nil
+            ))
         // P4-39: mediums exhausted the same way (larges untouched).
-        cases.append((
-            [
-                (.one, 2, 0, .medium), (.two, 3, 0, .small),
-                (.one, 6, 1, .medium), (.two, 6, 2, .small),
-                (.one, 5, 4, .medium),
-            ], [], (4, 2), .medium, 0, .one, .noSupply
-        ))
+        cases.append(
+            (
+                [
+                    (.one, 2, 0, .medium), (.two, 3, 0, .small),
+                    (.one, 6, 1, .medium), (.two, 6, 2, .small),
+                    (.one, 5, 4, .medium),
+                ], [], (4, 2), .medium, 0, .one, .noSupply
+            ))
         // P4-40: smalls exhausted (eight smalls on the board).
-        cases.append((
-            [
-                (.one, 2, 0, .small), (.two, -1, 7, .small),
-                (.one, 6, 2, .small), (.two, 1, 7, .small),
-                (.one, 4, 4, .small), (.two, -4, 9, .small),
-                (.one, 1, 8, .small), (.two, 0, 10, .small),
-            ], [], (4, 2), .small, 0, .one, .noSupply
-        ))
+        cases.append(
+            (
+                [
+                    (.one, 2, 0, .small), (.two, -1, 7, .small),
+                    (.one, 6, 2, .small), (.two, 1, 7, .small),
+                    (.one, 4, 4, .small), (.two, -4, 9, .small),
+                    (.one, 1, 8, .small), (.two, 0, 10, .small),
+                ], [], (4, 2), .small, 0, .one, .noSupply
+            ))
         // P4-41: a raked cell cannot receive a stone — the mover who
         // laid the rake is barred too.
-        cases.append((
-            [(.one, 2, 0, .large)], [(.one, (2, 0), 0, 2)], (3, 0),
-            .medium, 0, .one, .raked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [(.one, (2, 0), 0, 2)], (3, 0),
+                .medium, 0, .one, .raked
+            ))
         // P4-42: …and so is the opponent.
-        cases.append((
-            [(.one, 2, 0, .large)], [(.one, (2, 0), 0, 2)], (3, 0),
-            .medium, 0, .two, .raked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [(.one, (2, 0), 0, 2)], (3, 0),
+                .medium, 0, .two, .raked
+            ))
         // P4-43: facing 6 is not a direction — rejected.
         cases.append(([], [], (4, 2), .large, 6, .one, .offCourtyard))
         // P4-44: facing 5 (any real direction) is accepted on a plain
@@ -242,14 +262,16 @@ final class RulesTests: XCTestCase {
         cases.append(([], [], (4, 2), .large, 5, .one, nil))
         // P4-45: the opponent's adjacent large does NOT bar my large
         // (the anti-clump rule is own-stones only).
-        cases.append((
-            [(.two, 4, 1, .large)], [], (4, 2), .large, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.two, 4, 1, .large)], [], (4, 2), .large, 0, .one, nil
+            ))
         // P4-46: mixed neighbours of different sizes are fine.
-        cases.append((
-            [(.one, 4, 1, .medium), (.two, 5, 2, .small)], [], (4, 2),
-            .large, 0, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 1, .medium), (.two, 5, 2, .small)], [], (4, 2),
+                .large, 0, .one, nil
+            ))
 
         XCTAssertGreaterThanOrEqual(cases.count, 40, "R-4 fixture count")
 
@@ -280,153 +302,184 @@ final class RulesTests: XCTestCase {
         // R-5: a rake is a straight run of 2–5 empty non-feature cells
         // starting adjacent to one of the mover's stones; straightness
         // is structural ((start, direction, length) cannot bend).
-        var cases: [(
-            setup: [(PlayerID, Int, Int, StoneSize)],
-            pre: [(PlayerID, (Int, Int), Int, Int)],
-            start: (Int, Int), direction: Int, length: Int,
-            mover: PlayerID, expect: IllegalReason?
-        )] = []
+        var cases:
+            [(
+                setup: [(PlayerID, Int, Int, StoneSize)],
+                pre: [(PlayerID, (Int, Int), Int, Int)],
+                start: (Int, Int), direction: Int, length: Int,
+                mover: PlayerID, expect: IllegalReason?
+            )] = []
 
         // P5-01/02: lengths 2 and 3 east from (2,0) are legal.
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 2, .one, nil
-        ))
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 3, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 2, .one, nil
+            ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 3, .one, nil
+            ))
         // P5-03/04: lengths 1 and 6 are outside the 2…5 band.
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 1, .one,
-            .rakeBadLength
-        ))
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 6, .one,
-            .rakeBadLength
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 1, .one,
+                .rakeBadLength
+            ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 6, .one,
+                .rakeBadLength
+            ))
         // P5-05/06: lengths 4 and 5 run off the yard's east end
         // (row 0 ends at q=5).
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 4, .one,
-            .offCourtyard
-        ))
-        cases.append((
-            [(.one, 2, 0, .large)], [], (2, 0), 0, 5, .one,
-            .offCourtyard
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 4, .one,
+                .offCourtyard
+            ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (2, 0), 0, 5, .one,
+                .offCourtyard
+            ))
         // P5-07: blocked mid-path by an opponent stone.
-        cases.append((
-            [(.one, 2, 0, .large), (.two, 4, 0, .small)], [], (2, 0), 0,
-            2, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.two, 4, 0, .small)], [], (2, 0), 0,
+                2, .one, .rakeBlocked
+            ))
         // P5-08: blocked by an own stone.
-        cases.append((
-            [(.one, 2, 0, .large), (.one, 4, 0, .small)], [], (2, 0), 0,
-            2, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.one, 4, 0, .small)], [], (2, 0), 0,
+                2, .one, .rakeBlocked
+            ))
         // P5-09: no own stone adjacent to the first path cell.
-        cases.append((
-            [(.two, 1, 5, .large)], [], (2, 0), 0, 2, .one, .rakeNoAnchor
-        ))
+        cases.append(
+            (
+                [(.two, 1, 5, .large)], [], (2, 0), 0, 2, .one, .rakeNoAnchor
+            ))
         // P5-10: an opponent's stone as the only neighbour is no anchor.
-        cases.append((
-            [(.two, 2, 0, .large)], [], (2, 0), 0, 2, .one, .rakeNoAnchor
-        ))
+        cases.append(
+            (
+                [(.two, 2, 0, .large)], [], (2, 0), 0, 2, .one, .rakeNoAnchor
+            ))
         // P5-11: east from (5,0) leaves the yard.
-        cases.append((
-            [(.one, 5, 0, .large)], [], (5, 0), 0, 2, .one, .offCourtyard
-        ))
+        cases.append(
+            (
+                [(.one, 5, 0, .large)], [], (5, 0), 0, 2, .one, .offCourtyard
+            ))
         // P5-12: a rake may not pass through the basin (3,7).
-        cases.append((
-            [(.one, 0, 7, .large)], [], (0, 7), 0, 3, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 0, 7, .large)], [], (0, 7), 0, 3, .one, .rakeBlocked
+            ))
         // P5-13: the same path one cell short of the basin is legal.
-        cases.append((
-            [(.one, 0, 7, .large)], [], (0, 7), 0, 2, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 0, 7, .large)], [], (0, 7), 0, 2, .one, nil
+            ))
         // P5-14: a stone on the second path cell blocks (opponent's).
-        cases.append((
-            [(.one, 1, 4, .large), (.two, 3, 4, .small)], [], (1, 4), 0,
-            3, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 1, 4, .large), (.two, 3, 4, .small)], [], (1, 4), 0,
+                3, .one, .rakeBlocked
+            ))
         // P5-15: a clean full-length rake east from (1,4).
-        cases.append((
-            [(.one, 1, 4, .large)], [], (1, 4), 0, 4, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 1, 4, .large)], [], (1, 4), 0, 4, .one, nil
+            ))
         // P5-16: raking west (d3) into an own stone is blocked.
-        cases.append((
-            [(.one, 4, 0, .large), (.one, 2, 0, .small)], [], (4, 0), 3,
-            2, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 4, 0, .large), (.one, 2, 0, .small)], [], (4, 0), 3,
+                2, .one, .rakeBlocked
+            ))
         // P5-17: raking south-east (d1) from (4,0) is legal.
-        cases.append((
-            [(.one, 4, 0, .large)], [], (4, 0), 1, 2, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 4, 0, .large)], [], (4, 0), 1, 2, .one, nil
+            ))
         // P5-18: east len4 from (2,0) runs off (row 0 ends at q=5) —
         // the P2 stone on (5,0) is beside the point.
-        cases.append((
-            [(.one, 2, 0, .large), (.two, 5, 0, .small)], [], (2, 0), 0,
-            4, .one, .offCourtyard
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.two, 5, 0, .small)], [], (2, 0), 0,
+                4, .one, .offCourtyard
+            ))
         // P5-19: the path's FIRST cell blocked by an own stone.
-        cases.append((
-            [(.one, 2, 4, .small), (.one, 4, 4, .medium)], [], (4, 4), 3,
-            2, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 4, .small), (.one, 4, 4, .medium)], [], (4, 4), 3,
+                2, .one, .rakeBlocked
+            ))
         // P5-20: a length-4 lane along row 8 is legal.
-        cases.append((
-            [(.one, -1, 8, .large)], [], (-1, 8), 0, 4, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, -1, 8, .large)], [], (-1, 8), 0, 4, .one, nil
+            ))
         // P5-21: …length 5 runs off the row's east end (q 3).
-        cases.append((
-            [(.one, -1, 8, .large)], [], (-1, 8), 0, 5, .one,
-            .offCourtyard
-        ))
+        cases.append(
+            (
+                [(.one, -1, 8, .large)], [], (-1, 8), 0, 5, .one,
+                .offCourtyard
+            ))
         // P5-22: R-21 single crossing — P2's line shares exactly one
         // cell with P1's earlier rake.
-        cases.append((
-            [(.one, 2, 0, .large), (.two, 5, 2, .large)],
-            [(.one, (2, 0), 0, 3)], (5, 2), 4, 2, .two, nil
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.two, 5, 2, .large)],
+                [(.one, (2, 0), 0, 3)], (5, 2), 4, 2, .two, nil
+            ))
         // P5-23: two shared cells → rakeCrossing (opponent's rake).
-        cases.append((
-            [(.one, 1, 4, .large), (.two, 4, 4, .large)],
-            [(.one, (1, 4), 0, 2)], (4, 4), 3, 2, .two, .rakeCrossing
-        ))
+        cases.append(
+            (
+                [(.one, 1, 4, .large), (.two, 4, 4, .large)],
+                [(.one, (1, 4), 0, 2)], (4, 4), 3, 2, .two, .rakeCrossing
+            ))
         // P5-24: a fresh parallel lane from the same anchor stone.
-        cases.append((
-            [(.one, 2, 0, .large), (.one, 4, 2, .large)],
-            [(.one, (2, 0), 0, 2)], (4, 2), 4, 2, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.one, 4, 2, .large)],
+                [(.one, (2, 0), 0, 2)], (4, 2), 4, 2, .one, nil
+            ))
         // P5-25: two shared cells on the mover's OWN earlier rake also
         // cross (INV-9 is owner-blind).
-        cases.append((
-            [(.one, 1, 4, .large), (.one, 4, 4, .large)],
-            [(.one, (1, 4), 0, 2)], (4, 4), 3, 2, .one, .rakeCrossing
-        ))
+        cases.append(
+            (
+                [(.one, 1, 4, .large), (.one, 4, 4, .large)],
+                [(.one, (1, 4), 0, 2)], (4, 4), 3, 2, .one, .rakeCrossing
+            ))
         // P5-26: crossing an OPPONENT's rake once is legal.
-        cases.append((
-            [(.two, 5, 2, .large), (.one, 2, 0, .large)],
-            [(.two, (5, 2), 4, 2)], (2, 0), 0, 3, .one, nil
-        ))
+        cases.append(
+            (
+                [(.two, 5, 2, .large), (.one, 2, 0, .large)],
+                [(.two, (5, 2), 4, 2)], (2, 0), 0, 3, .one, nil
+            ))
         // P5-27: the anchor must neighbour the FIRST path cell: P1's
         // stone (2,0) is not beside (4,0).
-        cases.append((
-            [(.one, 2, 0, .large)], [], (5, 0), 3, 2, .one, .rakeNoAnchor
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large)], [], (5, 0), 3, 2, .one, .rakeNoAnchor
+            ))
         // P5-28: a stone on the SECOND cell blocks (mid-path).
-        cases.append((
-            [(.one, 2, 0, .large), (.two, 3, 0, .medium)], [], (2, 0), 0,
-            2, .one, .rakeBlocked
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.two, 3, 0, .medium)], [], (2, 0), 0,
+                2, .one, .rakeBlocked
+            ))
         // P5-29: a stone BEYOND the path's end does not block len2.
-        cases.append((
-            [(.one, 2, 0, .large), (.two, 5, 0, .small)], [], (2, 0), 0,
-            2, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 2, 0, .large), (.two, 5, 0, .small)], [], (2, 0), 0,
+                2, .one, nil
+            ))
         // P5-30: row 8 west end: (0,8) d0 l2 is legal.
-        cases.append((
-            [(.one, 0, 8, .large)], [], (0, 8), 0, 2, .one, nil
-        ))
+        cases.append(
+            (
+                [(.one, 0, 8, .large)], [], (0, 8), 0, 2, .one, nil
+            ))
 
         XCTAssertGreaterThanOrEqual(cases.count, 30, "R-5 fixture count")
 
@@ -734,5 +787,71 @@ final class RulesTests: XCTestCase {
         // Other sizes remain available: the medium placement succeeds.
         place(.one, (4, 1), .medium, state: &state)
         XCTAssertEqual(state.supplies[.one]?.count(.medium), 2)
+    }
+
+    // MARK: R-12 viewing face — regression (facing must point at the veranda)
+
+    /// Hand-computed tallies for one large stone at (2,7) on long_wall:
+    /// row 7 holds q −1…4, so its west ray holds (1,7) and (0,7), its
+    /// east ray holds the basin (3,7) and (4,7) — every ray cell below
+    /// is a real courtyard cell (features receive influence, R-24).
+    func talliesForStoneAtTwoSeven(facing: Int) -> [Hex: InfluenceTally] {
+        let stone = Stone(
+            owner: .one, cell: Hex(2, 7), size: .large, facing: facing)
+        return InfluenceEngine.computeAll(
+            courtyard: courtyard, stones: [stone], rakes: [], balance: balance)
+    }
+
+    func testR12ViewingBonusRequiresVerandaFacing() throws {
+        // R-12: the bonus goes to large/medium stones FACING THE VERANDA.
+        // long_wall's veranda is "bottom" → facing directions [1, 2, 3]
+        // (SE, SW, W). A stone facing east (0) must earn nothing, even
+        // though its east ray cells sit in the yard.
+        let east = talliesForStoneAtTwoSeven(facing: 0)
+        XCTAssertEqual(
+            east[Hex(3, 7)]?.one, 5,
+            "R-12: facing 0 is not veranda-ward — d1 ray cell keeps the bare curve value")
+        XCTAssertEqual(
+            east[Hex(4, 7)]?.one, 4,
+            "R-12: facing 0 earns no bonus at d2 either")
+        XCTAssertEqual(east[Hex(1, 7)]?.one, 5, "facing 0: off-ray d1 cell unaffected")
+        XCTAssertEqual(east[Hex(2, 8)]?.one, 5, "facing 0: off-ray SE cell unaffected")
+        let west = talliesForStoneAtTwoSeven(facing: 3)
+        XCTAssertEqual(
+            west[Hex(1, 7)]?.one, 6,
+            "R-12: facing 3 (toward the veranda) adds +1 at d1")
+        XCTAssertEqual(
+            west[Hex(0, 7)]?.one, 5,
+            "R-12: facing 3 adds +1 at d2")
+        XCTAssertEqual(
+            west[Hex(3, 7)]?.one, 5,
+            "R-12: the bonus covers only the facing ray")
+        let southEast = talliesForStoneAtTwoSeven(facing: 1)
+        XCTAssertEqual(
+            southEast[Hex(2, 8)]?.one, 6, "R-12: facing 1 also veranda-ward at d1")
+        let southWest = talliesForStoneAtTwoSeven(facing: 2)
+        XCTAssertEqual(southWest[Hex(1, 8)]?.one, 6, "R-12: facing 2 also veranda-ward at d1")
+    }
+
+    func testR12IncrementalOwnershipMatchesScratchForEveryFacing() throws {
+        // INV-2's incremental path shares the R-12 helper with the
+        // from-scratch engine; pin that the two agree for every facing
+        // of a large stone (a facing-dependent drift would show here).
+        for facing in 0..<6 {
+            let stone = Stone(
+                owner: .one, cell: Hex(2, 7), size: .large, facing: facing)
+            var ownership = Ownership(courtyard: courtyard, balance: balance)
+            ownership.applyStonePlacement(
+                stone, context: [stone], balance: balance)
+            let scratch = InfluenceEngine.computeAll(
+                courtyard: courtyard, stones: [stone], rakes: [],
+                balance: balance)
+            for cell in courtyard.cells {
+                XCTAssertEqual(
+                    ownership.tally(at: cell),
+                    scratch[cell] ?? InfluenceTally(),
+                    "INV-2 mismatch at \(cell) for facing \(facing)")
+            }
+        }
     }
 }

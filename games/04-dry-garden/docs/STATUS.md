@@ -64,6 +64,22 @@
 | G0 Setup | **pass** (2026-11-22) | evidence block below |
 | G1 Rules Engine | pending | — |
 
+## P1 Progress Log
+
+- **2026-11-23 — R-12 viewing-bonus regression fixed test-first (`d69586f`).**
+  RED: `testR12ViewingBonusRequiresVerandaFacing` failed with exactly the
+  diagnosed signature — `("Optional(6)") is not equal to ("Optional(5)")` and
+  `("Optional(5)") is not equal to ("Optional(4)")` on a stone facing east
+  (0), i.e. the engine granted the bonus without checking the facing.
+  GREEN: `InfluenceEngine.viewingBonus` now takes the `VerandaEdge` and
+  rejects any facing outside its `facingDirections` (bottom → [1, 2, 3]);
+  `Ownership` derives the edge from its courtyard and threads it into the
+  incremental path, so both INV-2 paths share one gate.
+  Full DGCore suite: `Executed 65 tests, with 0 failures (0 unexpected)
+  in 0.269 (0.288) seconds`. The fixture's geometry corrections during RED
+  (two hand-picked ray cells at r=9 were walls) were fixed by rebuilding the
+  fixture on row 7, verified against the mask.
+
 ## G0 Evidence (2026-11-22)
 
 ### Toolchain

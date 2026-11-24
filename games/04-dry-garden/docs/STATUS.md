@@ -66,6 +66,16 @@
 
 ## P1 Progress Log
 
+- **2026-11-23 — DG-P1.6 viewing-face fixtures (`410fd24`).** New
+  `ViewingFaceTests`: 16 test methods carrying 21 tagged fixtures (V-01…V-21)
+  over R-12 and R-25 — facing gate, ray-only coverage, bonus 0/1/2, size
+  gate, R-25 blockers at d1/d2/d3, d4 non-blocking, own-stone and off-ray
+  non-blocking, rake non-blocking, reducer-path flip, and two-stone stacking
+  (R-24). Full DGCore suite: `Executed 81 tests, with 0 failures (0
+  unexpected) in 0.097 (0.101) seconds`. Fixture geometry corrections made
+  during RED→GREEN: (2,7) is basin-adjacent (reducer fixtures use (1,7));
+  row 5 is q 1..6 ((0,5) is a wall); the symmetric-bonus case cancels to a
+  tie (both-side fixture pins the cancellation).
 - **2026-11-23 — R-12 viewing-bonus regression fixed test-first (`d69586f`).**
   RED: `testR12ViewingBonusRequiresVerandaFacing` failed with exactly the
   diagnosed signature — `("Optional(6)") is not equal to ("Optional(5)")` and

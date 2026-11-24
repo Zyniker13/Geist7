@@ -2,11 +2,44 @@
 
 ## Current State
 
-- **Phase:** P0 complete — G0 checks all pass (evidence below). Next: P1 Rules
-  Engine Prototype (DG-P1.1 placement/rakes/pass; DG-P1.2 laws with ≥ 40
-  fixtures each; DG-P1.3 influence/ownership/scoring; INV-1…INV-4).
-- **Branch:** `dry-garden/phase/P0-setup`. Tree state: DGCore 50/50 green,
-  iOS UI 2/2, macOS unit 3/3, both platform builds succeed, lint clean.
+- **Phase:** P1 Rules Engine Prototype — **in progress** on this branch (P0
+  complete; G0 evidence below).
+- **Branch:** `dry-garden/phase/P1-rules-engine` (HEAD `38ae4ee`, pushed to
+  origin).
+- **Tree state:** DGCore 63/63 green — `Executed 63 tests, with 0 failures
+  (0 unexpected)`. RulesTests carries the DG-P1.1 fixture quotas: 46 R-4
+  placement fixtures, 30 R-5 rake fixtures, the scripted R-2 rake-budget
+  game, and the corrected R-22 pair; plus R-6/R-27 pass, R-15/R-30 ends,
+  and INV-3. Commits `6ea6217` (engine), `6b66871` (`make sim`), and
+  `38ae4ee` (fixtures) are on origin.
+- **Remaining P1 work (in this order):**
+  1. R-12 regression test + fix, test-first: `viewingBonus` checks size
+     (large/medium), bonus > 0, and the R-25 clear-view scan, but never
+     checks `stone.facing` against the veranda's facing directions
+     (`VerandaEdge.bottom → [1, 2, 3]`; long_wall's veranda is "bottom"),
+     so a stone facing east (0) wrongly earns +1 at distances 1–2.
+  2. DG-P1.6: 20 viewing-face fixtures including R-25 blocked-view cases.
+  3. DG-P1.2 remainder: ≥ 40 symmetry fixtures including near-symmetric
+     positions and INV-6; DG-P1.4: ≥ 40 collinearity fixtures including
+     spacing 1–4 cases.
+  4. DG-P1.3/DG-P1.5: influence and ownership fixtures (R-9–R-11, R-24),
+     INV-2 over ≥ 1,000 seeded playouts, and the < 0.2 ms
+     incremental-influence benchmark.
+  5. DG-P1.7: groups and scoring (R-13–R-15, R-26), INV-8, 20 hand-checked
+     end positions, INV-9 property test.
+  6. DG-P1.8: INV-10 fuzz over ≥ 100,000 moves; INV-1/INV-4 property tests.
+  7. S1.4: 10 golden replays into `Tests/DGCoreTests/Fixtures/golden/` plus
+     the replay-loader test (coin draws re-derived stream-aligned).
+  8. Zero `Float` uses in DGCore (A.7): the canonical replay encoder still
+     references `Float` — remove it from the canonical path (or record a
+     real ADR); never weaken the gate silently.
+  9. G1 readiness: `make test` and `make lint` pass; `make coverage` ≥ 90%
+     on DGCore; `make sim N=5000` twice with an identical hash plus the
+     identical-hash check from an iPad build (real hashes pasted below).
+  10. Only if every G1 check in the ROADMAP G1 block and `_CONVENTIONS.md`
+      §8.1 passes or is SUBSTITUTED with real output here: tag
+      `dry-garden/gate-G1-pass` and push the tag. Any failed check stops
+      the gate cleanly at a committed, pushed, documented state.
 - **Blocked on:** nothing.
 
 ## Phase Queue
